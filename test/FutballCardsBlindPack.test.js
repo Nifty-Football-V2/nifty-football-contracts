@@ -22,6 +22,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
 
         // Create vending machine
         this.blindPack = await FutballCardsBlindPack.new(
+            creator,
             this.generator.address,
             this.futballCards.address,
             { from: creator }

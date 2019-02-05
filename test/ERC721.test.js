@@ -41,7 +41,7 @@ contract('ERC721', function ([_, creator, tokenOwner, anyone, ...accounts]) {
         });
 
         context('with minted token', function () {
-            const tokenId = new BN('1');
+            const tokenId = new BN('0');
 
             beforeEach(async function () {
                 ({logs: this.logs} = await this.token.mintCard(1, 1, 1, 1, 1, 1, anyone, {from: creator}));
@@ -49,7 +49,7 @@ contract('ERC721', function ([_, creator, tokenOwner, anyone, ...accounts]) {
 
             context('with burnt token', function () {
                 beforeEach(async function () {
-                    ({logs: this.logs} = await this.token.methods['burn(uint256)'](tokenId, {from: creator}));
+                    ({logs: this.logs} = await this.token.methods['burn(uint256)'](tokenId, {from: anyone}));
                 });
 
                 it('emits a Transfer event', function () {
