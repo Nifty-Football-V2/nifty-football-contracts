@@ -173,6 +173,19 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         );
     }
 
+    function attributesFlat(uint256 _tokenId) public view returns (uint256[5] memory) {
+        require(_exists(_tokenId));
+        Attributes storage attributes = attributesMapping[_tokenId];
+        uint256[5] memory attributesFlat = [
+        attributes.strength,
+        attributes.speed,
+        attributes.intelligence,
+        attributes.skill,
+        attributes.special
+        ];
+        return attributesFlat;
+    }
+
     function tokensOfOwner(address owner) public view returns (uint256[] memory) {
         return _tokensOfOwner(owner);
     }
