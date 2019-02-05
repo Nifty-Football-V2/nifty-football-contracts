@@ -4,6 +4,14 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract FutballCardsGenerator is Ownable {
 
+    event CardGenerated(
+        uint256 _nationality,
+        uint256 _position,
+        uint256 _ethnicity,
+        uint256 _kit,
+        uint256 _colour
+    );
+
     uint256 internal randNonce = 0;
 
     uint256[] nationalities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -11,7 +19,7 @@ contract FutballCardsGenerator is Ownable {
     uint256[] kits = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
     uint256[] colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-    function generate(address _sender)
+    function generateCard(address _sender)
     external
     returns (
         uint256 _nationality,
@@ -28,6 +36,14 @@ contract FutballCardsGenerator is Ownable {
 
         uint256 _kit = kits[generate(_sender, kits.length)];
         uint256 _colour = colours[generate(_sender, colours.length)];
+
+        emit CardGenerated(
+            _nationality,
+            _position,
+            _ethnicity,
+            _kit,
+            _colour
+        );
 
         return (
         _nationality,
