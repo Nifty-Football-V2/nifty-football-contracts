@@ -11,4 +11,12 @@ interface IFutballCardsCreator {
         address _to
     ) external returns (uint256 _tokenId);
 
+
+    function setAttributes(
+        uint256 _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill
+    ) external returns (bool);
 }

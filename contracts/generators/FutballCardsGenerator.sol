@@ -24,6 +24,22 @@ contract FutballCardsGenerator is Ownable {
         );
     }
 
+    function generateAttributes(address _sender)
+    external
+    returns (
+        uint256 strength,
+        uint256 speed,
+        uint256 intelligence,
+        uint256 skill
+    ) {
+        return (
+        generate(_sender, 100),
+        generate(_sender, 100),
+        generate(_sender, 100),
+        generate(_sender, 100)
+        );
+    }
+
     function generate(address _sender, uint256 _max) internal returns (uint256) {
         randNonce++;
         bytes memory packed = abi.encodePacked(blockhash(block.number), _sender, randNonce);

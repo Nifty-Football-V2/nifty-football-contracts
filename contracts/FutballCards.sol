@@ -17,13 +17,19 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         address indexed _to
     );
 
+    event CardAttributesSet(
+        uint256 indexed _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill
+    );
+
     uint256 public totalCards = 0;
     uint256 public tokenIdPointer = 0;
 
-    enum CardType {BESPOKE, BLIND, OTHER}
-
     struct Card {
-        CardType cardType;
+        uint256 cardType;
 
         uint256 nationality;
         uint256 position;
@@ -40,12 +46,19 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 speed;
         uint256 intelligence;
         uint256 skill;
+        uint256 special;
+    }
+
+    struct Experience {
+        uint256 points;
+        uint256 stars;
     }
 
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
+    mapping(uint256 => Experience) internal experienceMapping;
 
-    constructor (string memory _tokenBaseURI) public ERC721Full("FootballUnited", "FUTA") {
+    constructor (string memory _tokenBaseURI) public ERC721Full("FutballCard", "FUT") {
         super.addWhitelisted(msg.sender);
         tokenBaseURI = _tokenBaseURI;
     }
@@ -62,7 +75,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
 
         // create new card
         cardMapping[tokenIdPointer] = Card({
-            cardType : CardType.BESPOKE,
+            cardType : 1, // bespoke
             nationality : _nationality,
             position : _position,
 
@@ -88,38 +101,55 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         // increment pointer
         tokenIdPointer = tokenIdPointer.add(1);
 
-        return tokenIdPointer;
+        // pointer been bumped so return the last token ID
+        return tokenIdPointer.sub(1);
     }
 
-//    function attributes(uint256 _tokenId) public view returns (
-//        uint256 _city,
-//        uint256 _base,
-//        uint256 _baseExteriorColorway,
-//        uint256 _baseWindowColorway,
-//        uint256 _body,
-//        uint256 _bodyExteriorColorway,
-//        uint256 _bodyWindowColorway,
-//        uint256 _roof,
-//        uint256 _roofExteriorColorway,
-//        uint256 _roofWindowColorway,
-//        address _architect
-//    ) {
-//        require(_exists(_tokenId), "Token ID not found");
-//        Building storage building = buildings[_tokenId];
-//        return (
-//        building.city,
-//        building.base,
-//        building.baseExteriorColorway,
-//        building.baseWindowColorway,
-//        building.body,
-//        building.bodyExteriorColorway,
-//        building.bodyWindowColorway,
-//        building.roof,
-//        building.roofExteriorColorway,
-//        building.roofWindowColorway,
-//        building.architect
-//        );
-//    }
+    function setAttributes(
+        uint256 _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill
+    ) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId));
+
+        attributesMapping[_tokenId] = Attributes({
+            strength : _strength,
+            speed : _speed,
+            intelligence : _intelligence,
+            skill : _skill,
+            special : 0
+            });
+
+        emit CardAttributesSet(
+            _tokenId,
+            _strength,
+            _speed,
+            _intelligence,
+            _skill
+        );
+
+        return true;
+    }
+
+    function attributes(uint256 _tokenId) public view returns (
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill,
+        uint256 _special
+    ) {
+        require(_exists(_tokenId));
+        Attributes storage attributes = attributesMapping[_tokenId];
+        return (
+        attributes.strength,
+        attributes.speed,
+        attributes.intelligence,
+        attributes.skill,
+        attributes.special
+        );
+    }
 
     function tokensOfOwner(address owner) public view returns (uint256[] memory) {
         return _tokensOfOwner(owner);
