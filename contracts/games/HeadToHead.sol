@@ -7,16 +7,40 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../generators/HeadToHeadResulter.sol";
 
 contract IAttributesNft is IERC721 {
-    function attributesFlat(uint256 _tokenId) external view returns (uint256[] memory attributes);
+    function attributesFlat(uint256 _tokenId) external view returns (uint256[5] memory attributes);
 }
 
 contract HeadToHead is Ownable, Pausable {
     using SafeMath for uint256;
 
-    event GameCreated(uint256 indexed gameId, address indexed home, uint256 indexed _homeTokenId);
-    event GameResulted(address indexed home, address indexed away, uint256 indexed gameId, uint256 result);
-    event GameDraw(address indexed home, address indexed away, uint256 indexed gameId, uint256 result);
-    event GameClosed(uint256 indexed gameId, address indexed closer);
+    event GameCreated(
+        uint256 indexed gameId,
+        address indexed home,
+        uint256 indexed homeTokenId
+    );
+
+    event GameResulted(
+        address indexed home,
+        address indexed away,
+        uint256 indexed gameId,
+        uint256 homeValue,
+        uint256 awayValue,
+        uint256 result
+    );
+
+    event GameDraw(
+        address indexed home,
+        address indexed away,
+        uint256 indexed gameId,
+        uint256 homeValue,
+        uint256 awayValue,
+        uint256 result
+    );
+
+    event GameClosed(
+        uint256 indexed gameId,
+        address indexed closer
+    );
 
     enum State {OPEN, HOME_WIN, AWAY_WIN, DRAW, CLOSED}
 
@@ -56,7 +80,7 @@ contract HeadToHead is Ownable, Pausable {
     }
 
     modifier onlyWhenContractIsApproved() {
-        require(nft.isApprovedForAll(msg.sender, address(this)), "NFt not approved to play yet");
+        require(nft.isApprovedForAll(msg.sender, address(this)), "NFT not approved to play");
         _;
     }
 
@@ -79,6 +103,8 @@ contract HeadToHead is Ownable, Pausable {
         require(games[_gameId].state == State.DRAW || games[_gameId].state == State.OPEN, "Game not open");
         _;
     }
+
+    // TODO check token not used in another game
 
     ///////////////
     // Functions //
@@ -108,8 +134,6 @@ contract HeadToHead is Ownable, Pausable {
         return gameId;
     }
 
-    // TODO check token not used in another game
-
     function resultGame(uint256 _gameId, uint256 _tokenId)
     whenNotPaused
     onlyWhenContractIsApproved
@@ -118,18 +142,21 @@ contract HeadToHead is Ownable, Pausable {
     onlyWhenGameOpen(_gameId)
     public returns (bool) {
 
-        // Ensure you can win at least on one attribute
-        uint256[] memory home = nft.attributesFlat(games[_gameId].homeTokenId);
-        uint256[] memory away = nft.attributesFlat(_tokenId);
+        uint256[5] memory home = nft.attributesFlat(games[_gameId].homeTokenId);
+        uint256[5] memory away = nft.attributesFlat(_tokenId);
 
-        bool hasAtLeastSlimChanceOfWinning = false;
-        for (uint i = 0; i < home.length; i++) {
+        bool homeHasASlimChanceOfWinning = false;
+        bool awayHasASlimChanceOfWinning = false;
+
+        // Ensure you can win at least on one attribute
+        for (uint i = 0; i < 4; i++) {
             if (home[i] < away[i]) {
-                hasAtLeastSlimChanceOfWinning = true;
-                break;
+                awayHasASlimChanceOfWinning = true;
+            } else {
+                homeHasASlimChanceOfWinning = true;
             }
         }
-        require(hasAtLeastSlimChanceOfWinning, "There is no chance of winning");
+        require(homeHasASlimChanceOfWinning && awayHasASlimChanceOfWinning, "There is no chance of winning");
 
         games[_gameId].awayTokenId = _tokenId;
         games[_gameId].awayOwner = msg.sender;
@@ -142,9 +169,13 @@ contract HeadToHead is Ownable, Pausable {
     function reMatch(uint256 _gameId)
     whenNotPaused
     onlyWhenContractIsApproved
-    onlyWhenRealGame(_gameId)
     onlyWhenGameDrawn(_gameId)
     public returns (bool) {
+
+        // TODO is this check needed or can anyone result a drawn match?
+        address homeOwner = games[_gameId].homeOwner;
+        address awayOwner = games[_gameId].awayOwner;
+        require(awayOwner == msg.sender || homeOwner == msg.sender, "Can only re-match when you are playing");
 
         _resultGame(_gameId);
 
@@ -153,7 +184,6 @@ contract HeadToHead is Ownable, Pausable {
 
     function withdrawFromGame(uint256 _gameId)
     whenNotPaused
-    onlyWhenRealGame(_gameId)
     onlyWhenGameNotComplete(_gameId)
     public returns (bool) {
         require(games[_gameId].homeOwner == msg.sender || games[_gameId].awayOwner == msg.sender, "Cannot close a game you are not part of");
@@ -163,6 +193,25 @@ contract HeadToHead is Ownable, Pausable {
         emit GameClosed(_gameId, msg.sender);
 
         return true;
+    }
+
+    function getGame(uint256 _gameId)
+    onlyWhenRealGame(_gameId)
+    public view returns (
+        uint256 homeTokenId,
+        address homeOwner,
+        uint256 awayTokenId,
+        address awayOwner,
+        State state
+    ) {
+        Game memory game = games[_gameId];
+        return (
+        game.homeTokenId,
+        game.homeOwner,
+        game.awayTokenId,
+        game.awayOwner,
+        game.state
+        );
     }
 
     function _resultGame(uint256 _gameId) internal {
@@ -175,26 +224,26 @@ contract HeadToHead is Ownable, Pausable {
         // indexes are zero based
         uint256 result = resulter.result(_gameId, msg.sender).sub(1);
 
-        uint256[] memory home = nft.attributesFlat(homeTokenId);
-        uint256[] memory away = nft.attributesFlat(awayTokenId);
+        uint256[5] memory home = nft.attributesFlat(homeTokenId);
+        uint256[5] memory away = nft.attributesFlat(awayTokenId);
 
         if (home[result] > away[result]) {
             nft.safeTransferFrom(awayOwner, homeOwner, awayTokenId);
             games[_gameId].state = State.HOME_WIN;
 
-            emit GameResulted(homeOwner, awayOwner, _gameId, result);
+            emit GameResulted(homeOwner, awayOwner, _gameId, home[result], away[result], result);
         }
         else if (home[result] < away[result]) {
             nft.safeTransferFrom(homeOwner, awayOwner, homeTokenId);
             games[_gameId].state = State.AWAY_WIN;
 
-            emit GameResulted(homeOwner, awayOwner, _gameId, result);
+            emit GameResulted(homeOwner, awayOwner, _gameId, home[result], away[result], result);
         }
         else {
             // Allow a re-match if no winner found
             games[_gameId].state = State.DRAW;
 
-            emit GameDraw(homeOwner, awayOwner, _gameId, result);
+            emit GameDraw(homeOwner, awayOwner, _gameId, home[result], away[result], result);
         }
     }
 
