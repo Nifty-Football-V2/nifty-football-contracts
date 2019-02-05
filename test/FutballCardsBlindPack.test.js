@@ -39,7 +39,6 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...acco
 
         // mint a single building
         const {logs} = await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
-
         expectEvent.inLogs(
             logs,
             `BlindPackPulled`,
@@ -58,6 +57,13 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...acco
 
         it('has an owner', async function () {
             (await this.futballCards.tokensOfOwner(tokenOwner))[0].should.be.bignumber.equal(firstTokenId);
+        });
+    });
+
+    context('ensure card has attributes', function () {
+        it('returns attributes', async function () {
+            const attrs = await this.futballCards.attributes(firstTokenId);
+            console.log(attrs);
         });
     });
 

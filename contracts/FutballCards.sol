@@ -17,6 +17,14 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         address indexed _to
     );
 
+    event CardAttributesSet(
+        uint256 indexed _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill
+    );
+
     uint256 public totalCards = 0;
     uint256 public tokenIdPointer = 0;
 
@@ -114,40 +122,34 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
             special : 0
             });
 
-        // FIXME emit event
+        emit CardAttributesSet(
+            _tokenId,
+            _strength,
+            _speed,
+            _intelligence,
+            _skill
+        );
 
         return true;
     }
 
-    //    function attributes(uint256 _tokenId) public view returns (
-    //        uint256 _city,
-    //        uint256 _base,
-    //        uint256 _baseExteriorColorway,
-    //        uint256 _baseWindowColorway,
-    //        uint256 _body,
-    //        uint256 _bodyExteriorColorway,
-    //        uint256 _bodyWindowColorway,
-    //        uint256 _roof,
-    //        uint256 _roofExteriorColorway,
-    //        uint256 _roofWindowColorway,
-    //        address _architect
-    //    ) {
-    //        require(_exists(_tokenId), "Token ID not found");
-    //        Building storage building = buildings[_tokenId];
-    //        return (
-    //        building.city,
-    //        building.base,
-    //        building.baseExteriorColorway,
-    //        building.baseWindowColorway,
-    //        building.body,
-    //        building.bodyExteriorColorway,
-    //        building.bodyWindowColorway,
-    //        building.roof,
-    //        building.roofExteriorColorway,
-    //        building.roofWindowColorway,
-    //        building.architect
-    //        );
-    //    }
+    function attributes(uint256 _tokenId) public view returns (
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill,
+        uint256 _special
+    ) {
+        require(_exists(_tokenId));
+        Attributes storage attributes = attributesMapping[_tokenId];
+        return (
+        attributes.strength,
+        attributes.speed,
+        attributes.intelligence,
+        attributes.skill,
+        attributes.special
+        );
+    }
 
     function tokensOfOwner(address owner) public view returns (uint256[] memory) {
         return _tokensOfOwner(owner);
