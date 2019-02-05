@@ -22,9 +22,9 @@ contract HeadToHead is Ownable, Pausable {
 
     struct Game {
         uint256 id;
-        uint256 home;
+        uint256 homeTokenId;
         address homeOwner;
-        uint256 away;
+        uint256 awayTokenId;
         address awayOwner;
         State state;
     }
@@ -42,7 +42,7 @@ contract HeadToHead is Ownable, Pausable {
     /////////////////
 
     constructor (HeadToHeadResulter _resulter, IAttributesNft _nft) public {
-        resulter = _nft;
+        resulter = _resulter;
         nft = _nft;
     }
 
@@ -94,9 +94,9 @@ contract HeadToHead is Ownable, Pausable {
 
         games[totalGames] = Game({
             id : gameId,
-            home : _tokenId,
+            homeTokenId : _tokenId,
             homeOwner : msg.sender,
-            away : 0,
+            awayTokenId : 0,
             awayOwner : address(0),
             state : State.OPEN
             });
@@ -108,8 +108,6 @@ contract HeadToHead is Ownable, Pausable {
         return gameId;
     }
 
-    // TODO withdraw from game method
-    // TODO cant enter if you a card cant win 1/4 chance
     // TODO check token not used in another game
 
     function resultGame(uint256 _gameId, uint256 _tokenId)
@@ -119,7 +117,21 @@ contract HeadToHead is Ownable, Pausable {
     onlyWhenRealGame(_gameId)
     onlyWhenGameOpen(_gameId)
     public returns (bool) {
-        games[_gameId].away = _tokenId;
+
+        // Ensure you can win at least on one attribute
+        uint256[] memory home = nft.attributesFlat(games[_gameId].homeTokenId);
+        uint256[] memory away = nft.attributesFlat(_tokenId);
+
+        bool hasAtLeastSlimChanceOfWinning = false;
+        for (uint i = 0; i < home.length; i++) {
+            if (home[i] < away[i]) {
+                hasAtLeastSlimChanceOfWinning = true;
+                break;
+            }
+        }
+        require(hasAtLeastSlimChanceOfWinning, "There is no chance of winning");
+
+        games[_gameId].awayTokenId = _tokenId;
         games[_gameId].awayOwner = msg.sender;
 
         _resultGame(_gameId);
@@ -155,12 +167,13 @@ contract HeadToHead is Ownable, Pausable {
 
     function _resultGame(uint256 _gameId) internal {
         address homeOwner = games[_gameId].homeOwner;
-        uint256 homeTokenId = games[_gameId].home;
+        uint256 homeTokenId = games[_gameId].homeTokenId;
 
         address awayOwner = games[_gameId].awayOwner;
-        uint256 awayTokenId = games[_gameId].away;
+        uint256 awayTokenId = games[_gameId].awayTokenId;
 
-        uint256 result = resulter.result(_gameId, msg.sender);
+        // indexes are zero based
+        uint256 result = resulter.result(_gameId, msg.sender).sub(1);
 
         uint256[] memory home = nft.attributesFlat(homeTokenId);
         uint256[] memory away = nft.attributesFlat(awayTokenId);
