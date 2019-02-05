@@ -4,8 +4,7 @@ interface IFutballCardsCreator {
     function mintCard(
         uint256 _nationality,
         uint256 _position,
-        uint256 _skin,
-        uint256 _hair,
+        uint256 _ethnicity,
         uint256 _kit,
         uint256 _colour,
         address _to

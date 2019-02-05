@@ -47,27 +47,13 @@ contract FutballCardsBlindPack is Ownable {
             "Must supply at least the required minimum purchase value or have credit"
         );
 
-        (uint256 _nationality, uint256 _skin, uint256 _hair) = futballCardsGenerator.generate(msg.sender);
+        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generate(msg.sender);
 
-        uint256 tokenId = futballCardsNFT.mintCard(
-            _nationality,
-            _nationality,
-            _skin,
-            _hair,
-            _nationality,
-            _nationality,
-            _to
-        );
+        uint256 tokenId = futballCardsNFT.mintCard(_nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // generate attributes
         (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender);
-        futballCardsNFT.setAttributes(
-            tokenId,
-            _strength,
-            _speed,
-            _intelligence,
-            _skill
-        );
+        futballCardsNFT.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
 
         // use credits first
         if (credits[msg.sender] > 0) {

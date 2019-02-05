@@ -34,8 +34,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 nationality;
         uint256 position;
 
-        uint256 skin;
-        uint256 hair;
+        uint256 ethnicity;
 
         uint256 kit;
         uint256 colour;
@@ -66,8 +65,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
     function mintCard(
         uint256 _nationality,
         uint256 _position,
-        uint256 _skin,
-        uint256 _hair,
+        uint256 _ethnicity,
         uint256 _kit,
         uint256 _colour,
         address _to
@@ -78,10 +76,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
             cardType : 1, // bespoke
             nationality : _nationality,
             position : _position,
-
-            skin : _skin,
-            hair : _hair,
-
+            ethnicity : _ethnicity,
             kit : _kit,
             colour : _colour
             });
@@ -137,8 +132,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 _cardType,
         uint256 _nationality,
         uint256 _position,
-        uint256 _skin,
-        uint256 _hair,
+        uint256 _ethnicity,
         uint256 _kit,
         uint256 _colour
     ) {
@@ -148,8 +142,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         tokenCard.cardType,
         tokenCard.nationality,
         tokenCard.position,
-        tokenCard.skin,
-        tokenCard.hair,
+        tokenCard.ethnicity,
         tokenCard.kit,
         tokenCard.colour
         );
