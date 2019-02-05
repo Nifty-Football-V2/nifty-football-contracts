@@ -63,7 +63,27 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...acco
     context('ensure card has attributes', function () {
         it('returns attributes', async function () {
             const attrs = await this.futballCards.attributes(firstTokenId);
-            console.log(attrs);
+
+            // between 0 - 99
+            attrs[0].should.be.bignumber.lt('100');
+            attrs[1].should.be.bignumber.lt('100');
+            attrs[2].should.be.bignumber.lt('100');
+            attrs[3].should.be.bignumber.lt('100');
+        });
+    });
+
+    context('ensure card has card values', function () {
+        it('returns attributes', async function () {
+            const cardAttrs = await this.futballCards.card(firstTokenId);
+
+            // between 0 - 3
+            cardAttrs[0].should.be.bignumber.lt('3');
+            cardAttrs[1].should.be.bignumber.lt('3');
+            cardAttrs[2].should.be.bignumber.lt('3');
+            cardAttrs[3].should.be.bignumber.lt('3');
+            cardAttrs[4].should.be.bignumber.lt('3');
+            cardAttrs[5].should.be.bignumber.lt('3');
+            cardAttrs[6].should.be.bignumber.lt('3');
         });
     });
 
