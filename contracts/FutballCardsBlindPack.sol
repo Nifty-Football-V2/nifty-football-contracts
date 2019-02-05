@@ -23,19 +23,16 @@ contract FutballCardsBlindPack is Ownable {
     );
 
     FutballCardsGenerator public futballCardsGenerator;
-    IFutballCardsCreator public footballUnitedNFT;
+    IFutballCardsCreator public futballCardsNFT;
 
     mapping(address => uint256) public credits;
 
     uint256 public totalPurchasesInWei = 0;
     uint256 public priceInWei = 100;
 
-    constructor (
-        FutballCardsGenerator _futballCardsGenerator,
-        IFutballCardsCreator _footballUnitedNFT
-    ) public {
+    constructor (FutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
         futballCardsGenerator = _futballCardsGenerator;
-        footballUnitedNFT = _footballUnitedNFT;
+        futballCardsNFT = _fuballCardsNFT;
     }
 
     function blindPack() public payable returns (uint256 _tokenId) {
@@ -50,7 +47,7 @@ contract FutballCardsBlindPack is Ownable {
 
         (uint256 _nationality, uint256 _skin, uint256 _hair) = futballCardsGenerator.generate(msg.sender);
 
-        uint256 tokenId = footballUnitedNFT.mintCard(
+        uint256 tokenId = futballCardsNFT.mintCard(
             _nationality,
             _nationality,
             _nationality,
@@ -58,6 +55,16 @@ contract FutballCardsBlindPack is Ownable {
             _nationality,
             _nationality,
             _to
+        );
+
+        // generate attributes
+        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender);
+        futballCardsNFT.setAttributes(
+            tokenId,
+            _strength,
+            _speed,
+            _intelligence,
+            _skill
         );
 
         // use credits first

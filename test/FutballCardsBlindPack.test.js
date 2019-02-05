@@ -43,7 +43,7 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...acco
         expectEvent.inLogs(
             logs,
             `BlindPackPulled`,
-            {_tokenId: new BN(1), _to: tokenOwner}
+            {_tokenId: new BN(0), _to: tokenOwner}
         );
     });
 
