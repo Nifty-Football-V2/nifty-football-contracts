@@ -22,6 +22,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
 
         // Create vending machine
         this.blindPack = await FutballCardsBlindPack.new(
+            creator,
             this.generator.address,
             this.futballCards.address,
             { from: creator }
@@ -77,13 +78,12 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
             const cardAttrs = await this.futballCards.card(firstTokenId);
 
             // between 0 - 3
-            cardAttrs[0].should.be.bignumber.lt('3');
-            cardAttrs[1].should.be.bignumber.lt('3');
-            cardAttrs[2].should.be.bignumber.lt('3');
-            cardAttrs[3].should.be.bignumber.lt('3');
-            cardAttrs[4].should.be.bignumber.lt('3');
-            cardAttrs[5].should.be.bignumber.lt('3');
-            cardAttrs[6].should.be.bignumber.lt('3');
+            cardAttrs[0].should.be.bignumber.lt('10');
+            cardAttrs[1].should.be.bignumber.lt('10');
+            cardAttrs[2].should.be.bignumber.lt('10');
+            cardAttrs[3].should.be.bignumber.lt('10');
+            cardAttrs[4].should.be.bignumber.lt('10');
+            cardAttrs[5].should.be.bignumber.lt('10');
         });
     });
 
@@ -118,11 +118,11 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
 
     context('ensure only owner can transfer buildings', function () {
         it('should revert if not owner', async function () {
-            await shouldFail.reverting(this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner, {from: tokenOwner}));
+            await shouldFail.reverting(this.futballCards.mintCard(1, 1, 1, 1, 1, tokenOwner, {from: tokenOwner}));
         });
 
         it('should mint and transfer if owner', async function () {
-            const {logs} = await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, anyone, {from: creator});
+            const {logs} = await this.futballCards.mintCard(1, 1, 1, 1, 1, anyone, {from: creator});
             expectEvent.inLogs(
                 logs,
                 `CardMinted`,

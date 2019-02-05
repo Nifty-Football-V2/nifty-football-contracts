@@ -6,21 +6,35 @@ contract FutballCardsGenerator is Ownable {
 
     uint256 internal randNonce = 0;
 
+    uint256[] nationalities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    uint256[] positions = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3];
+    uint256[] kits = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
+    uint256[] colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
     function generate(address _sender)
     external
     returns (
-        uint256 nationality,
-        uint256 baseExteriorColorway,
-        uint256 baseWindowColorway
+        uint256 _nationality,
+        uint256 _position,
+        uint256 _ethnicity,
+        uint256 _kit,
+        uint256 _colour
     ) {
 
-        // TODO THIS IS DUMB FOR NOW, JUST TO PROVE THE POINT
+        uint256 _nationality = nationalities[generate(_sender, nationalities.length)];
+        uint256 _position = positions[generate(_sender, positions.length)];
+
+        uint256 _ethnicity = generate(_sender, 10);
+
+        uint256 _kit = kits[generate(_sender, kits.length)];
+        uint256 _colour = colours[generate(_sender, colours.length)];
 
         return (
-        // Base
-        generate(_sender, 3),
-        generate(_sender, 3),
-        generate(_sender, 3)
+        _nationality,
+        _position,
+        _ethnicity,
+        _kit,
+        _colour
         );
     }
 

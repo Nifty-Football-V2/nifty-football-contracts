@@ -34,8 +34,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 nationality;
         uint256 position;
 
-        uint256 skin;
-        uint256 hair;
+        uint256 ethnicity;
 
         uint256 kit;
         uint256 colour;
@@ -66,8 +65,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
     function mintCard(
         uint256 _nationality,
         uint256 _position,
-        uint256 _skin,
-        uint256 _hair,
+        uint256 _ethnicity,
         uint256 _kit,
         uint256 _colour,
         address _to
@@ -78,10 +76,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
             cardType : 1, // bespoke
             nationality : _nationality,
             position : _position,
-
-            skin : _skin,
-            hair : _hair,
-
+            ethnicity : _ethnicity,
             kit : _kit,
             colour : _colour
             });
@@ -137,21 +132,19 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 _cardType,
         uint256 _nationality,
         uint256 _position,
-        uint256 _skin,
-        uint256 _hair,
+        uint256 _ethnicity,
         uint256 _kit,
         uint256 _colour
     ) {
         require(_exists(_tokenId));
-        Card storage card = cardMapping[_tokenId];
+        Card storage tokenCard = cardMapping[_tokenId];
         return (
-        card.cardType,
-        card.nationality,
-        card.position,
-        card.skin,
-        card.hair,
-        card.kit,
-        card.colour
+        tokenCard.cardType,
+        tokenCard.nationality,
+        tokenCard.position,
+        tokenCard.ethnicity,
+        tokenCard.kit,
+        tokenCard.colour
         );
     }
 
@@ -163,14 +156,39 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 _special
     ) {
         require(_exists(_tokenId));
-        Attributes storage attributes = attributesMapping[_tokenId];
+        Attributes storage tokenAttributes = attributesMapping[_tokenId];
         return (
-        attributes.strength,
-        attributes.speed,
-        attributes.intelligence,
-        attributes.skill,
-        attributes.special
+        tokenAttributes.strength,
+        tokenAttributes.speed,
+        tokenAttributes.intelligence,
+        tokenAttributes.skill,
+        tokenAttributes.special
         );
+    }
+
+    function experience(uint256 _tokenId) public view returns (
+        uint256 _points,
+        uint256 _stars
+    ) {
+        require(_exists(_tokenId));
+        Experience storage tokenExperience = experienceMapping[_tokenId];
+        return (
+        tokenExperience.points,
+        tokenExperience.stars
+        );
+    }
+
+    function attributesFlat(uint256 _tokenId) public view returns (uint256[5] memory) {
+        require(_exists(_tokenId));
+        Attributes storage tokenAttributes = attributesMapping[_tokenId];
+        uint256[5] memory tokenAttributesFlat = [
+        tokenAttributes.strength,
+        tokenAttributes.speed,
+        tokenAttributes.intelligence,
+        tokenAttributes.skill,
+        tokenAttributes.special
+        ];
+        return tokenAttributesFlat;
     }
 
     function tokensOfOwner(address owner) public view returns (uint256[] memory) {

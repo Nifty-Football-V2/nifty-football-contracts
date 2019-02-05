@@ -10,16 +10,18 @@ function shouldBehaveLikeERC721 (
     [owner, approved, anotherApproved, operator, anyone]
 ) {
 
-    const firstTokenId = new BN(1);
-    const secondTokenId = new BN(2);
-    const unknownTokenId = new BN(3);
+    const firstTokenId = new BN(0);
+    const secondTokenId = new BN(1);
+    const unknownTokenId = new BN(999);
+
+    const firstURI = 'http://futball-cards';
+    const baseURI = 'http://futball-cards';
     const RECEIVER_MAGIC_VALUE = '0x150b7a02';
-    const firstURI = 'abc123';
 
     describe('like an ERC721', function () {
         beforeEach(async function () {
-            await this.token.createBuilding(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, owner, {from: creator});
-            await this.token.createBuilding(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, owner, {from: creator});
+            await this.token.mintCard(1, 1, 1, 1, 1, 1, owner, {from: creator});
+            await this.token.mintCard(1, 1, 1, 1, 1, 1, owner, {from: creator});
             this.toWhom = anyone; // default to anyone for toWhom in context-dependent tests
         });
 
