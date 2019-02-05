@@ -47,8 +47,8 @@ contract FutballCardsBlindPack is Ownable {
             "Must supply at least the required minimum purchase value or have credit"
         );
 
-        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generate(msg.sender);
-
+        // generate card
+        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generateCard(msg.sender);
         uint256 tokenId = futballCardsNFT.mintCard(_nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // generate attributes
@@ -58,6 +58,7 @@ contract FutballCardsBlindPack is Ownable {
         // use credits first
         if (credits[msg.sender] > 0) {
             credits[msg.sender] = credits[msg.sender].sub(1);
+            // any trapped ether can be withdrawn with withdraw()
         } else {
             totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
             wallet.transfer(msg.value);
