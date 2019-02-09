@@ -63,13 +63,15 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...acco
 
     context('ensure card has attributes', function () {
         it('returns attributes', async function () {
-            const attrs = await this.futballCards.attributes(firstTokenId);
+            const attrs = await this.futballCards.attributesAndName(firstTokenId);
 
             // between 0 - 99
             attrs[0].should.be.bignumber.lt('100');
             attrs[1].should.be.bignumber.lt('100');
             attrs[2].should.be.bignumber.lt('100');
             attrs[3].should.be.bignumber.lt('100');
+            attrs[4].should.be.bignumber.lt('100');
+            attrs[5].should.be.bignumber.lt('100');
         });
     });
 

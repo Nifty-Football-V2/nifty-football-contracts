@@ -25,6 +25,12 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 _skill
     );
 
+    event NameSet(
+        uint256 indexed _tokenId,
+        uint256 _firstName,
+        uint256 _lastName
+    );
+
     uint256 public totalCards = 0;
     uint256 public tokenIdPointer = 0;
 
@@ -147,13 +153,11 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
             lastName : _lastName
             });
 
-//        emit CardAttributesSet(
-//            _tokenId,
-//            _strength,
-//            _speed,
-//            _intelligence,
-//            _skill
-//        );
+        emit NameSet(
+            _tokenId,
+            _firstName,
+            _lastName
+        );
 
         return true;
     }
@@ -178,21 +182,26 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         );
     }
 
-    function attributes(uint256 _tokenId) public view returns (
+    function attributesAndName(uint256 _tokenId) public view returns (
         uint256 _strength,
         uint256 _speed,
         uint256 _intelligence,
         uint256 _skill,
-        uint256 _special
+        uint256 _special,
+        uint256 _firstName,
+        uint256 _lastName
     ) {
         require(_exists(_tokenId));
         Attributes storage tokenAttributes = attributesMapping[_tokenId];
+        Name storage tokenName = namesMapping[_tokenId];
         return (
         tokenAttributes.strength,
         tokenAttributes.speed,
         tokenAttributes.intelligence,
         tokenAttributes.skill,
-        tokenAttributes.special
+        tokenAttributes.special,
+        tokenName.firstName,
+        tokenName.lastName
         );
     }
 
