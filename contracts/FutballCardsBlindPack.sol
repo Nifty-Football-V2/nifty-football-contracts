@@ -30,6 +30,7 @@ contract FutballCardsBlindPack is Ownable {
 
     uint256 public totalPurchasesInWei = 0;
     uint256 public priceInWei = 100;
+    uint256 public cardTypeDefault = 0;
 
     constructor (address payable _wallet, FutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
         futballCardsGenerator = _futballCardsGenerator;
@@ -51,11 +52,14 @@ contract FutballCardsBlindPack is Ownable {
         (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generateCard(msg.sender);
 
         // cardType is 1 (initially)
-        uint256 tokenId = futballCardsNFT.mintCard(1, _nationality, _position, _ethnicity, _kit, _colour, _to);
+        uint256 tokenId = futballCardsNFT.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // generate attributes
         (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender);
         futballCardsNFT.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
+
+        (uint256 _firstName, uint256 _lastName) = futballCardsGenerator.generateName(msg.sender);
+        futballCardsNFT.setName(tokenId, _firstName, _lastName);
 
         // use credits first
         if (credits[msg.sender] > 0) {

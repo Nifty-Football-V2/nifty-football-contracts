@@ -48,6 +48,11 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 special;
     }
 
+    struct Name {
+        uint256 firstName;
+        uint256 lastName;
+    }
+
     struct Experience {
         uint256 points;
         uint256 stars;
@@ -55,6 +60,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
 
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
+    mapping(uint256 => Name) internal namesMapping;
     mapping(uint256 => Experience) internal experienceMapping;
 
     constructor (string memory _tokenBaseURI) public ERC721Full("FutballCard", "FUT") {
@@ -125,6 +131,29 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
             _intelligence,
             _skill
         );
+
+        return true;
+    }
+
+    function setName(
+        uint256 _tokenId,
+        uint256 _firstName,
+        uint256 _lastName
+    ) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId));
+
+        namesMapping[_tokenId] = Name({
+            firstName : _firstName,
+            lastName : _lastName
+            });
+
+//        emit CardAttributesSet(
+//            _tokenId,
+//            _strength,
+//            _speed,
+//            _intelligence,
+//            _skill
+//        );
 
         return true;
     }

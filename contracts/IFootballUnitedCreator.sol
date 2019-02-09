@@ -19,4 +19,10 @@ interface IFutballCardsCreator {
         uint256 _intelligence,
         uint256 _skill
     ) external returns (bool);
+
+    function setName(
+        uint256 _tokenId,
+        uint256 _firstName,
+        uint256 _lastName
+    ) external returns (bool);
 }
