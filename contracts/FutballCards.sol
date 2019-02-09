@@ -31,6 +31,14 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 _lastName
     );
 
+    event ExtrasSet(
+        uint256 indexed _tokenId,
+        uint256 _badge,
+        uint256 _sponsor,
+        uint256 _number
+    );
+
+
     uint256 public totalCards = 0;
     uint256 public tokenIdPointer = 0;
 
@@ -64,10 +72,17 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 stars;
     }
 
+    struct Extras {
+        uint256 badge;
+        uint256 sponsor;
+        uint256 number;
+    }
+
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
     mapping(uint256 => Name) internal namesMapping;
     mapping(uint256 => Experience) internal experienceMapping;
+    mapping(uint256 => Extras) internal extrasMapping;
 
     constructor (string memory _tokenBaseURI) public ERC721Full("FutballCard", "FUT") {
         super.addWhitelisted(msg.sender);
@@ -94,6 +109,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
             colour : _colour
             });
 
+        // FIXME don't set full URI - only suffix
         // dynamic string URI
         string memory _tokenURI = Strings.strConcat(tokenBaseURI, "/token/", Strings.uint2str(tokenIdPointer));
 
@@ -162,6 +178,30 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         return true;
     }
 
+    function setExtras(
+        uint256 _tokenId,
+        uint256 _badge,
+        uint256 _sponsor,
+        uint256 _number
+    ) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId));
+
+        extrasMapping[_tokenId] = Extras({
+            badge : _badge,
+            sponsor : _sponsor,
+            number : _number
+            });
+
+        emit ExtrasSet(
+            _tokenId,
+            _badge,
+            _sponsor,
+            _number
+        );
+
+        return true;
+    }
+
     function card(uint256 _tokenId) public view returns (
         uint256 _cardType,
         uint256 _nationality,
@@ -202,6 +242,20 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         tokenAttributes.special,
         tokenName.firstName,
         tokenName.lastName
+        );
+    }
+
+    function extras(uint256 _tokenId) public view returns (
+        uint256 _badge,
+        uint256 _sponsor,
+        uint256 _number
+    ) {
+        require(_exists(_tokenId));
+        Extras storage tokenExtras = extrasMapping[_tokenId];
+        return (
+        tokenExtras.badge,
+        tokenExtras.sponsor,
+        tokenExtras.number,
         );
     }
 
