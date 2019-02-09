@@ -49,7 +49,9 @@ contract FutballCardsBlindPack is Ownable {
 
         // generate card
         (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generateCard(msg.sender);
-        uint256 tokenId = futballCardsNFT.mintCard(_nationality, _position, _ethnicity, _kit, _colour, _to);
+
+        // cardType is 1 (initially)
+        uint256 tokenId = futballCardsNFT.mintCard(1, _nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // generate attributes
         (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender);

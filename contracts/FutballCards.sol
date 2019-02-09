@@ -63,6 +63,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
     }
 
     function mintCard(
+        uint256 _cardType,
         uint256 _nationality,
         uint256 _position,
         uint256 _ethnicity,
@@ -73,7 +74,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
 
         // create new card
         cardMapping[tokenIdPointer] = Card({
-            cardType : 1, // bespoke
+            cardType : _cardType,
             nationality : _nationality,
             position : _position,
             ethnicity : _ethnicity,

@@ -1,0 +1,105 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<meta name="viewport" content="width=device-width">
+<style>
+
+body {
+  background-color: lightgrey;
+}
+
+.card {
+  height: 350px;
+  padding: 20px
+}
+.card-flip {
+  perspective: 1000px;
+}
+.card-flip:hover .flip, .card-flip.hover .flip {
+  transform: rotateY(180deg);
+}
+.card-flip, .front, .back {
+  width: 100%;
+}
+.flip {
+  transition: 0.6s;
+  transform-style: preserve-3d;
+  position: relative;
+}
+.front, .back {
+  backface-visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.front {
+  z-index: 2;
+  transform: rotateY(0deg);
+}
+.back {
+  transform: rotateY(180deg);
+}
+
+.attributes {
+  font-size: 0.75rem;
+}
+</style>
+</head>
+<body>
+<section>
+    <div class="container">
+        <div class="row d-flex justify-content-center">
+            <div class="col-sm-6 col-lg-4 mt-5">
+                <!-- Card Flip -->
+                <div class="card-flip">
+                    <div class="flip">
+                        <div class="front">
+                            <!-- front content -->
+                            <div class="card">
+                                <div class="card-block">
+                                    <div class="row">
+                                      <div class="col">
+                                          <h6 class="card-subtitle text-muted">Futball.Cards</h6>
+                                      </div>
+                                      <div class="col text-right">
+                                         <h1><span class="badge badge-primary">67</span></h1>
+                                      </div>
+                                    </div> 
+                                </div>
+                                <img class="card-img-top" src="https://us-central1-futbol-cards.cloudfunctions.net/api/card" alt="Futball.Card" style="height: 180px; width: 100%; display: block; margin-top: 20px;">
+                                <div class="card-block mt-3 text-center border border-dark">
+                                    <h4 class="card-title mt-2">ANDY GRAY</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="back">
+                            <!-- back content -->
+                            <div class="card">
+                                <div class="card-block">
+                                    <h4 class="card-title">MIDFIELD</h4>
+                                    <h6 class="card-subtitle text-muted">Futball.Cards</h6>
+                                </div>
+                                <div class="card-block mt-5">
+                                    <h6>Attributes</h6>
+                                    <div class="row">
+                                        <div class="col-3 attributes mb-3">Strength</div>
+                                        <div class="col-3 text-right mb-3"><span class="badge badge-primary">86</span></div>
+                                        <div class="col-3 attributes mb-3">Skill</div>
+                                        <div class="col-3 text-right mb-3"><span class="badge badge-primary">56</span></div>
+                                        <div class="col-3 attributes">Power</div>
+                                        <div class="col-3 text-right"><span class="badge badge-primary">86</span></div>
+                                        <div class="col-3 attributes">Intel.</div>
+                                        <div class="col-3 text-right"><span class="badge badge-primary">56</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Card Flip -->
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
