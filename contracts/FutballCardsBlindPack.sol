@@ -20,6 +20,7 @@ contract FutballCardsBlindPack is Ownable {
 
     event DefaultCardTypeChanged(uint256 _newDefaultCardType);
 
+    event AttributesBaseChanged(uint256 _newAttributesBase);
 
     FutballCardsGenerator public futballCardsGenerator;
     IFutballCardsCreator public futballCardsNFT;
@@ -30,6 +31,7 @@ contract FutballCardsBlindPack is Ownable {
     uint256 public totalPurchasesInWei = 0;
     uint256 public priceInWei = 100;
     uint256 public cardTypeDefault = 0;
+    uint256 public attributesBase = 50;
 
     constructor (address payable _wallet, FutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
         futballCardsGenerator = _futballCardsGenerator;
@@ -54,7 +56,7 @@ contract FutballCardsBlindPack is Ownable {
         uint256 tokenId = futballCardsNFT.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // generate attributes
-        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender);
+        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender, attributesBase);
         futballCardsNFT.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
 
         (uint256 _firstName, uint256 _lastName) = futballCardsGenerator.generateName(msg.sender);
@@ -78,6 +80,14 @@ contract FutballCardsBlindPack is Ownable {
         cardTypeDefault = _newDefaultCardType;
 
         emit DefaultCardTypeChanged(_newDefaultCardType);
+
+        return true;
+    }
+
+    function setAttributesBase(uint256 _newAttributesBase) public onlyOwner returns (bool) {
+        attributesBase = _newAttributesBase;
+
+        emit AttributesBaseChanged(_newAttributesBase);
 
         return true;
     }
