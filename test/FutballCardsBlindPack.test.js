@@ -5,7 +5,7 @@ const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]) => {
+contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);
@@ -63,13 +63,15 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
 
     context('ensure card has attributes', function () {
         it('returns attributes', async function () {
-            const attrs = await this.futballCards.attributes(firstTokenId);
+            const attrs = await this.futballCards.attributesAndName(firstTokenId);
 
             // between 0 - 99
             attrs[0].should.be.bignumber.lt('100');
             attrs[1].should.be.bignumber.lt('100');
             attrs[2].should.be.bignumber.lt('100');
             attrs[3].should.be.bignumber.lt('100');
+            attrs[4].should.be.bignumber.lt('100');
+            attrs[5].should.be.bignumber.lt('100');
         });
     });
 
@@ -118,11 +120,11 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
 
     context('ensure only owner can transfer buildings', function () {
         it('should revert if not owner', async function () {
-            await shouldFail.reverting(this.futballCards.mintCard(1, 1, 1, 1, 1, tokenOwner, {from: tokenOwner}));
+            await shouldFail.reverting(this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner, {from: tokenOwner}));
         });
 
         it('should mint and transfer if owner', async function () {
-            const {logs} = await this.futballCards.mintCard(1, 1, 1, 1, 1, anyone, {from: creator});
+            const {logs} = await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, anyone, {from: creator});
             expectEvent.inLogs(
                 logs,
                 `CardMinted`,

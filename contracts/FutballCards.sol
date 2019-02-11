@@ -25,6 +25,21 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 _skill
     );
 
+    event NameSet(
+        uint256 indexed _tokenId,
+        uint256 _firstName,
+        uint256 _lastName
+    );
+
+    event ExtrasSet(
+        uint256 indexed _tokenId,
+        uint256 _badge,
+        uint256 _sponsor,
+        uint256 _number,
+        uint256 _boots
+    );
+
+
     uint256 public totalCards = 0;
     uint256 public tokenIdPointer = 0;
 
@@ -48,14 +63,28 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 special;
     }
 
+    struct Name {
+        uint256 firstName;
+        uint256 lastName;
+    }
+
     struct Experience {
         uint256 points;
         uint256 stars;
     }
 
+    struct Extras {
+        uint256 badge;
+        uint256 sponsor;
+        uint256 number;
+        uint256 boots;
+    }
+
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
+    mapping(uint256 => Name) internal namesMapping;
     mapping(uint256 => Experience) internal experienceMapping;
+    mapping(uint256 => Extras) internal extrasMapping;
 
     constructor (string memory _tokenBaseURI) public ERC721Full("FutballCard", "FUT") {
         super.addWhitelisted(msg.sender);
@@ -63,6 +92,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
     }
 
     function mintCard(
+        uint256 _cardType,
         uint256 _nationality,
         uint256 _position,
         uint256 _ethnicity,
@@ -73,7 +103,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
 
         // create new card
         cardMapping[tokenIdPointer] = Card({
-            cardType : 1, // bespoke
+            cardType : _cardType,
             nationality : _nationality,
             position : _position,
             ethnicity : _ethnicity,
@@ -81,6 +111,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
             colour : _colour
             });
 
+        // FIXME don't set full URI - only suffix
         // dynamic string URI
         string memory _tokenURI = Strings.strConcat(tokenBaseURI, "/token/", Strings.uint2str(tokenIdPointer));
 
@@ -128,6 +159,54 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         return true;
     }
 
+    function setName(
+        uint256 _tokenId,
+        uint256 _firstName,
+        uint256 _lastName
+    ) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId));
+
+        namesMapping[_tokenId] = Name({
+            firstName : _firstName,
+            lastName : _lastName
+            });
+
+        emit NameSet(
+            _tokenId,
+            _firstName,
+            _lastName
+        );
+
+        return true;
+    }
+
+    function setExtras(
+        uint256 _tokenId,
+        uint256 _badge,
+        uint256 _sponsor,
+        uint256 _number,
+        uint256 _boots
+    ) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId));
+
+        extrasMapping[_tokenId] = Extras({
+            badge : _badge,
+            sponsor : _sponsor,
+            number : _number,
+            boots : _boots
+            });
+
+        emit ExtrasSet(
+            _tokenId,
+            _badge,
+            _sponsor,
+            _number,
+            _boots
+        );
+
+        return true;
+    }
+
     function card(uint256 _tokenId) public view returns (
         uint256 _cardType,
         uint256 _nationality,
@@ -148,21 +227,42 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         );
     }
 
-    function attributes(uint256 _tokenId) public view returns (
+    function attributesAndName(uint256 _tokenId) public view returns (
         uint256 _strength,
         uint256 _speed,
         uint256 _intelligence,
         uint256 _skill,
-        uint256 _special
+        uint256 _special,
+        uint256 _firstName,
+        uint256 _lastName
     ) {
         require(_exists(_tokenId));
         Attributes storage tokenAttributes = attributesMapping[_tokenId];
+        Name storage tokenName = namesMapping[_tokenId];
         return (
         tokenAttributes.strength,
         tokenAttributes.speed,
         tokenAttributes.intelligence,
         tokenAttributes.skill,
-        tokenAttributes.special
+        tokenAttributes.special,
+        tokenName.firstName,
+        tokenName.lastName
+        );
+    }
+
+    function extras(uint256 _tokenId) public view returns (
+        uint256 _badge,
+        uint256 _sponsor,
+        uint256 _number,
+        uint256 _boots
+    ) {
+        require(_exists(_tokenId));
+        Extras storage tokenExtras = extrasMapping[_tokenId];
+        return (
+        tokenExtras.badge,
+        tokenExtras.sponsor,
+        tokenExtras.number,
+        tokenExtras.boots
         );
     }
 
@@ -197,16 +297,22 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
 
     function burn(uint256 _tokenId) public returns (bool) {
         _burn(msg.sender, _tokenId);
+
+        // **sad face**
+        totalCards = totalCards.sub(1);
+
         return true;
     }
 
-    function setTokenURI(uint256 _tokenId, string memory _tokenUri) public onlyWhitelisted {
+    function setTokenURI(uint256 _tokenId, string memory _tokenUri) public onlyWhitelisted returns (bool) {
         require(bytes(_tokenUri).length != 0, "URI invalid");
         _setTokenURI(_tokenId, _tokenUri);
+        return true;
     }
 
-    function updateTokenBaseURI(string memory _newBaseURI) public onlyWhitelisted {
+    function updateTokenBaseURI(string memory _newBaseURI) public onlyWhitelisted returns (bool) {
         require(bytes(_newBaseURI).length != 0, "Base URI invalid");
         tokenBaseURI = _newBaseURI;
+        return true;
     }
 }

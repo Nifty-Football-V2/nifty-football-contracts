@@ -54,7 +54,7 @@ contract FutballCardsGenerator is Ownable {
         );
     }
 
-    function generateAttributes(address _sender)
+    function generateAttributes(address _sender, uint256 _base)
     external
     returns (
         uint256 strength,
@@ -63,8 +63,20 @@ contract FutballCardsGenerator is Ownable {
         uint256 skill
     ) {
         return (
-        generate(_sender, 100),
-        generate(_sender, 100),
+        _base + generate(_sender, 100 - _base),
+        _base + generate(_sender, 100 - _base),
+        _base + generate(_sender, 100 - _base),
+        _base + generate(_sender, 100 - _base)
+        );
+    }
+
+    function generateName(address _sender)
+    external
+    returns (
+        uint256 firstName,
+        uint256 lastName
+    ) {
+        return (
         generate(_sender, 100),
         generate(_sender, 100)
         );

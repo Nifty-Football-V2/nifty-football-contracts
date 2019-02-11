@@ -20,8 +20,8 @@ function shouldBehaveLikeERC721 (
 
     describe('like an ERC721', function () {
         beforeEach(async function () {
-            await this.token.mintCard(1, 1, 1, 1, 1, owner, {from: creator});
-            await this.token.mintCard(1, 1, 1, 1, 1, owner, {from: creator});
+            await this.token.mintCard(1, 1, 1, 1, 1, 1, owner, {from: creator});
+            await this.token.mintCard(1, 1, 1, 1, 1, 1, owner, {from: creator});
             this.toWhom = anyone; // default to anyone for toWhom in context-dependent tests
         });
 

@@ -2,6 +2,7 @@ pragma solidity 0.5.0;
 
 interface IFutballCardsCreator {
     function mintCard(
+        uint256 _cardType,
         uint256 _nationality,
         uint256 _position,
         uint256 _ethnicity,
@@ -17,5 +18,11 @@ interface IFutballCardsCreator {
         uint256 _speed,
         uint256 _intelligence,
         uint256 _skill
+    ) external returns (bool);
+
+    function setName(
+        uint256 _tokenId,
+        uint256 _firstName,
+        uint256 _lastName
     ) external returns (bool);
 }

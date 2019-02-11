@@ -7,7 +7,7 @@ module.exports = async function (deployer, network, accounts) {
     const _futballCardsGenerator = await FutballCardsGenerator.deployed();
     const _futballCards = await FutballCards.deployed();
 
-    // Deploy vending machine
+    // Deploy
     await deployer.deploy(
         FutballCardsBlindPack,
         accounts[0],
