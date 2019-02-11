@@ -12,15 +12,14 @@ import "./IFootballUnitedCreator.sol";
 contract FutballCardsBlindPack is Ownable {
     using SafeMath for uint256;
 
-    event PriceInWeiChanged(
-        uint256 _oldPriceInWei,
-        uint256 _newPriceInWei
-    );
+    event PriceInWeiChanged(uint256 _oldPriceInWei, uint256 _newPriceInWei);
 
-    event BlindPackPulled(
-        uint256 indexed _tokenId,
-        address indexed _to
-    );
+    event BlindPackPulled(uint256 indexed _tokenId, address indexed _to);
+
+    event CreditAdded(address indexed _to);
+
+    event DefaultCardTypeChanged(uint256 _newDefaultCardType);
+
 
     FutballCardsGenerator public futballCardsGenerator;
     IFutballCardsCreator public futballCardsNFT;
@@ -63,11 +62,11 @@ contract FutballCardsBlindPack is Ownable {
 
         // use credits first
         if (credits[msg.sender] > 0) {
-            credits[msg.sender] = credits[msg.sender].sub(1);
-            // any trapped ether can be withdrawn with withdraw()
+        credits[msg.sender] = credits[msg.sender].sub(1);
+        // any trapped ether can be withdrawn with withdraw()
         } else {
-            totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
-            wallet.transfer(msg.value);
+        totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
+        wallet.transfer(msg.value);
         }
 
         emit BlindPackPulled(tokenId, _to);
@@ -75,25 +74,31 @@ contract FutballCardsBlindPack is Ownable {
         return tokenId;
     }
 
-    function setPriceInWei(uint256 _newPriceInWei) public onlyOwner returns (bool) {
-        emit PriceInWeiChanged(priceInWei, _newPriceInWei);
+    function setCardTypeDefault(uint256 _newDefaultCardType) public onlyOwner returns (bool) {
+        cardTypeDefault = _newDefaultCardType;
 
-        priceInWei = _newPriceInWei;
+        emit DefaultCardTypeChanged(_newDefaultCardType);
 
         return true;
     }
 
-    function withdraw() public onlyOwner returns(bool) {
+    function setPriceInWei(uint256 _newPriceInWei) public onlyOwner returns (bool) {
+        emit PriceInWeiChanged(priceInWei, _newPriceInWei);
+        priceInWei = _newPriceInWei;
+
+
+        return true;
+    }
+
+    function withdraw() public onlyOwner returns (bool) {
         wallet.transfer(address(this).balance);
         return true;
     }
 
-    // TODO batch add credits
-
     function addCredit(address _to) public onlyOwner returns (bool) {
         credits[_to] = credits[_to].add(1);
 
-        // FIXME EVENT
+        emit CreditAdded(_to);
 
         return true;
     }

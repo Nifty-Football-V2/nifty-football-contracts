@@ -255,7 +255,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         return (
         tokenExtras.badge,
         tokenExtras.sponsor,
-        tokenExtras.number,
+        tokenExtras.number
         );
     }
 
@@ -293,13 +293,15 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         return true;
     }
 
-    function setTokenURI(uint256 _tokenId, string memory _tokenUri) public onlyWhitelisted {
+    function setTokenURI(uint256 _tokenId, string memory _tokenUri) public onlyWhitelisted returns (bool) {
         require(bytes(_tokenUri).length != 0, "URI invalid");
         _setTokenURI(_tokenId, _tokenUri);
+        return true;
     }
 
-    function updateTokenBaseURI(string memory _newBaseURI) public onlyWhitelisted {
+    function updateTokenBaseURI(string memory _newBaseURI) public onlyWhitelisted returns (bool) {
         require(bytes(_newBaseURI).length != 0, "Base URI invalid");
         tokenBaseURI = _newBaseURI;
+        return true;
     }
 }
