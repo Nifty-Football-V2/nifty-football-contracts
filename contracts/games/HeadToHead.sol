@@ -19,6 +19,12 @@ contract HeadToHead is Ownable, Pausable {
         uint256 indexed homeTokenId
     );
 
+    event Test(
+        uint256 indexed home,
+        uint256 indexed away,
+        uint256 indexed result
+    );
+
     event GameResulted(
         address indexed home,
         address indexed away,
@@ -226,6 +232,8 @@ contract HeadToHead is Ownable, Pausable {
 
         uint256[5] memory home = nft.attributesFlat(homeTokenId);
         uint256[5] memory away = nft.attributesFlat(awayTokenId);
+
+        emit Test(home[result], away[result], result);
 
         if (home[result] > away[result]) {
             nft.safeTransferFrom(awayOwner, homeOwner, awayTokenId);

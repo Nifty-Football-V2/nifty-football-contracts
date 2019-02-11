@@ -8,15 +8,14 @@ contract MockHeadToHeadResulter is HeadToHeadResulter
 
     uint256 mockResult = 0;
 
-    function setResult(uint result) public {
+    function setResult(uint256 result) public {
         mockResult = result;
     }
 
     function result(uint256 gameId, address _sender) public returns (uint256) {
-
         if (mockResult != 0) {
             uint256 fakeResult = mockResult;
-            mockResult = 0;
+            mockResult = 0; // reset between results
             emit Resulted(gameId, fakeResult);
             return fakeResult;
         }
