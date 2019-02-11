@@ -5,9 +5,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/access/roles/WhitelistedRole.sol";
 
 import "./libs/Strings.sol";
-import "./IFootballUnitedCreator.sol";
+import "./IFutballCardsCreator.sol";
+import "./IFutballCardsAttributes.sol";
 
-contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
+contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFutballCardsAttrbiutes {
     using SafeMath for uint256;
 
     string public tokenBaseURI = "";

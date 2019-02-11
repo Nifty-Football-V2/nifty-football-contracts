@@ -2,13 +2,9 @@ pragma solidity 0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
-import "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../generators/HeadToHeadResulter.sol";
-
-contract IAttributesNft is IERC721 {
-    function attributesFlat(uint256 _tokenId) external view returns (uint256[5] memory attributes);
-}
+import "../IFutballCardsAttributes.sol";
 
 contract HeadToHead is Ownable, Pausable {
     using SafeMath for uint256;
@@ -68,14 +64,22 @@ contract HeadToHead is Ownable, Pausable {
     // Token ID -> Game ID - once resulted or withdraw from game we remove from here
     mapping(uint256 => uint256) tokenToGameMapping;
 
-    IAttributesNft public nft;
+    // TODO TEST MAPPINGS
+
+    // A list of open game IDS
+    uint256[] openGames;
+
+    // A mapping for the list of GameID => Position in open games array
+    mapping(uint256 => uint256) gamesIndex;
+
+    IFutballCardsAttrbiutes public nft;
     HeadToHeadResulter public resulter;
 
     /////////////////
     // Constructor //
     /////////////////
 
-    constructor (HeadToHeadResulter _resulter, IAttributesNft _nft) public {
+    constructor (HeadToHeadResulter _resulter, IFutballCardsAttrbiutes _nft) public {
         resulter = _resulter;
         nft = _nft;
     }
@@ -145,6 +149,10 @@ contract HeadToHead is Ownable, Pausable {
 
         tokenToGameMapping[_tokenId] = gameId;
 
+        // Keep a track of the game
+        gamesIndex[gameId] = openGames.length;
+        openGames.push(gameId);
+
         emit GameCreated(gameId, msg.sender, _tokenId);
 
         return gameId;
@@ -211,9 +219,7 @@ contract HeadToHead is Ownable, Pausable {
 
         games[_gameId].state = State.CLOSED;
 
-        // Clean up in game mappings
-        delete tokenToGameMapping[games[_gameId].awayTokenId];
-        delete tokenToGameMapping[games[_gameId].homeTokenId];
+        _cleanUpGame(_gameId, games[_gameId].homeTokenId, games[_gameId].awayTokenId);
 
         emit GameClosed(_gameId, msg.sender);
 
@@ -258,9 +264,7 @@ contract HeadToHead is Ownable, Pausable {
             nft.safeTransferFrom(awayOwner, homeOwner, awayTokenId);
             games[_gameId].state = State.HOME_WIN;
 
-            // Clean up in game mappings
-            delete tokenToGameMapping[homeTokenId];
-            delete tokenToGameMapping[awayTokenId];
+            _cleanUpGame(_gameId, homeTokenId, awayTokenId);
 
             emit GameResulted(homeOwner, awayOwner, _gameId, home[result], away[result], result);
         }
@@ -268,9 +272,7 @@ contract HeadToHead is Ownable, Pausable {
             nft.safeTransferFrom(homeOwner, awayOwner, homeTokenId);
             games[_gameId].state = State.AWAY_WIN;
 
-            // Clean up in game mappings
-            delete tokenToGameMapping[homeTokenId];
-            delete tokenToGameMapping[awayTokenId];
+            _cleanUpGame(_gameId, homeTokenId, awayTokenId);
 
             emit GameResulted(homeOwner, awayOwner, _gameId, home[result], away[result], result);
         }
@@ -282,4 +284,13 @@ contract HeadToHead is Ownable, Pausable {
         }
     }
 
+    function _cleanUpGame(uint256 _gameId, uint256 _homeTokenId, uint256 _awayTokenId) internal {
+
+        // Clean up in game mappings
+        delete tokenToGameMapping[_homeTokenId];
+        delete tokenToGameMapping[_awayTokenId];
+
+        // Delete the game once its finished
+        delete openGames[gamesIndex[_gameId]];
+    }
 }

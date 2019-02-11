@@ -6,7 +6,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./generators/FutballCardsGenerator.sol";
 
 import "./libs/Strings.sol";
-import "./IFootballUnitedCreator.sol";
+import "./IFutballCardsCreator.sol";
 
 
 contract FutballCardsBlindPack is Ownable {

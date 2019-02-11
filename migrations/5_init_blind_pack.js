@@ -1,7 +1,7 @@
-const FutballCardsBlindPack = artifacts.require('./FutballCardsBlindPack.sol');
-const FutballCards = artifacts.require('./FutballCards.sol');
+const FutballCardsBlindPack = artifacts.require('FutballCardsBlindPack.sol');
+const FutballCards = artifacts.require('FutballCards.sol');
 
-const FutballCardsGenerator = artifacts.require('./FutballCardsGenerator.sol');
+const FutballCardsGenerator = artifacts.require('FutballCardsGenerator.sol');
 
 module.exports = async function (deployer, network, accounts) {
     const _futballCardsGenerator = await FutballCardsGenerator.deployed();
