@@ -35,7 +35,8 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 indexed _tokenId,
         uint256 _badge,
         uint256 _sponsor,
-        uint256 _number
+        uint256 _number,
+        uint256 _boots
     );
 
 
@@ -76,6 +77,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 badge;
         uint256 sponsor;
         uint256 number;
+        uint256 boots;
     }
 
     mapping(uint256 => Card) internal cardMapping;
@@ -182,21 +184,24 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
         uint256 _tokenId,
         uint256 _badge,
         uint256 _sponsor,
-        uint256 _number
+        uint256 _number,
+        uint256 _boots
     ) public onlyWhitelisted returns (bool) {
         require(_exists(_tokenId));
 
         extrasMapping[_tokenId] = Extras({
             badge : _badge,
             sponsor : _sponsor,
-            number : _number
+            number : _number,
+            boots : _boots
             });
 
         emit ExtrasSet(
             _tokenId,
             _badge,
             _sponsor,
-            _number
+            _number,
+            _boots
         );
 
         return true;

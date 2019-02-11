@@ -5,7 +5,7 @@ const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]) => {
+contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);
