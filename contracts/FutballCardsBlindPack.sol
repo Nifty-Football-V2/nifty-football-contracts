@@ -96,7 +96,6 @@ contract FutballCardsBlindPack is Ownable {
         emit PriceInWeiChanged(priceInWei, _newPriceInWei);
         priceInWei = _newPriceInWei;
 
-
         return true;
     }
 

@@ -295,6 +295,10 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
 
     function burn(uint256 _tokenId) public returns (bool) {
         _burn(msg.sender, _tokenId);
+
+        // **sad face**
+        totalCards = totalCards.sub(1);
+
         return true;
     }
 
