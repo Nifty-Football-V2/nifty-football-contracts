@@ -62,7 +62,11 @@ contract HeadToHead is Ownable, Pausable {
     // Start at 1 so we can use Game ID 0 to identify not set
     uint256 public totalGames = 1;
 
+    // Game ID -> Game
     mapping(uint256 => Game) games;
+
+    // Token ID -> Game ID - once resulted or withdraw from game we remove from here
+    mapping(uint256 => uint256) tokenToGameMapping;
 
     IAttributesNft public nft;
     HeadToHeadResulter public resulter;
@@ -110,7 +114,10 @@ contract HeadToHead is Ownable, Pausable {
         _;
     }
 
-    // TODO check token not used in another game
+    modifier onlyWhenTokenNotAlreadyPlaying(uint256 _tokenId) {
+        require(tokenToGameMapping[_tokenId] == 0, "Token already playing a game");
+        _;
+    }
 
     ///////////////
     // Functions //
@@ -120,6 +127,7 @@ contract HeadToHead is Ownable, Pausable {
     whenNotPaused
     onlyWhenContractIsApproved
     onlyWhenTokenOwner(_tokenId)
+    onlyWhenTokenNotAlreadyPlaying(_tokenId)
     public returns (uint256 _gameId) {
 
         uint256 gameId = totalGames;
@@ -135,6 +143,8 @@ contract HeadToHead is Ownable, Pausable {
 
         totalGames = totalGames.add(1);
 
+        tokenToGameMapping[_tokenId] = gameId;
+
         emit GameCreated(gameId, msg.sender, _tokenId);
 
         return gameId;
@@ -144,6 +154,7 @@ contract HeadToHead is Ownable, Pausable {
     whenNotPaused
     onlyWhenContractIsApproved
     onlyWhenTokenOwner(_tokenId)
+    onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenRealGame(_gameId)
     onlyWhenGameOpen(_gameId)
     public returns (bool) {
@@ -167,6 +178,9 @@ contract HeadToHead is Ownable, Pausable {
         games[_gameId].awayTokenId = _tokenId;
         games[_gameId].awayOwner = msg.sender;
 
+        // Update mapping
+        tokenToGameMapping[_tokenId] = _gameId;
+
         _resultGame(_gameId);
 
         return true;
@@ -178,10 +192,11 @@ contract HeadToHead is Ownable, Pausable {
     onlyWhenGameDrawn(_gameId)
     public returns (bool) {
 
-        // TODO is this check needed or can anyone result a drawn match?
         address homeOwner = games[_gameId].homeOwner;
         address awayOwner = games[_gameId].awayOwner;
-        require(awayOwner == msg.sender || homeOwner == msg.sender, "Can only re-match when you are playing");
+
+        // Allow both players or the contract owner to result the game
+        require(awayOwner == msg.sender || homeOwner == msg.sender || isOwner(), "Can only re-match when you are playing");
 
         _resultGame(_gameId);
 
@@ -192,9 +207,13 @@ contract HeadToHead is Ownable, Pausable {
     whenNotPaused
     onlyWhenGameNotComplete(_gameId)
     public returns (bool) {
-        require(games[_gameId].homeOwner == msg.sender || games[_gameId].awayOwner == msg.sender, "Cannot close a game you are not part of");
+        require(games[_gameId].homeOwner == msg.sender || games[_gameId].awayOwner == msg.sender || isOwner(), "Cannot close a game you are not part of");
 
         games[_gameId].state = State.CLOSED;
+
+        // Clean up in game mappings
+        delete tokenToGameMapping[games[_gameId].awayTokenId];
+        delete tokenToGameMapping[games[_gameId].homeTokenId];
 
         emit GameClosed(_gameId, msg.sender);
 
@@ -239,11 +258,19 @@ contract HeadToHead is Ownable, Pausable {
             nft.safeTransferFrom(awayOwner, homeOwner, awayTokenId);
             games[_gameId].state = State.HOME_WIN;
 
+            // Clean up in game mappings
+            delete tokenToGameMapping[homeTokenId];
+            delete tokenToGameMapping[awayTokenId];
+
             emit GameResulted(homeOwner, awayOwner, _gameId, home[result], away[result], result);
         }
         else if (home[result] < away[result]) {
             nft.safeTransferFrom(homeOwner, awayOwner, homeTokenId);
             games[_gameId].state = State.AWAY_WIN;
+
+            // Clean up in game mappings
+            delete tokenToGameMapping[homeTokenId];
+            delete tokenToGameMapping[awayTokenId];
 
             emit GameResulted(homeOwner, awayOwner, _gameId, home[result], away[result], result);
         }

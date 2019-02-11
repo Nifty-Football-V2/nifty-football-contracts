@@ -121,6 +121,34 @@ contract.only('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
 
             });
 
+            context('joining multiple game', async function () {
+
+                beforeEach(async function () {
+                    await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
+                    await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
+                    await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: anyone});
+                });
+
+                it('cant create a new game if you are already playing', async function () {
+                    await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
+                    await shouldFail.reverting.withMessage(
+                        this.headToHead.createGame(_tokenId1, {from: tokenOwner1}),
+                        "Token already playing a game"
+                    );
+                });
+
+                it('cant join an existing game if you are already playing', async function () {
+                    await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
+
+                    await this.headToHead.createGame(_tokenId3, {from: anyone});
+
+                    await shouldFail.reverting.withMessage(
+                        this.headToHead.resultGame(new BN(1), _tokenId1, {from: tokenOwner1}),
+                        "Token already playing a game"
+                    );
+                });
+
+            });
         });
 
         context('playing a game', async function () {
