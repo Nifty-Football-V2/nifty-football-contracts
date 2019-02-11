@@ -62,11 +62,11 @@ contract FutballCardsBlindPack is Ownable {
 
         // use credits first
         if (credits[msg.sender] > 0) {
-        credits[msg.sender] = credits[msg.sender].sub(1);
-        // any trapped ether can be withdrawn with withdraw()
+            credits[msg.sender] = credits[msg.sender].sub(1);
+            // any trapped ether can be withdrawn with withdraw()
         } else {
-        totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
-        wallet.transfer(msg.value);
+            totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
+            wallet.transfer(msg.value);
         }
 
         emit BlindPackPulled(tokenId, _to);
