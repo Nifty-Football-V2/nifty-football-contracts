@@ -253,14 +253,16 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
     function extras(uint256 _tokenId) public view returns (
         uint256 _badge,
         uint256 _sponsor,
-        uint256 _number
+        uint256 _number,
+        uint256 _boots
     ) {
         require(_exists(_tokenId));
         Extras storage tokenExtras = extrasMapping[_tokenId];
         return (
         tokenExtras.badge,
         tokenExtras.sponsor,
-        tokenExtras.number
+        tokenExtras.number,
+        tokenExtras.boots
         );
     }
 
