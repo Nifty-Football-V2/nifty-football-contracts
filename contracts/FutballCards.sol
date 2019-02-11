@@ -279,7 +279,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator {
     }
 
     function attributesFlat(uint256 _tokenId) public view returns (uint256[5] memory) {
-        require(_exists(_tokenId));
+        require(_exists(_tokenId), "Token does not exist");
         Attributes storage tokenAttributes = attributesMapping[_tokenId];
         uint256[5] memory tokenAttributesFlat = [
         tokenAttributes.strength,
