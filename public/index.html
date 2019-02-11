@@ -52,16 +52,15 @@
         <div class="card m-2 p-2" v-for="c in cards">
             <!--<img class="card-img-top" :src="b.data.image" :alt="b.data.name" style="max-height: 250px">-->
             <div class="card-body">
-                <h3 class="card-title text-center">{{ c.data }}</h3>
-                <!--<p class="small"><span class="text-muted">Architect</span> <code>{{ b.data.architect }}</code></p>-->
-                <!--<p class="small">-->
-                    <!--<span class="text-muted">City</span> <code>{{ b.data.city }}</code><br/>-->
-                    <!--<span class="text-muted">Base</span> <code>{{ b.data.base }}</code><br/>-->
-                    <!--<span class="text-muted">Body</span> <code>{{ b.data.body }}</code><br/>-->
-                    <!--<span class="text-muted">Roof</span> <code>{{ b.data.roof }}</code><br/>-->
-                    <!--<span class="text-muted">Exterior</span> <code>{{ b.data.exteriorColorway }}</code><br/>-->
-                    <!--<span class="text-muted">Windows</span> <code>{{ b.data.windowColorway }}</code>-->
-                <!--</p>-->
+                <h2 class="card-title text-center">{{ c.data.fullName }}</h2>
+                <h4 class="card-title text-center">{{ c.data.nationalityText }}</h4>
+                <h6 class="card-title text-center">{{ c.data.positionText }}</h6>
+                <p class="small">
+                    <span class="text-muted">Strength</span> <code>{{ c.data.strength }}</code><br/>
+                    <span class="text-muted">Speed</span> <code>{{ c.data.speed }}</code><br/>
+                    <span class="text-muted">Intelligence</span> <code>{{ c.data.intelligence }}</code><br/>
+                    <span class="text-muted">Skill</span> <code>{{ c.data.skill }}</code><br/>
+                </p>
             </div>
         </div>
     </div>
