@@ -52,7 +52,7 @@ contract FutballCardsBlindPack is Ownable {
         // generate card
         (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generateCard(msg.sender);
 
-        // cardType is 1 (initially)
+        // cardType is 0 for genesis (initially)
         uint256 tokenId = futballCardsNFT.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // generate attributes

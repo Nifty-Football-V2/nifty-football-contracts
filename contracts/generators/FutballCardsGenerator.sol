@@ -4,18 +4,14 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract FutballCardsGenerator is Ownable {
 
-    event CardGenerated(
-        uint256 _nationality,
-        uint256 _position,
-        uint256 _ethnicity,
-        uint256 _kit,
-        uint256 _colour
-    );
-
     uint256 internal randNonce = 0;
 
-    uint256[] nationalities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    uint256 nameLength = 100;
+    uint256 maxAttributeScore = 100;
+
+    uint256[] nationalities = [0, 1, 2, 3, 4];
     uint256[] positions = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3];
+    uint256[] ethnicity = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
     uint256[] kits = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
     uint256[] colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
@@ -28,29 +24,12 @@ contract FutballCardsGenerator is Ownable {
         uint256 _kit,
         uint256 _colour
     ) {
-
-        uint256 _nationality = nationalities[generate(_sender, nationalities.length)];
-        uint256 _position = positions[generate(_sender, positions.length)];
-
-        uint256 _ethnicity = generate(_sender, 10);
-
-        uint256 _kit = kits[generate(_sender, kits.length)];
-        uint256 _colour = colours[generate(_sender, colours.length)];
-
-        emit CardGenerated(
-            _nationality,
-            _position,
-            _ethnicity,
-            _kit,
-            _colour
-        );
-
         return (
-        _nationality,
-        _position,
-        _ethnicity,
-        _kit,
-        _colour
+        nationalities[generate(_sender, nationalities.length)],
+        positions[generate(_sender, positions.length)],
+        ethnicity[generate(_sender, ethnicity.length)],
+        kits[generate(_sender, kits.length)],
+        colours[generate(_sender, colours.length)]
         );
     }
 
@@ -63,10 +42,10 @@ contract FutballCardsGenerator is Ownable {
         uint256 skill
     ) {
         return (
-        _base + generate(_sender, 100 - _base),
-        _base + generate(_sender, 100 - _base),
-        _base + generate(_sender, 100 - _base),
-        _base + generate(_sender, 100 - _base)
+        _base + generate(_sender, maxAttributeScore - _base),
+        _base + generate(_sender, maxAttributeScore - _base),
+        _base + generate(_sender, maxAttributeScore - _base),
+        _base + generate(_sender, maxAttributeScore - _base)
         );
     }
 
@@ -77,9 +56,25 @@ contract FutballCardsGenerator is Ownable {
         uint256 lastName
     ) {
         return (
-        generate(_sender, 100),
-        generate(_sender, 100)
+        generate(_sender, nameLength),
+        generate(_sender, nameLength)
         );
+    }
+
+    function addNationality(uint256 _new) external onlyOwner returns (bool) {
+        nationalities.push(_new);
+    }
+
+    function addPositions(uint256 _new) external onlyOwner returns (bool) {
+        positions.push(_new);
+    }
+
+    function addKits(uint256 _new) external onlyOwner returns (bool) {
+        kits.push(_new);
+    }
+
+    function addColours(uint256 _new) external onlyOwner returns (bool) {
+        colours.push(_new);
     }
 
     function generate(address _sender, uint256 _max) internal returns (uint256) {
