@@ -10,10 +10,12 @@ contract FutballCardsGenerator is Ownable {
     uint256 public maxAttributeScore = 100;
 
     uint256[] internal nationalities = [0, 1, 2, 3, 4];
-    uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3];
-    uint256[] internal ethnicity = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
+    uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 3, 3];
     uint256[] internal kits = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
     uint256[] internal colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    // FIXME map by region
+    uint256[] internal ethnicity = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
 
     function generateCard(address _sender)
     external
@@ -83,20 +85,75 @@ contract FutballCardsGenerator is Ownable {
         nationalities.length--;
     }
 
-    function addPositions(uint256 _new) external onlyOwner returns (bool) {
-        positions.push(_new);
+    function allPositions() public view returns (uint256[] memory) {
+        return positions;
     }
 
+    function addPosition(uint256 _new) external onlyOwner returns (bool) {
+        positions.push(_new);
+        return true;
+    }
+
+    function clearPositions() external onlyOwner returns (bool) {
+        positions.length = 0;
+        return true;
+    }
+
+    function clearPositionAtIndex(uint256 _index) external onlyOwner returns (bool) {
+        uint lastIndex = positions.length - 1;
+        require(_index <= lastIndex);
+
+        positions[_index] = positions[lastIndex];
+        positions.length--;
+    }
+
+    function allKits() public view returns (uint256[] memory) {
+        return kits;
+    }
+
+    function addKit(uint256 _new) external onlyOwner returns (bool) {
+        kits.push(_new);
+        return true;
+    }
+
+    function clearKits() external onlyOwner returns (bool) {
+        kits.length = 0;
+        return true;
+    }
+
+    function clearKitAtIndex(uint256 _index) external onlyOwner returns (bool) {
+        uint lastIndex = kits.length - 1;
+        require(_index <= lastIndex);
+
+        kits[_index] = kits[lastIndex];
+        kits.length--;
+    }
+
+    function allColours() public view returns (uint256[] memory) {
+        return colours;
+    }
+
+    function addColour(uint256 _new) external onlyOwner returns (bool) {
+        colours.push(_new);
+        return true;
+    }
+
+    function clearColours() external onlyOwner returns (bool) {
+        colours.length = 0;
+        return true;
+    }
+
+    function clearColourAtIndex(uint256 _index) external onlyOwner returns (bool) {
+        uint lastIndex = colours.length - 1;
+        require(_index <= lastIndex);
+
+        colours[_index] = colours[lastIndex];
+        colours.length--;
+    }
+
+    // FIXME - by nationality mapping?
     function addEthnicity(uint256 _new) external onlyOwner returns (bool) {
         ethnicity.push(_new);
-    }
-
-    function addKits(uint256 _new) external onlyOwner returns (bool) {
-        kits.push(_new);
-    }
-
-    function addColours(uint256 _new) external onlyOwner returns (bool) {
-        colours.push(_new);
     }
 
     function generate(address _sender, uint256 _max) internal returns (uint256) {
