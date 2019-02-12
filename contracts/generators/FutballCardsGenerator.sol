@@ -6,14 +6,14 @@ contract FutballCardsGenerator is Ownable {
 
     uint256 internal randNonce = 0;
 
-    uint256 nameLength = 100;
-    uint256 maxAttributeScore = 100;
+    uint256 public nameLength = 100;
+    uint256 public maxAttributeScore = 100;
 
-    uint256[] nationalities = [0, 1, 2, 3, 4];
-    uint256[] positions = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3];
-    uint256[] ethnicity = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
-    uint256[] kits = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
-    uint256[] colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    uint256[] internal nationalities = [0, 1, 2, 3, 4];
+    uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3];
+    uint256[] internal ethnicity = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
+    uint256[] internal kits = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
+    uint256[] internal colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
     function generateCard(address _sender)
     external
@@ -61,12 +61,34 @@ contract FutballCardsGenerator is Ownable {
         );
     }
 
+    function allNationalities() public view returns (uint256[] memory) {
+       return nationalities;
+    }
+
     function addNationality(uint256 _new) external onlyOwner returns (bool) {
         nationalities.push(_new);
+        return true;
+    }
+
+    function clearNationalities() external onlyOwner returns (bool) {
+        nationalities.length = 0;
+        return true;
+    }
+
+    function clearNationalityAtIndex(uint256 _index) external onlyOwner returns (bool) {
+        uint lastIndex = nationalities.length - 1;
+        require(_index <= lastIndex);
+
+        nationalities[_index] = nationalities[lastIndex];
+        nationalities.length--;
     }
 
     function addPositions(uint256 _new) external onlyOwner returns (bool) {
         positions.push(_new);
+    }
+
+    function addEthnicity(uint256 _new) external onlyOwner returns (bool) {
+        ethnicity.push(_new);
     }
 
     function addKits(uint256 _new) external onlyOwner returns (bool) {
