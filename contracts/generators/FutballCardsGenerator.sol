@@ -14,8 +14,14 @@ contract FutballCardsGenerator is Ownable {
     uint256[] internal kits = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
     uint256[] internal colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-    // FIXME map by region
-    uint256[] internal ethnicity = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
+
+    uint256[][] internal ethnicity = [
+        [0, 0, 0, 0, 1, 1, 1, 2, 2, 3],
+        [0, 0, 0, 0, 1, 1, 1, 2, 2, 3],
+        [0, 0, 0, 0, 1, 1, 1, 2, 2, 3],
+        [0, 0, 0, 0, 1, 1, 1, 2, 2, 3],
+        [0, 0, 0, 0, 1, 1, 1, 2, 2, 3]
+    ];
 
     function generateCard(address _sender)
     external
@@ -26,10 +32,11 @@ contract FutballCardsGenerator is Ownable {
         uint256 _kit,
         uint256 _colour
     ) {
+        uint256 nationalityRandom = nationalities[generate(_sender, nationalities.length)];
         return (
-        nationalities[generate(_sender, nationalities.length)],
+        nationalityRandom,
         positions[generate(_sender, positions.length)],
-        ethnicity[generate(_sender, ethnicity.length)],
+        ethnicity[nationalityRandom][generate(_sender, ethnicity.length)],
         kits[generate(_sender, kits.length)],
         colours[generate(_sender, colours.length)]
         );
@@ -64,7 +71,7 @@ contract FutballCardsGenerator is Ownable {
     }
 
     function allNationalities() public view returns (uint256[] memory) {
-       return nationalities;
+        return nationalities;
     }
 
     function addNationality(uint256 _new) external onlyOwner returns (bool) {
@@ -151,10 +158,10 @@ contract FutballCardsGenerator is Ownable {
         colours.length--;
     }
 
-    // FIXME - by nationality mapping?
-    function addEthnicity(uint256 _new) external onlyOwner returns (bool) {
-        ethnicity.push(_new);
-    }
+//    // FIXME - by nationality mapping?
+//    function addEthnicity(uint256 _new) external onlyOwner returns (bool) {
+//        ethnicity.push(_new);
+//    }
 
     function generate(address _sender, uint256 _max) internal returns (uint256) {
         randNonce++;
