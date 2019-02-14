@@ -14,21 +14,21 @@ contract.only('FutballCardsGenerator tests', (accounts) => {
     context('Nationalities - ensure can manipulate seed arrays', function () {
         it('adds to', async function () {
             let nationalities = await this.generator.allNationalities();
-            nationalities.length.should.be.equal(5);
+            nationalities.length.should.be.equal(10);
 
             await this.generator.addNationality(new BN('5'), {from: accounts[0]});
             nationalities = await this.generator.allNationalities();
-            nationalities.length.should.be.equal(6);
+            nationalities.length.should.be.equal(11);
         });
 
         it('replace at index', async function () {
             await this.generator.clearNationalityAtIndex(1, {from: accounts[0]});
             let nationalities = await this.generator.allNationalities();
-            nationalities.length.should.be.equal(5);
+            nationalities.length.should.be.equal(10);
 
             await this.generator.clearNationalityAtIndex(1, {from: accounts[0]});
             nationalities = await this.generator.allNationalities();
-            nationalities.length.should.be.equal(4);
+            nationalities.length.should.be.equal(9);
         });
 
         it('replace', async function () {
@@ -187,15 +187,59 @@ contract.only('FutballCardsGenerator tests', (accounts) => {
         });
     });
 
-    it('generate me some randoms', async function () {
-        const results = {};
-        for (let i = 0; i < 100; i++) {
-            const {logs} = await this.generator.generateCard(randomAccount());
+    context('Ethnicities - ensure can manipulate seed arrays', function () {
+        it('adds to', async function () {
+            let ethnicities = await this.generator.allEthnicities();
+            ethnicities.length.should.be.equal(10);
 
-            // const {_nationality, _position, _ethnicity, _kit, _colour} = logs[0].args;
-            // console.log(`N ${_nationality} P ${_position} E ${_ethnicity} K ${_kit} C ${_colour}`);
-        }
+            await this.generator.addEthnicity(new BN('5'), {from: accounts[0]});
+            ethnicities = await this.generator.allEthnicities();
+            ethnicities.length.should.be.equal(11);
+        });
+
+        it('replace at index', async function () {
+            await this.generator.clearEthnicityAtIndex(1, {from: accounts[0]});
+            let ethnicities = await this.generator.allEthnicities();
+            ethnicities.length.should.be.equal(10);
+
+            await this.generator.clearEthnicityAtIndex(1, {from: accounts[0]});
+            ethnicities = await this.generator.allEthnicities();
+            ethnicities.length.should.be.equal(9);
+        });
+
+        it('replace', async function () {
+            await this.generator.clearEthnicities({from: accounts[0]});
+            let ethnicities = await this.generator.allEthnicities();
+            ethnicities.length.should.be.equal(0);
+
+            await this.generator.addEthnicity(new BN('55'), {from: accounts[0]});
+            ethnicities = await this.generator.allEthnicities();
+            ethnicities.length.should.be.equal(1);
+            ethnicities[0].should.be.bignumber.equal('55');
+        });
+
+        it('only owner can clear', async function () {
+            await shouldFail.reverting(this.generator.clearEthnicities({from: accounts[1]}));
+        });
+
+        it('only owner can clear at index', async function () {
+            await shouldFail.reverting(this.generator.clearEthnicityAtIndex(1, {from: accounts[1]}));
+        });
+
+        it('only owner can add to', async function () {
+            await shouldFail.reverting(this.generator.addEthnicity(new BN('6'), {from: accounts[1]}));
+        });
     });
+
+    // it('generate me some randoms', async function () {
+    //     const results = {};
+    //     for (let i = 0; i < 100; i++) {
+    //         const {logs} = await this.generator.generateCard(randomAccount());
+    //
+    //         // const {_nationality, _position, _ethnicity, _kit, _colour} = logs[0].args;
+    //         // console.log(`N ${_nationality} P ${_position} E ${_ethnicity} K ${_kit} C ${_colour}`);
+    //     }
+    // });
 
     function randomAccount () {
         // Random account between 0-9 (10 accounts)
