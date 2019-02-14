@@ -4,7 +4,7 @@ const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('FutballCardsGenerator tests', (accounts) => {
+contract('FutballCardsGenerator tests', (accounts) => {
 
     before(async function () {
         // console.log(accounts);

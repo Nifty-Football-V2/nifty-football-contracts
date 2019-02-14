@@ -6,11 +6,11 @@ contract FutballCardsGenerator is Ownable {
 
     uint256 internal randNonce = 0;
 
-    uint256 public nameLength = 100;
+    uint256 public nameLength = 256;
     uint256 public maxAttributeScore = 100;
 
     uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 3, 3];
-    uint256[] internal nationalities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    uint256[] internal nationalities = [0, 1, 2, 3, 4];
     uint256[] internal kits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     uint256[] internal colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     uint256[] internal ethnicities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];

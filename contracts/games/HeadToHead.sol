@@ -72,14 +72,14 @@ contract HeadToHead is Ownable, Pausable {
     // A mapping for the list of GameID => Position in open games array
     mapping(uint256 => uint256) gamesIndex;
 
-    IFutballCardsAttrbiutes public nft;
+    IFutballCardsAttributes public nft;
     HeadToHeadResulter public resulter;
 
     /////////////////
     // Constructor //
     /////////////////
 
-    constructor (HeadToHeadResulter _resulter, IFutballCardsAttrbiutes _nft) public {
+    constructor (HeadToHeadResulter _resulter, IFutballCardsAttributes _nft) public {
         resulter = _resulter;
         nft = _nft;
     }
