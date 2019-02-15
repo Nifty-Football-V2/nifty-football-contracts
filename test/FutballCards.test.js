@@ -30,8 +30,8 @@ contract.only('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) =>
         });
     });
 
-    context('should return correct core values', function () {
-        it('mints and emits event', async function () {
+    context('should return correct values', function () {
+        it('mints set card values', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
             const cardAttrs = await this.futballCards.card(firstTokenId);
@@ -42,6 +42,28 @@ contract.only('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) =>
             cardAttrs[3].should.be.bignumber.equal('0');
             cardAttrs[4].should.be.bignumber.equal('0');
             cardAttrs[5].should.be.bignumber.equal('0');
+        });
+
+        it('set attributes', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await this.futballCards.setAttributes(firstTokenId, 1, 1, 1, 1, {from: creator});
+
+            const attrsAndName = await this.futballCards.attributesAndName(firstTokenId);
+            attrsAndName[0].should.be.bignumber.equal('1');
+            attrsAndName[1].should.be.bignumber.equal('1');
+            attrsAndName[2].should.be.bignumber.equal('1');
+            attrsAndName[3].should.be.bignumber.equal('1');
+        });
+
+        it('set name', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await this.futballCards.setName(firstTokenId, 2, 2, {from: creator});
+
+            const attrsAndName = await this.futballCards.attributesAndName(firstTokenId);
+            attrsAndName[5].should.be.bignumber.equal('2');
+            attrsAndName[6].should.be.bignumber.equal('2');
         });
     });
 });
