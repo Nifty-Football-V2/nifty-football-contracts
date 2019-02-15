@@ -32,6 +32,11 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         uint256 _lastName
     );
 
+    event SpecialSet(
+        uint256 indexed _tokenId,
+        uint256 _value
+    );
+
     uint256 public totalCards = 0;
     uint256 public tokenIdPointer = 0;
 
@@ -234,18 +239,6 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         );
     }
 
-    function experience(uint256 _tokenId) public view returns (
-        uint256 _points,
-        uint256 _stars
-    ) {
-        require(_exists(_tokenId));
-        Experience storage tokenExperience = experienceMapping[_tokenId];
-        return (
-        tokenExperience.points,
-        tokenExperience.stars
-        );
-    }
-
     function attributesFlat(uint256 _tokenId) public view returns (uint256[5] memory) {
         require(_exists(_tokenId), "Token does not exist");
         Attributes storage tokenAttributes = attributesMapping[_tokenId];
@@ -272,6 +265,24 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
 
         return true;
     }
+
+    function setSpecial(uint256 _tokenId, uint256 _newSpecial) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId), "Token does not exist");
+
+        Attributes storage tokenAttributes = attributesMapping[_tokenId];
+        tokenAttributes.special = _newSpecial;
+
+        emit SpecialSet(_tokenId, _newSpecial);
+
+        return true;
+    }
+
+    // SETTER required
+//tokenExtras.badge,
+//tokenExtras.sponsor,
+//tokenExtras.number,
+//tokenExtras.boots,
+//tokenExtras.stars
 
     function setTokenURI(uint256 _tokenId, string memory _tokenUri) public onlyWhitelisted returns (bool) {
         require(bytes(_tokenUri).length != 0, "URI invalid");

@@ -26,11 +26,6 @@ contract IFutballCardsAttributes is IERC721 {
         uint256 _stars
     );
 
-    function experience(uint256 _tokenId) public view returns (
-        uint256 _points,
-        uint256 _stars
-    );
-
     function card(uint256 _tokenId) public view returns (
         uint256 _cardType,
         uint256 _nationality,

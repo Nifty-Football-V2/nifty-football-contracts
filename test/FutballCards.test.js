@@ -56,6 +56,12 @@ contract.only('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) =>
             attrsAndName[3].should.be.bignumber.equal('1');
         });
 
+        it('set attributes must be whitelisted', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setAttributes(firstTokenId, 1, 1, 1, 1, {from: tokenOwner}));
+        });
+
         it('set name', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
@@ -64,6 +70,27 @@ contract.only('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) =>
             const attrsAndName = await this.futballCards.attributesAndName(firstTokenId);
             attrsAndName[5].should.be.bignumber.equal('2');
             attrsAndName[6].should.be.bignumber.equal('2');
+        });
+
+        it('set name must be whitelisted', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setName(firstTokenId, 2, 2, {from: tokenOwner}));
+        });
+
+        it('set special', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await this.futballCards.setSpecial(firstTokenId, 3, {from: creator});
+
+            const attrsAndName = await this.futballCards.attributesAndName(firstTokenId);
+            attrsAndName[4].should.be.bignumber.equal('3');
+        });
+
+        it('set special must be whitelisted', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setSpecial(firstTokenId, 3, {from: tokenOwner}));
         });
     });
 });
