@@ -296,6 +296,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         return _tokensOfOwner(owner);
     }
 
+    // FIXME think about this - clean out stuff too in this contract
     function burn(uint256 _tokenId) public returns (bool) {
         _burn(msg.sender, _tokenId);
 
