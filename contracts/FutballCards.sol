@@ -32,15 +32,6 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         uint256 _lastName
     );
 
-    event ExtrasSet(
-        uint256 indexed _tokenId,
-        uint256 _badge,
-        uint256 _sponsor,
-        uint256 _number,
-        uint256 _boots
-    );
-
-
     uint256 public totalCards = 0;
     uint256 public tokenIdPointer = 0;
 
@@ -79,6 +70,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         uint256 sponsor;
         uint256 number;
         uint256 boots;
+        uint256 stars;
     }
 
     mapping(uint256 => Card) internal cardMapping;
@@ -181,33 +173,6 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         return true;
     }
 
-    function setExtras(
-        uint256 _tokenId,
-        uint256 _badge,
-        uint256 _sponsor,
-        uint256 _number,
-        uint256 _boots
-    ) public onlyWhitelisted returns (bool) {
-        require(_exists(_tokenId));
-
-        extrasMapping[_tokenId] = Extras({
-            badge : _badge,
-            sponsor : _sponsor,
-            number : _number,
-            boots : _boots
-            });
-
-        emit ExtrasSet(
-            _tokenId,
-            _badge,
-            _sponsor,
-            _number,
-            _boots
-        );
-
-        return true;
-    }
-
     function card(uint256 _tokenId) public view returns (
         uint256 _cardType,
         uint256 _nationality,
@@ -255,7 +220,8 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         uint256 _badge,
         uint256 _sponsor,
         uint256 _number,
-        uint256 _boots
+        uint256 _boots,
+        uint256 _stars
     ) {
         require(_exists(_tokenId));
         Extras storage tokenExtras = extrasMapping[_tokenId];
@@ -263,7 +229,8 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         tokenExtras.badge,
         tokenExtras.sponsor,
         tokenExtras.number,
-        tokenExtras.boots
+        tokenExtras.boots,
+        tokenExtras.stars
         );
     }
 

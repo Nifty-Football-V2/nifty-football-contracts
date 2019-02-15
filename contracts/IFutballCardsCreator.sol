@@ -24,13 +24,4 @@ interface IFutballCardsCreator {
         uint256 _firstName,
         uint256 _lastName
     ) external returns (bool);
-
-    function setExtras(
-        uint256 _tokenId,
-        uint256 _badge,
-        uint256 _sponsor,
-        uint256 _number,
-        uint256 _boots
-    ) external returns (bool);
-
 }
