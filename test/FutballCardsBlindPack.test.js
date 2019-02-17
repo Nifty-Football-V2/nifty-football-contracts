@@ -3,9 +3,9 @@ const FutballCardsBlindPack = artifacts.require('FutballCardsBlindPack');
 
 const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
 
-const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
+const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]) => {
+contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, noCredit, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);
@@ -22,10 +22,10 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
 
         // Create vending machine
         this.blindPack = await FutballCardsBlindPack.new(
-            creator,
+            wallet,
             this.generator.address,
             this.futballCards.address,
-            { from: creator }
+            {from: creator}
         );
 
         // Add to whitelist
@@ -37,18 +37,21 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
 
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
         (await this.blindPack.totalPurchasesInWei()).should.be.bignumber.equal('0');
-
-        // mint a single building
-        const {logs} = await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
-        expectEvent.inLogs(
-            logs,
-            `BlindPackPulled`,
-            {_tokenId: new BN(0), _to: tokenOwner}
-        );
     });
 
-    context('ensure counters are functional', function () {
-        it('returns total buildings', async function () {
+    context('ensure counters and getters are functional', function () {
+
+        before(async function () {
+            // mint a single building
+            const {logs} = await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
+            expectEvent.inLogs(
+                logs,
+                `BlindPackPulled`,
+                {_tokenId: new BN(0), _to: tokenOwner}
+            );
+        });
+
+        it('returns total card', async function () {
             (await this.futballCards.totalCards()).should.be.bignumber.equal('1');
         });
 
@@ -59,35 +62,36 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
         it('has an owner', async function () {
             (await this.futballCards.tokensOfOwner(tokenOwner))[0].should.be.bignumber.equal(firstTokenId);
         });
-    });
 
-    context('ensure card has attributes', function () {
-        it('returns attributes', async function () {
-            const attrs = await this.futballCards.attributesAndName(firstTokenId);
+        context('ensure card has attributes', function () {
+            it('returns attributes', async function () {
+                const attrs = await this.futballCards.attributesAndName(firstTokenId);
 
-            // between 0 - 99
-            attrs[0].should.be.bignumber.lt('100');
-            attrs[1].should.be.bignumber.lt('100');
-            attrs[2].should.be.bignumber.lt('100');
-            attrs[3].should.be.bignumber.lt('100');
-            attrs[4].should.be.bignumber.lt('100');
-            attrs[5].should.be.bignumber.lt('256');
-            attrs[6].should.be.bignumber.lt('256');
+                // between 0 - 99
+                attrs[0].should.be.bignumber.lt('100');
+                attrs[1].should.be.bignumber.lt('100');
+                attrs[2].should.be.bignumber.lt('100');
+                attrs[3].should.be.bignumber.lt('100');
+                attrs[4].should.be.bignumber.lt('100');
+                attrs[5].should.be.bignumber.lt('256');
+                attrs[6].should.be.bignumber.lt('256');
+            });
         });
-    });
 
-    context('ensure card has card values', function () {
-        it('returns attributes', async function () {
-            const cardAttrs = await this.futballCards.card(firstTokenId);
+        context('ensure card has card values', function () {
+            it('returns attributes', async function () {
+                const cardAttrs = await this.futballCards.card(firstTokenId);
 
-            // between 0 - 3
-            cardAttrs[0].should.be.bignumber.lt('10');
-            cardAttrs[1].should.be.bignumber.lt('10');
-            cardAttrs[2].should.be.bignumber.lt('10');
-            cardAttrs[3].should.be.bignumber.lt('10');
-            cardAttrs[4].should.be.bignumber.lt('10');
-            cardAttrs[5].should.be.bignumber.lt('10');
+                // between 0 - 3
+                cardAttrs[0].should.be.bignumber.lt('10');
+                cardAttrs[1].should.be.bignumber.lt('10');
+                cardAttrs[2].should.be.bignumber.lt('10');
+                cardAttrs[3].should.be.bignumber.lt('10');
+                cardAttrs[4].should.be.bignumber.lt('10');
+                cardAttrs[5].should.be.bignumber.lt('10');
+            });
         });
+
     });
 
     context('ensure only owner can change base price in wei', function () {
@@ -168,24 +172,6 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
         });
     });
 
-    context('ensure only owner can mint cards', function () {
-        it('should revert if not owner', async function () {
-            await shouldFail.reverting(this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner, {from: tokenOwner}));
-        });
-
-        it('should mint and transfer if owner', async function () {
-            const {logs} = await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, anyone, {from: creator});
-            expectEvent.inLogs(
-                logs,
-                `CardMinted`,
-                {
-                    _tokenId: new BN(1),
-                    _to: anyone
-                }
-            );
-        });
-    });
-
     context('ensure can not mint with less than minimum purchase value', function () {
         it('should revert if not enough payable', async function () {
             await shouldFail.reverting(this.blindPack.blindPack({
@@ -206,6 +192,22 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
         it('should fulfil if credit and no value', async function () {
             await this.blindPack.addCredit(tokenOwner, {from: creator});
             await this.blindPack.blindPack({from: tokenOwner, value: 0});
+        });
+    });
+
+    context.only('wallet', function () {
+        it('should be transferred the blind pack eth purchase', async function () {
+            const preWalletBalance = await balance.current(wallet);
+
+            await this.blindPack.blindPack({from: noCredit, value: this.basePrice});
+
+            const postWalletBalance = await balance.current(wallet);
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(this.basePrice));
+
+            await this.blindPack.blindPackTo(tokenOwner, {from: noCredit, value: this.basePrice});
+
+            const postToWalletBalance = await balance.current(wallet);
+            postToWalletBalance.should.be.bignumber.equal(postWalletBalance.add(this.basePrice));
         });
     });
 });

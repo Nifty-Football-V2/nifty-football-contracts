@@ -40,10 +40,10 @@ contract FutballCardsBlindPack is Ownable {
     }
 
     function blindPack() public payable returns (uint256 _tokenId) {
-        return blindPackFrom(msg.sender);
+        return blindPackTo(msg.sender);
     }
 
-    function blindPackFrom(address _to) public payable returns (uint256 _tokenId) {
+    function blindPackTo(address _to) public payable returns (uint256 _tokenId) {
         require(
             credits[msg.sender] > 0 || msg.value >= priceInWei,
             "Must supply at least the required minimum purchase value or have credit"
