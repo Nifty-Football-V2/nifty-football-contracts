@@ -310,13 +310,71 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         return true;
     }
 
-    // SETTER required
-//tokenExtras.badge,
-//tokenExtras.sponsor,
-//tokenExtras.number,
-//tokenExtras.boots,
-//tokenExtras.stars
-//tokenExtras.xp
+    function setBadge(uint256 _tokenId, uint256 _new) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId), "Token does not exist");
+
+        Extras storage tokenExtras = extrasMapping[_tokenId];
+        tokenExtras.badge = _new;
+
+        emit BadgeSet(_tokenId, _new);
+
+        return true;
+    }
+
+    function setSponsor(uint256 _tokenId, uint256 _new) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId), "Token does not exist");
+
+        Extras storage tokenExtras = extrasMapping[_tokenId];
+        tokenExtras.sponsor = _new;
+
+        emit SponsorSet(_tokenId, _new);
+
+        return true;
+    }
+
+    function setNumber(uint256 _tokenId, uint256 _new) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId), "Token does not exist");
+
+        Extras storage tokenExtras = extrasMapping[_tokenId];
+        tokenExtras.number = _new;
+
+        emit NumberSet(_tokenId, _new);
+
+        return true;
+    }
+
+    function setBoots(uint256 _tokenId, uint256 _new) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId), "Token does not exist");
+
+        Extras storage tokenExtras = extrasMapping[_tokenId];
+        tokenExtras.boots = _new;
+
+        emit BootsSet(_tokenId, _new);
+
+        return true;
+    }
+
+    function addStar(uint256 _tokenId) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId), "Token does not exist");
+
+        Extras storage tokenExtras = extrasMapping[_tokenId];
+        tokenExtras.stars = tokenExtras.stars.add(1);
+
+        emit StarsSet(_tokenId, tokenExtras.stars);
+
+        return true;
+    }
+
+    function addXp(uint256 _tokenId, uint256 _increment) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId), "Token does not exist");
+
+        Extras storage tokenExtras = extrasMapping[_tokenId];
+        tokenExtras.xp = tokenExtras.xp.add(_increment);
+
+        emit XpSet(_tokenId, tokenExtras.xp);
+
+        return true;
+    }
 
     function setTokenURI(uint256 _tokenId, string memory _tokenUri) public onlyWhitelisted returns (bool) {
         require(bytes(_tokenUri).length != 0, "URI invalid");
