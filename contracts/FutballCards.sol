@@ -37,6 +37,36 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         uint256 _value
     );
 
+    event BadgeSet(
+        uint256 indexed _tokenId,
+        uint256 _value
+    );
+
+    event SponsorSet(
+        uint256 indexed _tokenId,
+        uint256 _value
+    );
+
+    event NumberSet(
+        uint256 indexed _tokenId,
+        uint256 _value
+    );
+
+    event BootsSet(
+        uint256 indexed _tokenId,
+        uint256 _value
+    );
+
+    event StarsSet(
+        uint256 indexed _tokenId,
+        uint256 _value
+    );
+
+    event XpSet(
+        uint256 indexed _tokenId,
+        uint256 _value
+    );
+
     uint256 public totalCards = 0;
     uint256 public tokenIdPointer = 0;
 
@@ -76,6 +106,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         uint256 number;
         uint256 boots;
         uint256 stars;
+        uint256 xp;
     }
 
     mapping(uint256 => Card) internal cardMapping;
@@ -226,7 +257,8 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         uint256 _sponsor,
         uint256 _number,
         uint256 _boots,
-        uint256 _stars
+        uint256 _stars,
+        uint256 _xp
     ) {
         require(_exists(_tokenId));
         Extras storage tokenExtras = extrasMapping[_tokenId];
@@ -235,7 +267,8 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         tokenExtras.sponsor,
         tokenExtras.number,
         tokenExtras.boots,
-        tokenExtras.stars
+        tokenExtras.stars,
+        tokenExtras.xp
         );
     }
 
@@ -283,6 +316,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
 //tokenExtras.number,
 //tokenExtras.boots,
 //tokenExtras.stars
+//tokenExtras.xp
 
     function setTokenURI(uint256 _tokenId, string memory _tokenUri) public onlyWhitelisted returns (bool) {
         require(bytes(_tokenUri).length != 0, "URI invalid");

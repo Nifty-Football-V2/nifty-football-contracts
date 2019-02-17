@@ -23,7 +23,8 @@ contract IFutballCardsAttributes is IERC721 {
         uint256 _sponsor,
         uint256 _number,
         uint256 _boots,
-        uint256 _stars
+        uint256 _stars,
+        uint256 _xp
     );
 
     function card(uint256 _tokenId) public view returns (
