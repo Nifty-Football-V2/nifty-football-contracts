@@ -195,7 +195,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, noCr
         });
     });
 
-    context.only('wallet', function () {
+    context('wallet', function () {
         it('should be transferred the blind pack eth purchase', async function () {
             const preWalletBalance = await balance.current(wallet);
 
@@ -208,6 +208,32 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, noCr
 
             const postToWalletBalance = await balance.current(wallet);
             postToWalletBalance.should.be.bignumber.equal(postWalletBalance.add(this.basePrice));
+        });
+
+        it('should be transferred the blind pack eth purchase - over min amount', async function () {
+            const preWalletBalance = await balance.current(wallet);
+
+            await this.blindPack.blindPack({from: noCredit, value: 12345678});
+
+            const postWalletBalance = await balance.current(wallet);
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
+        });
+
+        it('should allow withdrawal of send eth if credit used', async function () {
+            const preWalletBalance = await balance.current(wallet);
+            const contractBalance = await balance.current(this.blindPack.address);
+            contractBalance.should.be.bignumber.equal(new BN('0'));
+
+            await this.blindPack.addCredit(tokenOwner, {from: creator});
+            await this.blindPack.blindPack({from: tokenOwner, value: 12345678});
+
+            const postContractBalance = await balance.current(this.blindPack.address);
+            postContractBalance.should.be.bignumber.equal(new BN('12345678'));
+
+            await this.blindPack.withdraw({from: creator});
+            const postWalletBalance = await balance.current(wallet);
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
+
         });
     });
 });
