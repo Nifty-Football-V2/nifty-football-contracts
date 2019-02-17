@@ -12,15 +12,15 @@ import "./IFutballCardsCreator.sol";
 contract FutballCardsBlindPack is Ownable {
     using SafeMath for uint256;
 
-    event PriceInWeiChanged(uint256 _oldPriceInWei, uint256 _newPriceInWei);
+    event PriceInWeiChanged(uint256 _old, uint256 _new);
 
     event BlindPackPulled(uint256 indexed _tokenId, address indexed _to);
 
     event CreditAdded(address indexed _to);
 
-    event DefaultCardTypeChanged(uint256 _newDefaultCardType);
+    event DefaultCardTypeChanged(uint256 _new);
 
-    event AttributesBaseChanged(uint256 _newAttributesBase);
+    event AttributesBaseChanged(uint256 _new);
 
     FutballCardsGenerator public futballCardsGenerator;
     IFutballCardsCreator public futballCardsNFT;
@@ -94,13 +94,9 @@ contract FutballCardsBlindPack is Ownable {
 
     function setPriceInWei(uint256 _newPriceInWei) public onlyOwner returns (bool) {
         emit PriceInWeiChanged(priceInWei, _newPriceInWei);
+
         priceInWei = _newPriceInWei;
 
-        return true;
-    }
-
-    function withdraw() public onlyOwner returns (bool) {
-        wallet.transfer(address(this).balance);
         return true;
     }
 
@@ -109,6 +105,11 @@ contract FutballCardsBlindPack is Ownable {
 
         emit CreditAdded(_to);
 
+        return true;
+    }
+
+    function withdraw() public onlyOwner returns (bool) {
+        wallet.transfer(address(this).balance);
         return true;
     }
 }

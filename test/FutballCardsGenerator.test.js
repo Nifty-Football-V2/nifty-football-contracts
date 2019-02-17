@@ -14,21 +14,21 @@ contract('FutballCardsGenerator tests', (accounts) => {
     context('Nationalities - ensure can manipulate seed arrays', function () {
         it('adds to', async function () {
             let nationalities = await this.generator.allNationalities();
-            nationalities.length.should.be.equal(10);
+            nationalities.length.should.be.equal(5);
 
             await this.generator.addNationality(new BN('5'), {from: accounts[0]});
             nationalities = await this.generator.allNationalities();
-            nationalities.length.should.be.equal(11);
+            nationalities.length.should.be.equal(6);
         });
 
         it('replace at index', async function () {
             await this.generator.clearNationalityAtIndex(1, {from: accounts[0]});
             let nationalities = await this.generator.allNationalities();
-            nationalities.length.should.be.equal(10);
+            nationalities.length.should.be.equal(5);
 
             await this.generator.clearNationalityAtIndex(1, {from: accounts[0]});
             nationalities = await this.generator.allNationalities();
-            nationalities.length.should.be.equal(9);
+            nationalities.length.should.be.equal(4);
         });
 
         it('replace', async function () {

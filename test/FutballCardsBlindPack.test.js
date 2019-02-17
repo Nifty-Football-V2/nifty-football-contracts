@@ -71,7 +71,8 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
             attrs[2].should.be.bignumber.lt('100');
             attrs[3].should.be.bignumber.lt('100');
             attrs[4].should.be.bignumber.lt('100');
-            attrs[5].should.be.bignumber.lt('100');
+            attrs[5].should.be.bignumber.lt('256');
+            attrs[6].should.be.bignumber.lt('256');
         });
     });
 
@@ -89,7 +90,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
         });
     });
 
-    context('ensure only owner can change base price', function () {
+    context('ensure only owner can change base price in wei', function () {
         it('should revert if not owner', async function () {
             await shouldFail.reverting(this.blindPack.setPriceInWei(1, {from: tokenOwner}));
         });
@@ -99,8 +100,57 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
             expectEvent.inLogs(
                 logs,
                 `PriceInWeiChanged`,
-                {_oldPriceInWei: new BN(100), _newPriceInWei: new BN(123)}
+                {_old: new BN(100), _new: new BN(123)}
             );
+            (await this.blindPack.priceInWei()).should.be.bignumber.equal('123');
+        });
+    });
+
+    context('ensure only owner can change attributes base', function () {
+        it('should revert if not owner', async function () {
+            await shouldFail.reverting(this.blindPack.setAttributesBase(10, {from: tokenOwner}));
+        });
+
+        it('should adjust base if owner', async function () {
+            const {logs} = await this.blindPack.setAttributesBase(30, {from: creator});
+            expectEvent.inLogs(
+                logs,
+                `AttributesBaseChanged`,
+                {_new: new BN(30)}
+            );
+            (await this.blindPack.attributesBase()).should.be.bignumber.equal('30');
+        });
+    });
+
+    context('ensure only owner can add credit', function () {
+        it('should revert if not owner', async function () {
+            await shouldFail.reverting(this.blindPack.addCredit(anyone, {from: tokenOwner}));
+        });
+
+        it('should add credit if owner', async function () {
+            const {logs} = await this.blindPack.addCredit(anyone, {from: creator});
+            expectEvent.inLogs(
+                logs,
+                `CreditAdded`,
+                {_to: anyone}
+            );
+            (await this.blindPack.credits(anyone)).should.be.bignumber.equal('1');
+        });
+    });
+
+    context('ensure only owner can change default card type', function () {
+        it('should revert if not owner', async function () {
+            await shouldFail.reverting(this.blindPack.setCardTypeDefault(2, {from: tokenOwner}));
+        });
+
+        it('should add credit if owner', async function () {
+            const {logs} = await this.blindPack.setCardTypeDefault(2, {from: creator});
+            expectEvent.inLogs(
+                logs,
+                `DefaultCardTypeChanged`,
+                {_new: new BN(2)}
+            );
+            (await this.blindPack.cardTypeDefault()).should.be.bignumber.equal('2');
         });
     });
 
@@ -118,7 +168,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, ...accounts]
         });
     });
 
-    context('ensure only owner can transfer buildings', function () {
+    context('ensure only owner can mint cards', function () {
         it('should revert if not owner', async function () {
             await shouldFail.reverting(this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner, {from: tokenOwner}));
         });

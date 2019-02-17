@@ -57,12 +57,12 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         uint256 _value
     );
 
-    event StarsSet(
+    event StarAdded(
         uint256 indexed _tokenId,
         uint256 _value
     );
 
-    event XpSet(
+    event XpAdded(
         uint256 indexed _tokenId,
         uint256 _value
     );
@@ -360,7 +360,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         Extras storage tokenExtras = extrasMapping[_tokenId];
         tokenExtras.stars = tokenExtras.stars.add(1);
 
-        emit StarsSet(_tokenId, tokenExtras.stars);
+        emit StarAdded(_tokenId, tokenExtras.stars);
 
         return true;
     }
@@ -371,7 +371,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         Extras storage tokenExtras = extrasMapping[_tokenId];
         tokenExtras.xp = tokenExtras.xp.add(_increment);
 
-        emit XpSet(_tokenId, tokenExtras.xp);
+        emit XpAdded(_tokenId, tokenExtras.xp);
 
         return true;
     }

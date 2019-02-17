@@ -99,10 +99,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
         });
     });
 
-    context.only('should set extras', function () {
-
-//tokenExtras.stars
-//tokenExtras.xp
+    context('should set extras', function () {
 
         it('set badge', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
@@ -190,7 +187,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             const {logs} = await this.futballCards.addStar(firstTokenId, {from: creator});
             expectEvent.inLogs(
                 logs,
-                `StarsSet`,
+                `StarAdded`,
                 {_tokenId: new BN(0), _value: new BN(1)}
             );
 
@@ -210,7 +207,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             const {logs} = await this.futballCards.addXp(firstTokenId, 99, {from: creator});
             expectEvent.inLogs(
                 logs,
-                `XpSet`,
+                `XpAdded`,
                 {_tokenId: new BN(0), _value: new BN(99)}
             );
 
