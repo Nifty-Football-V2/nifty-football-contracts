@@ -5,7 +5,7 @@ const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, noCredit, ...accounts]) => {
+contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);
@@ -196,42 +196,57 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, noCr
     });
 
     context('wallet', function () {
+        before(async function () {
+            // Create vending machine
+            this.cleanBlindPack = await FutballCardsBlindPack.new(
+                cleanWallet,
+                this.generator.address,
+                this.futballCards.address,
+                {from: creator}
+            );
+
+            await this.futballCards.addWhitelisted(this.cleanBlindPack.address, {from: creator});
+
+            this.basePrice = await this.cleanBlindPack.priceInWei();
+            this.basePrice.should.be.bignumber.equal('100');
+        });
+
         it('should be transferred the blind pack eth purchase', async function () {
-            const preWalletBalance = await balance.current(wallet);
+            const preWalletBalance = await balance.current(cleanWallet);
 
-            await this.blindPack.blindPack({from: noCredit, value: this.basePrice});
+            await this.cleanBlindPack.blindPack({from: anyone, value: this.basePrice});
 
-            const postWalletBalance = await balance.current(wallet);
+            const postWalletBalance = await balance.current(cleanWallet);
             postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(this.basePrice));
 
-            await this.blindPack.blindPackTo(tokenOwner, {from: noCredit, value: this.basePrice});
+            await this.cleanBlindPack.blindPackTo(tokenOwner, {from: anyone, value: this.basePrice});
 
-            const postToWalletBalance = await balance.current(wallet);
+            const postToWalletBalance = await balance.current(cleanWallet);
             postToWalletBalance.should.be.bignumber.equal(postWalletBalance.add(this.basePrice));
         });
 
         it('should be transferred the blind pack eth purchase - over min amount', async function () {
-            const preWalletBalance = await balance.current(wallet);
+            const preWalletBalance = await balance.current(cleanWallet);
 
-            await this.blindPack.blindPack({from: noCredit, value: 12345678});
+            await this.cleanBlindPack.blindPack({from: anyone, value: 12345678});
 
-            const postWalletBalance = await balance.current(wallet);
+            const postWalletBalance = await balance.current(cleanWallet);
             postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
         });
 
         it('should allow withdrawal of send eth if credit used', async function () {
-            const preWalletBalance = await balance.current(wallet);
-            const contractBalance = await balance.current(this.blindPack.address);
+            const preWalletBalance = await balance.current(cleanWallet);
+            const contractBalance = await balance.current(this.cleanBlindPack.address);
             contractBalance.should.be.bignumber.equal(new BN('0'));
 
-            await this.blindPack.addCredit(tokenOwner, {from: creator});
-            await this.blindPack.blindPack({from: tokenOwner, value: 12345678});
+            await this.cleanBlindPack.addCredit(tokenOwner, {from: creator});
+            await this.cleanBlindPack.blindPack({from: tokenOwner, value: 12345678});
 
-            const postContractBalance = await balance.current(this.blindPack.address);
+            const postContractBalance = await balance.current(this.cleanBlindPack.address);
             postContractBalance.should.be.bignumber.equal(new BN('12345678'));
 
-            await this.blindPack.withdraw({from: creator});
-            const postWalletBalance = await balance.current(wallet);
+            await this.cleanBlindPack.withdraw({from: creator});
+            const postWalletBalance = await balance.current(cleanWallet);
             postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
 
         });
