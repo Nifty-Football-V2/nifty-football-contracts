@@ -7,8 +7,9 @@ import "openzeppelin-solidity/contracts/access/roles/WhitelistedRole.sol";
 import "./libs/Strings.sol";
 import "./IFutballCardsCreator.sol";
 import "./IFutballCardsAttributes.sol";
+import "./erc721/CustomERC721Full.sol";
 
-contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFutballCardsAttributes {
+contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator, IFutballCardsAttributes {
     using SafeMath for uint256;
 
     string public tokenBaseURI = "";
@@ -16,6 +17,10 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
     event CardMinted(
         uint256 indexed _tokenId,
         address indexed _to
+    );
+
+    event TokenBaseURIChanged(
+        string _new
     );
 
     event CardAttributesSet(
@@ -115,7 +120,7 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
     mapping(uint256 => Experience) internal experienceMapping;
     mapping(uint256 => Extras) internal extrasMapping;
 
-    constructor (string memory _tokenBaseURI) public ERC721Full("FutballCard", "FUT") {
+    constructor (string memory _tokenBaseURI) public CustomERC721Full("FutballCard", "FUT") {
         super.addWhitelisted(msg.sender);
         tokenBaseURI = _tokenBaseURI;
     }
@@ -140,13 +145,8 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
             colour : _colour
             });
 
-        // FIXME don't set full URI - only suffix
-        // dynamic string URI
-        string memory _tokenURI = Strings.strConcat(tokenBaseURI, "/token/", Strings.uint2str(tokenIdPointer));
-
         // the magic bit!
         _mint(_to, tokenIdPointer);
-        _setTokenURI(tokenIdPointer, _tokenURI);
 
         // woo! more cards exist!
         totalCards = totalCards.add(1);
@@ -376,15 +376,17 @@ contract FutballCards is ERC721Full, WhitelistedRole, IFutballCardsCreator, IFut
         return true;
     }
 
-    function setTokenURI(uint256 _tokenId, string memory _tokenUri) public onlyWhitelisted returns (bool) {
-        require(bytes(_tokenUri).length != 0, "URI invalid");
-        _setTokenURI(_tokenId, _tokenUri);
-        return true;
+    function tokenURI(uint256 tokenId) external view returns (string memory) {
+        require(_exists(tokenId));
+        return Strings.strConcat(tokenBaseURI, Strings.uint2str(tokenId));
     }
 
     function updateTokenBaseURI(string memory _newBaseURI) public onlyWhitelisted returns (bool) {
         require(bytes(_newBaseURI).length != 0, "Base URI invalid");
         tokenBaseURI = _newBaseURI;
+
+        emit TokenBaseURIChanged(_newBaseURI);
+
         return true;
     }
 }

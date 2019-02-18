@@ -30,6 +30,22 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
         });
     });
 
+    context('ensure only owner can base URI', function () {
+        it('should revert if not owner', async function () {
+            await shouldFail.reverting(this.futballCards.updateTokenBaseURI('fc.xyz', {from: tokenOwner}));
+        });
+
+        it('should reset if owner', async function () {
+            const {logs} = await this.futballCards.updateTokenBaseURI('http://hello', {from: creator});
+            expectEvent.inLogs(
+                logs,
+                `TokenBaseURIChanged`,
+                {_new: 'http://hello'}
+            );
+            (await this.futballCards.tokenBaseURI()).should.be.equal('http://hello');
+        });
+    });
+
     context('should return correct values', function () {
         it('mints set card values', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
