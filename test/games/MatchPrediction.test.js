@@ -32,8 +32,13 @@ contract.only('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
         });
 
         context('construction', async function () {
-            it('cant create game', async function () {
+            it('basic contract', async () => {
                 console.log(this.matchPrediction);
+            });
+
+            it('assert result as expected', async () => {
+                //await this.matchPrediction.resultGame(1);
+                console.log(await this.matchPrediction.result());
             });
         });
     });
