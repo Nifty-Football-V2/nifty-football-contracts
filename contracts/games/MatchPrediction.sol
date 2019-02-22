@@ -1,20 +1,24 @@
 pragma solidity 0.5.0;
 
-import "openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
+import "./abstract/FutballCardGame.sol";
+import "../IFutballCardsAttributes.sol";
 
+contract MatchPrediction is FutballCardGame {
 
-contract MatchPrediction {
+    enum Outcomes {HOME_WIN, AWAY_WIN, DRAW}
 
-    ERC721 nft;
+    Outcomes public prediction;
 
-    uint256 public result = 9283049284029384203948029384092384092384092384029384;
-
-    constructor (ERC721 _nft) public {
+    constructor (IFutballCardsAttributes _nft) public {
         nft = _nft;
     }
 
-    function resultGame(uint256 _result) public returns (bool) {
-        result = _result;
-        return true;
+    function makePrediction(Outcomes _prediction) whenNotPaused public {
+        prediction = _prediction;
+    }
+
+    function wasPredictionTrue() whenNotPaused public view returns (bool) {
+        Outcomes fixedResult = Outcomes.HOME_WIN;
+        return fixedResult == prediction;
     }
 }
