@@ -4,12 +4,17 @@ const MockHeadToHeadResulter = artifacts.require('MockHeadToHeadResulter');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-
-contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
+contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
     const baseURI = 'http://futball-cards';
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-    const State = {OPEN: new BN(0), HOME_WIN: new BN(1), AWAY_WIN: new BN(2), DRAW: new BN(3), CLOSED: new BN(4)};
+    const State = {
+        OPEN: new BN(0),
+        HOME_WIN: new BN(1),
+        AWAY_WIN: new BN(2),
+        DRAW: new BN(3),
+        CLOSED: new BN(4)
+    };
 
     const _tokenId1 = new BN(0);
     const _tokenId2 = new BN(1);
@@ -28,13 +33,13 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
     context('should be able to play game', async function () {
 
         beforeEach(async function () {
-            await this.futballCards.mintCard(1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+            await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
             await this.futballCards.setAttributes(_tokenId1, 10, 10, 10, 10, {from: creator});
 
-            await this.futballCards.mintCard(2, 2, 2, 2, 2, tokenOwner2, {from: creator});
+            await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
             await this.futballCards.setAttributes(_tokenId2, 5, 10, 20, 20, {from: creator});
 
-            await this.futballCards.mintCard(3, 3, 3, 3, 3, anyone, {from: creator});
+            await this.futballCards.mintCard(3, 3, 3, 3, 3, 3, anyone, {from: creator});
             await this.futballCards.setAttributes(_tokenId3, 30, 30, 30, 30, {from: creator});
 
             (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
