@@ -24,9 +24,10 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
     context('should be able to play game', async () => {
 
         it('should handle a basic prediction', async () => {
-            await this.matchPrediction.makePrediction(Outcomes.HOME_WIN);
-            const result = await this.matchPrediction.wasPredictionTrue();
-            result.should.be.true;
+            // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
+            await this.matchPrediction.makeFirstPrediction(_tokenId1, Outcomes.HOME_WIN);
+
+            (await this.matchPrediction.wasPredictionTrue()).should.be.true;
         });
     });
 
