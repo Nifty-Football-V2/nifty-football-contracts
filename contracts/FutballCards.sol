@@ -99,12 +99,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 firstName;
         uint256 lastName;
     }
-
-    struct Experience {
-        uint256 points;
-        uint256 stars;
-    }
-
+    
     struct Extras {
         uint256 badge;
         uint256 sponsor;
@@ -117,7 +112,6 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
     mapping(uint256 => Name) internal namesMapping;
-    mapping(uint256 => Experience) internal experienceMapping;
     mapping(uint256 => Extras) internal extrasMapping;
 
     constructor (string memory _tokenBaseURI) public CustomERC721Full("FutballCard", "FUT") {
