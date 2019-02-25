@@ -6,10 +6,10 @@
     "test": "test"
   },
   "scripts": {
-    "test": "truffle test"
+    "test": "$NODE_DEBUG_OPTION truffle test --show-events"
   },
   "author": "BlockRocket.tech",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "openzeppelin-solidity": "^2.1.2",
     "openzeppelin-test-helpers": "^0.1.2",

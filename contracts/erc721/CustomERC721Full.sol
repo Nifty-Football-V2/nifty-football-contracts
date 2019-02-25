@@ -14,24 +14,7 @@ import "./ERC721MetadataWithoutTokenUri.sol";
  */
 contract CustomERC721Full is ERC721, ERC721Enumerable, ERC721MetadataWithoutTokenUri {
 
-    address public commissionAccount;
-    uint256 private commissionValue = 1;
-
     constructor (string memory name, string memory symbol) public ERC721MetadataWithoutTokenUri(name, symbol) {
-        commissionAccount = msg.sender;
+        // solhint-disable-previous-line no-empty-blocks
     }
-
-    function transferFrom(address from, address to, uint256 tokenId) public {
-        super.transferFrom(from, to, tokenId);
-    }
-
-    function safeTransferFrom(address from, address to, uint256 tokenId) public {
-        safeTransferFrom(from, to, tokenId, "");
-    }
-
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public {
-        transferFrom(from, to, tokenId);
-        require(_checkOnERC721Received(from, to, tokenId, _data));
-    }
-
 }

@@ -32,6 +32,7 @@ contract BuyNowMarketplace is Pausable {
     }
 
     function listToken(uint256 _tokenId, uint256 _priceInWei) public whenNotPaused onlyWhenTokenOwner(_tokenId) returns (bool) {
+        // FIXME - allow this to be configurable and make msg more generic
         require(_priceInWei >= 1000000000, "Must be at least 1 GWEI");
 
         tokenIdToPrice[_tokenId] = _priceInWei;
@@ -52,6 +53,7 @@ contract BuyNowMarketplace is Pausable {
         address tokenSeller = nft.ownerOf(_tokenId);
         nft.safeTransferFrom(tokenSeller, msg.sender, _tokenId);
 
+        // FIXME make possible to use smaller denomination e.g. 0.5%
         // send commission to wallet
         uint256 buyNowCommission = msg.value.div(100).mul(commission);
         wallet.transfer(buyNowCommission);
@@ -61,5 +63,7 @@ contract BuyNowMarketplace is Pausable {
         tokenSellerPayable.transfer(msg.value.sub(buyNowCommission));
 
         emit BoughtNow(msg.sender, _tokenId, msg.value);
+
+        // FIXME include return type so we other contract can in theory call and know if it was successful
     }
 }

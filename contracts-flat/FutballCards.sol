@@ -1246,19 +1246,9 @@ contract ERC721MetadataWithoutTokenUri is ERC165, ERC721, IERC721Metadata {
         return _symbol;
     }
 
-    /**
-     * @dev Internal function to burn a specific token
-     * Reverts if the token does not exist
-     * Deprecated, use _burn(uint256) instead
-     * @param owner owner of the token to burn
-     * @param tokenId uint256 ID of the token being burned by the msg.sender
-     */
-    function _burn(address owner, uint256 tokenId) internal {
-        super._burn(owner, tokenId);
-    }
 }
 
-// File: contracts/erc721/CustomERC721Full.sol
+// File: contracts/erc721/CustomERC721FullWithCustomTransfer.sol
 
 pragma solidity ^0.5.0;
 
@@ -1272,16 +1262,25 @@ pragma solidity ^0.5.0;
  * Moreover, it includes approve all functionality using operator terminology
  * @dev see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
  */
-contract CustomERC721Full is ERC721, ERC721Enumerable, ERC721MetadataWithoutTokenUri {
+contract CustomERC721FullWithCustomTransfer is ERC721, ERC721Enumerable, ERC721MetadataWithoutTokenUri {
 
-    address public commissionAccount;
-    uint256 private commissionValue = 1;
+    address payable public commissionAccount;
+
+    // TODO do we need floating points e.g. 0.25%?
+    uint256 private commissionValue = 1; // 1% by default
+
+    // FIXME setter, need whitelisting though
+    // Allow this logic to be disabled
+    bool enableSplit = true;
 
     constructor (string memory name, string memory symbol) public ERC721MetadataWithoutTokenUri(name, symbol) {
         commissionAccount = msg.sender;
     }
 
+    // Needs to be payable?
     function transferFrom(address from, address to, uint256 tokenId) public {
+        require(_isApprovedOrOwner(msg.sender, tokenId), "Caller not approved or owner");
+        _splitFunds(from);
         super.transferFrom(from, to, tokenId);
     }
 
@@ -1292,6 +1291,19 @@ contract CustomERC721Full is ERC721, ERC721Enumerable, ERC721MetadataWithoutToke
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public {
         transferFrom(from, to, tokenId);
         require(_checkOnERC721Received(from, to, tokenId, _data));
+    }
+
+    function _splitFunds(address from) internal {
+        if (enableSplit && msg.value > 0) {
+            // Extra and absorb commission
+            uint256 baseCommission = msg.value.div(100).mul(commissionValue);
+            commissionAccount.transfer(baseCommission);
+
+            // FIMXE - how to handle is from is a contract address, is this a problem?
+            // Send remaining commission to previous player
+            address payable tokenSellerPayable = address(uint160(from));
+            tokenSellerPayable.transfer(msg.value.sub(baseCommission));
+        }
     }
 
 }
@@ -1307,7 +1319,7 @@ pragma solidity 0.5.0;
 
 
 
-contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator, IFutballCardsAttributes {
+contract FutballCards is CustomERC721FullWithCustomTransfer, WhitelistedRole, IFutballCardsCreator, IFutballCardsAttributes {
     using SafeMath for uint256;
 
     string public tokenBaseURI = "";
@@ -1420,7 +1432,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
     mapping(uint256 => Name) internal namesMapping;
     mapping(uint256 => Extras) internal extrasMapping;
 
-    constructor (string memory _tokenBaseURI) public CustomERC721Full("FutballCard", "FUT") {
+    constructor (string memory _tokenBaseURI) public CustomERC721FullWithCustomTransfer("FutballCard", "FUT") {
         super.addWhitelisted(msg.sender);
         tokenBaseURI = _tokenBaseURI;
     }
