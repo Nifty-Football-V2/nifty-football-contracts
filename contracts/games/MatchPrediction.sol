@@ -47,17 +47,30 @@ contract MatchPrediction is FutballCardGame {
     // Modifiers //
     ///////////////
     modifier onlyWhenOracle() {
-        require(oracle == msg.sender, "matchprediction.validation.error.notoracle");
+        require(oracle == msg.sender, "match.prediction.validation.error.not.oracle");
+        _;
+    }
+
+    modifier onlyWhenTimesValid(uint256 _predictFrom, uint256 _predictTo) {
+        require(_predictFrom >= block.timestamp, "match.prediction.validation.error.predict.from.invalid");
+        require(_predictTo > _predictFrom, "match.prediction.validation.error.predict.to.before.from");
+        _;
+    }
+
+    modifier onlyWhenMatchValid(uint256 _matchId) {
+        require(matchIdToMatchMapping[_matchId].id > 0, "match.prediction.validation.error.invalid.match.id");
         _;
     }
 
     ///////////////
     // Functions //
     ///////////////
-
-    // todo: add basic validation on the matchId arg using a modifier
-    // todo: add time validation modifiers
-    function addMatch(uint256 _matchId, uint256 _predictFrom, uint256 _predictTo) onlyWhenOracle public {
+    
+    function addMatch(uint256 _matchId, uint256 _predictFrom, uint256 _predictTo)
+    onlyWhenOracle
+    onlyWhenTimesValid(_predictFrom, _predictTo)
+    onlyWhenMatchValid(_matchId)
+    public {
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
             predictFrom: _predictFrom,
