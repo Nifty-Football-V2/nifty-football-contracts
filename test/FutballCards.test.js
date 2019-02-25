@@ -8,10 +8,10 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
     const secondTokenId = new BN(1);
     const unknownTokenId = new BN(999);
 
-    const firstURI = 'http://futball-cards';
-    const baseURI = 'http://futball-cards';
+    const firstURI = 'http://futball-cards/';
+    const baseURI = 'http://futball-cards/';
 
-    before(async function () {
+    beforeEach(async function () {
         // Create 721 contract
         this.futballCards = await FutballCards.new(baseURI, {from: creator});
         (await this.futballCards.isWhitelisted(creator)).should.be.true;
@@ -43,6 +43,22 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
                 {_new: 'http://hello'}
             );
             (await this.futballCards.tokenBaseURI()).should.be.equal('http://hello');
+        });
+    });
+
+    context('ensure only owner can base IPFS URI', function () {
+        it('should revert if not owner', async function () {
+            await shouldFail.reverting(this.futballCards.updateTokenBaseIpfsURI('fc.xyz', {from: tokenOwner}));
+        });
+
+        it('should reset if owner', async function () {
+            const {logs} = await this.futballCards.updateTokenBaseIpfsURI('http://hello', {from: creator});
+            expectEvent.inLogs(
+                logs,
+                `TokenBaseIPFSURIChanged`,
+                {_new: 'http://hello'}
+            );
+            (await this.futballCards.tokenBaseIpfsURI()).should.be.equal('http://hello');
         });
     });
 
@@ -228,7 +244,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             );
 
             const extras = await this.futballCards.extras(firstTokenId);
-            extras[4].should.be.bignumber.equal('1');
+            extras[5].should.be.bignumber.equal('99');
         });
 
         it('add xp must be whitelisted', async function () {
@@ -236,5 +252,101 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
             await shouldFail.reverting(this.futballCards.addXp(firstTokenId, 4, {from: tokenOwner}));
         });
+    });
+
+    context('static and dynamic IPFS images', function () {
+
+        const staticIpfsHash = "123-abc-456-def";
+
+        beforeEach(async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+            (await this.futballCards.totalCards()).should.be.bignumber.equal('1');
+        });
+
+        context('if token owner', function () {
+            it('can set static IPFS hash', async function () {
+                const {logs} = await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: tokenOwner});
+                expectEvent.inLogs(
+                    logs,
+                    `StaticIpfsTokenURISet`,
+                    {
+                        _tokenId: firstTokenId,
+                        _ipfsHash: staticIpfsHash
+                    }
+                );
+            });
+
+            it('can remove static IPFS hash', async function () {
+                await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: tokenOwner});
+                const {logs} = await this.futballCards.clearIpfsImageUri(firstTokenId, {from: tokenOwner});
+                expectEvent.inLogs(
+                    logs,
+                    `StaticIpfsTokenURICleared`,
+                    {
+                        _tokenId: firstTokenId
+                    }
+                );
+            });
+        });
+
+        context('if whitelisted', function () {
+
+            beforeEach(async function () {
+                await this.futballCards.addWhitelisted(anyone, {from: creator});
+                (await this.futballCards.isWhitelisted(anyone)).should.be.true;
+            });
+
+            it('can set static IPFS hash', async function () {
+                const {logs} = await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: anyone});
+                expectEvent.inLogs(
+                    logs,
+                    `StaticIpfsTokenURISet`,
+                    {
+                        _tokenId: firstTokenId,
+                        _ipfsHash: staticIpfsHash
+                    }
+                );
+            });
+
+            it('can remove static IPFS hash', async function () {
+                await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: anyone});
+                const {logs} = await this.futballCards.clearIpfsImageUri(firstTokenId, {from: anyone});
+                expectEvent.inLogs(
+                    logs,
+                    `StaticIpfsTokenURICleared`,
+                    {
+                        _tokenId: firstTokenId
+                    }
+                );
+            });
+        });
+
+        context('if not whitelisted', function () {
+            it('cannot set static IPFS hash', async function () {
+                await shouldFail.reverting(this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: anyone}));
+            });
+
+            it('cannot remove static IPFS hash', async function () {
+                await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: tokenOwner});
+                await shouldFail.reverting(this.futballCards.clearIpfsImageUri(firstTokenId, {from: anyone}));
+            });
+        });
+
+        context('when calling tokenURI()', function () {
+
+            it('will use static IPFS hash if found', async function () {
+                await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: tokenOwner});
+                const tokenURI = await this.futballCards.tokenURI(firstTokenId);
+                tokenURI.should.be.equal("https://ipfs.infura.io/ipfs/123-abc-456-def");
+            });
+
+            it('will go back to using dynamic  URI if static set and then cleared', async function () {
+                await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: tokenOwner});
+                this.futballCards.clearIpfsImageUri(firstTokenId, {from: tokenOwner});
+                const tokenURI = await this.futballCards.tokenURI(firstTokenId);
+                tokenURI.should.be.equal("http://futball-cards/0");
+            });
+        });
+
     });
 });
