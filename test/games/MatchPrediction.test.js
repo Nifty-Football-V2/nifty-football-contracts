@@ -5,6 +5,12 @@ const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-help
 
 contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, tokenOwner2, oracle, ...accounts]) => {
     const baseURI = 'http://futball-cards';
+
+    const validationErrorContentKeys = {
+        notOracle: "match.prediction.validation.error.not.oracle",
+        matchExists: "match.prediction.validation.error.match.exists"
+    };
+
     const Outcomes = {
         UNINITIALISED: new BN(0),
         HOME_WIN: new BN(1),
@@ -15,7 +21,15 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
     const _tokenId1 = new BN(0);
     const _tokenId2 = new BN(1);
 
-    const _matchId = new BN(34564543);
+    const SECONDS_IN_A_DAY = 24 * 60 * 60;
+    const predictFrom = Math.floor(((new Date()).getTime() / 1000) - 15);
+    const predictTo = predictFrom + SECONDS_IN_A_DAY;
+
+    const _match1 = {
+        _matchId: new BN(34564543),
+        _predictFrom: new BN(predictFrom),
+        _predictTo: new BN(predictTo)
+    };
 
     before(async () => {
         this.futballCards = await FutballCards.new(baseURI, {from: creator});
@@ -24,13 +38,38 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
     });
 
-    context('should be able to play game', async () => {
+    context('validation', async () => {
+        context('when adding matches', async () => {
+            it('should be successful with valid parameters', async () => {
+                await this.matchPrediction.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: oracle});
+            });
 
-        it('should handle a basic prediction', async () => {
-            // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
-            await this.matchPrediction.makeFirstPrediction(_matchId, _tokenId1, Outcomes.HOME_WIN);
+            it('should block any non-oracle address', async () => {
+                await shouldFail.reverting.withMessage(
+                    this.matchPrediction.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: tokenOwner1}),
+                    validationErrorContentKeys.notOracle
+                );
+            });
 
-            (await this.matchPrediction.wasPredictionTrue()).should.be.true;
+            it('should not allow the same match to be added twice', async () => {
+                await shouldFail.reverting.withMessage(
+                    this.matchPrediction.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: oracle}),
+                    validationErrorContentKeys.matchExists
+                );
+            });
+
+            // todo: add invalid tests for time i.e. trying to add a match where end is before start time etc.
+        });
+    });
+
+    context('playing the game', async () => {
+        context('when match #1 is chosen', async () => {
+            it('should handle a basic prediction', async () => {
+                // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
+                await this.matchPrediction.makeFirstPrediction(_match1._matchId, _tokenId1, Outcomes.HOME_WIN);
+
+                (await this.matchPrediction.wasPredictionTrue()).should.be.true;
+            });
         });
     });
 
