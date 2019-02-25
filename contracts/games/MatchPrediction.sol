@@ -36,10 +36,11 @@ contract MatchPrediction is FutballCardGame {
     mapping(uint256 => uint256[]) matchIdToOpenGameIdListMapping;
     mapping(uint256 => Match) matchIdToMatchMapping;
 
-    constructor (IFutballCardsAttributes _nft) public {
+    constructor (IFutballCardsAttributes _nft, address _oracle) public {
         // todo: add validation on all to ensure constructor is not supplied address(0) on any params
         // todo: should this be done in modifiers?
         nft = _nft;
+        oracle = _oracle;
     }
 
     ///////////////

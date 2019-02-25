@@ -19,7 +19,7 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
 
     before(async () => {
         this.futballCards = await FutballCards.new(baseURI, {from: creator});
-        this.matchPrediction = await MatchPrediction.new(this.futballCards.address, {from: creator});
+        this.matchPrediction = await MatchPrediction.new(this.futballCards.address, oracle, {from: creator});
 
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
     });
