@@ -13,15 +13,17 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
     using SafeMath for uint256;
 
     string public tokenBaseURI = "";
+    string public tokenBaseIpfsURI = "https://ipfs.infura.io/ipfs/";
 
     event CardMinted(
         uint256 indexed _tokenId,
         address indexed _to
     );
 
-    event TokenBaseURIChanged(
-        string _new
-    );
+    event TokenBaseURIChanged(string _new);
+    event TokenBaseIPFSURIChanged(string _new);
+    event StaticIpfsTokenURISet(uint256 indexed _tokenId, string _ipfsHash);
+    event StaticIpfsTokenURICleared(uint256 indexed _tokenId);
 
     event CardAttributesSet(
         uint256 indexed _tokenId,
@@ -99,7 +101,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 firstName;
         uint256 lastName;
     }
-    
+
     struct Extras {
         uint256 badge;
         uint256 sponsor;
@@ -109,6 +111,12 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 xp;
     }
 
+    modifier onlyWhitelistedOrTokenOwner(uint256 _tokenId){
+        require(isWhitelisted(msg.sender) || ownerOf(_tokenId) == msg.sender, "Unable to set token image URI unless owner of whitelisted");
+        _;
+    }
+
+    mapping(uint256 => string) public staticIpfsImageLink;
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
     mapping(uint256 => Name) internal namesMapping;
@@ -372,6 +380,11 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
         require(_exists(tokenId));
+
+        // If we have an override then use it
+        if (bytes(staticIpfsImageLink[tokenId]).length > 0) {
+            return Strings.strConcat(tokenBaseIpfsURI, staticIpfsImageLink[tokenId]);
+        }
         return Strings.strConcat(tokenBaseURI, Strings.uint2str(tokenId));
     }
 
@@ -380,6 +393,39 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         tokenBaseURI = _newBaseURI;
 
         emit TokenBaseURIChanged(_newBaseURI);
+
+        return true;
+    }
+
+    function updateTokenBaseIpfsURI(string memory _tokenBaseIpfsURI) public onlyWhitelisted returns (bool) {
+        require(bytes(_tokenBaseIpfsURI).length != 0, "Base IPFS URI invalid");
+        tokenBaseIpfsURI = _tokenBaseIpfsURI;
+
+        emit TokenBaseIPFSURIChanged(_tokenBaseIpfsURI);
+
+        return true;
+    }
+
+    function overrideDynamicImageWithIpfsLink(uint256 _tokenId, string memory _ipfsHash)
+    public
+    onlyWhitelistedOrTokenOwner(_tokenId)
+    returns (bool) {
+        require(bytes(_ipfsHash).length != 0, "Base IPFS URI invalid");
+
+        staticIpfsImageLink[_tokenId] = _ipfsHash;
+
+        emit StaticIpfsTokenURISet(_tokenId, _ipfsHash);
+
+        return true;
+    }
+
+    function clearIpfsImageUri(uint256 _tokenId)
+    public
+    onlyWhitelistedOrTokenOwner(_tokenId)
+    returns (bool) {
+        delete staticIpfsImageLink[_tokenId];
+
+        emit StaticIpfsTokenURICleared(_tokenId);
 
         return true;
     }
