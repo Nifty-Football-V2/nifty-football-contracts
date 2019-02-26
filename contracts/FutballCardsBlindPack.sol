@@ -76,6 +76,8 @@ contract FutballCardsBlindPack is Ownable {
         return tokenId;
     }
 
+    // batch buy
+
     function setCardTypeDefault(uint256 _newDefaultCardType) public onlyOwner returns (bool) {
         cardTypeDefault = _newDefaultCardType;
 

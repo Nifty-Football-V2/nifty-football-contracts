@@ -169,7 +169,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _intelligence,
         uint256 _skill
     ) public onlyWhitelisted returns (bool) {
-        require(_exists(_tokenId));
+        require(_exists(_tokenId), "Token does not exist");
 
         attributesMapping[_tokenId] = Attributes({
             strength : _strength,
@@ -195,7 +195,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _firstName,
         uint256 _lastName
     ) public onlyWhitelisted returns (bool) {
-        require(_exists(_tokenId));
+        require(_exists(_tokenId), "Token does not exist");
 
         namesMapping[_tokenId] = Name({
             firstName : _firstName,
@@ -219,7 +219,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _kit,
         uint256 _colour
     ) {
-        require(_exists(_tokenId));
+        require(_exists(_tokenId), "Token does not exist");
         Card storage tokenCard = cardMapping[_tokenId];
         return (
         tokenCard.cardType,
@@ -240,7 +240,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _firstName,
         uint256 _lastName
     ) {
-        require(_exists(_tokenId));
+        require(_exists(_tokenId), "Token does not exist");
         Attributes storage tokenAttributes = attributesMapping[_tokenId];
         Name storage tokenName = namesMapping[_tokenId];
         return (
@@ -262,7 +262,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _stars,
         uint256 _xp
     ) {
-        require(_exists(_tokenId));
+        require(_exists(_tokenId), "Token does not exist");
         Extras storage tokenExtras = extrasMapping[_tokenId];
         return (
         tokenExtras.badge,
