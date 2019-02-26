@@ -31,7 +31,7 @@ contract FutballCardsBlindPack is Ownable {
     uint256 public totalPurchasesInWei = 0;
     uint256 public priceInWei = 100;
     uint256 public cardTypeDefault = 0;
-    uint256 public attributesBase = 50;
+    uint256 public attributesBase = 30;
 
     constructor (address payable _wallet, FutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
         futballCardsGenerator = _futballCardsGenerator;

@@ -291,12 +291,15 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         return _tokensOfOwner(owner);
     }
 
-    // FIXME think about this - clean out stuff too in this contract
     function burn(uint256 _tokenId) public returns (bool) {
-        _burn(msg.sender, _tokenId);
+        require(_exists(_tokenId), "Token does not exist");
 
-        // **sad face**
-        totalCards = totalCards.sub(1);
+        delete cardMapping[_tokenId];
+        delete attributesMapping[_tokenId];
+        delete namesMapping[_tokenId];
+        delete extrasMapping[_tokenId];
+
+        _burn(msg.sender, _tokenId);
 
         return true;
     }
