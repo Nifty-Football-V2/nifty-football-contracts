@@ -215,6 +215,7 @@ contract HeadToHead is Ownable, Pausable {
     whenNotPaused
     onlyWhenGameNotComplete(_gameId)
     public returns (bool) {
+
         require(games[_gameId].homeOwner == msg.sender || games[_gameId].awayOwner == msg.sender || isOwner(), "Cannot close a game you are not part of");
 
         games[_gameId].state = State.CLOSED;

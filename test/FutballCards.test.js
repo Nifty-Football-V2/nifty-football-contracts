@@ -342,9 +342,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
             it('will go back to using dynamic  URI if static set and then cleared', async function () {
                 await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: tokenOwner});
-                this.futballCards.clearIpfsImageUri(firstTokenId, {from: tokenOwner});
-                const tokenURI = await this.futballCards.tokenURI(firstTokenId);
-                tokenURI.should.be.equal("http://futball-cards/0");
+                const newTokenURI = await this.futballCards.tokenURI(firstTokenId);
+                newTokenURI.should.be.equal("https://ipfs.infura.io/ipfs/123-abc-456-def");
+
+                await this.futballCards.clearIpfsImageUri(firstTokenId, {from: tokenOwner});
+                const resetTokenURI = await this.futballCards.tokenURI(firstTokenId);
+                resetTokenURI.should.be.equal("http://futball-cards/0");
             });
         });
 
