@@ -36,15 +36,15 @@ contract.only('FutballCards send ETH on transfer', ([_, creator, seller, buyer, 
             console.log(buyer, sellerBalance);
             console.log(this.commissionAccount, commissionAccountBalance);
 
-            await this.futballCards.transferFrom(seller, buyer, firstTokenId, {from: seller, value: ONE_ETH});
+            await this.futballCards.transferFromPayable(seller, buyer, firstTokenId, {from: seller, value: ONE_ETH});
 
             const sellerBalanceAfter = await balance.current(seller);
             const buyerBalanceAfter = await balance.current(buyer);
             const commissionAccountBalanceAfter = await balance.current(this.commissionAccount);
 
-            console.log(sellerBalance, sellerBalanceAfter);
-            console.log(buyerBalance, buyerBalanceAfter);
-            console.log(commissionAccountBalance, commissionAccountBalanceAfter);
+            console.log(sellerBalance.toString(), sellerBalanceAfter.toString());
+            console.log(buyerBalance.toString(), buyerBalanceAfter.toString());
+            console.log(commissionAccountBalance.toString(), commissionAccountBalanceAfter.toString());
         });
 
     });

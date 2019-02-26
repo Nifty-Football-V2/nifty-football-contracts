@@ -34,6 +34,12 @@ contract CustomERC721FullWithCustomTransfer is ERC721, ERC721Enumerable, ERC721M
         super.transferFrom(from, to, tokenId);
     }
 
+    function transferFromPayable(address from, address to, uint256 tokenId) payable public {
+        require(_isApprovedOrOwner(msg.sender, tokenId), "Caller not approved or owner");
+        _splitFunds(from);
+        super.transferFrom(from, to, tokenId);
+    }
+
     function safeTransferFrom(address from, address to, uint256 tokenId) public {
         safeTransferFrom(from, to, tokenId, "");
     }

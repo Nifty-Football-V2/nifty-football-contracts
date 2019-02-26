@@ -295,9 +295,6 @@ contract FutballCards is CustomERC721FullWithCustomTransfer, WhitelistedRole, IF
     function burn(uint256 _tokenId) public returns (bool) {
         _burn(msg.sender, _tokenId);
 
-        // **sad face**
-        totalCards = totalCards.sub(1);
-
         return true;
     }
 
@@ -385,6 +382,7 @@ contract FutballCards is CustomERC721FullWithCustomTransfer, WhitelistedRole, IF
         if (bytes(staticIpfsImageLink[tokenId]).length > 0) {
             return Strings.strConcat(tokenBaseIpfsURI, staticIpfsImageLink[tokenId]);
         }
+
         return Strings.strConcat(tokenBaseURI, Strings.uint2str(tokenId));
     }
 
