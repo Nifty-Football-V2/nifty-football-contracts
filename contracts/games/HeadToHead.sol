@@ -15,12 +15,6 @@ contract HeadToHead is Ownable, Pausable {
         uint256 indexed homeTokenId
     );
 
-    event Test(
-        uint256 indexed home,
-        uint256 indexed away,
-        uint256 indexed result
-    );
-
     event GameResulted(
         address indexed home,
         address indexed away,
@@ -63,8 +57,6 @@ contract HeadToHead is Ownable, Pausable {
 
     // Token ID -> Game ID - once resulted or withdraw from game we remove from here
     mapping(uint256 => uint256) tokenToGameMapping;
-
-    // TODO TEST MAPPINGS
 
     // A list of open game IDS
     uint256[] openGames;
@@ -215,6 +207,7 @@ contract HeadToHead is Ownable, Pausable {
     whenNotPaused
     onlyWhenGameNotComplete(_gameId)
     public returns (bool) {
+
         require(games[_gameId].homeOwner == msg.sender || games[_gameId].awayOwner == msg.sender || isOwner(), "Cannot close a game you are not part of");
 
         games[_gameId].state = State.CLOSED;
@@ -257,8 +250,6 @@ contract HeadToHead is Ownable, Pausable {
 
         uint256[5] memory home = nft.attributesFlat(homeTokenId);
         uint256[5] memory away = nft.attributesFlat(awayTokenId);
-
-        emit Test(home[result], away[result], result);
 
         if (home[result] > away[result]) {
             nft.safeTransferFrom(awayOwner, homeOwner, awayTokenId);
