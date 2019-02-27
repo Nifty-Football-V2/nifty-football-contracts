@@ -3,7 +3,7 @@ const BuyNowMarketplace = artifacts.require('BuyNowMarketplace');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accounts]) => {
+contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);
@@ -103,15 +103,40 @@ contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...
         });
     });
 
-    context.only('buy now', function () {
+    context.only('delist token', function () {
+        it('sets price to zero when delisting', async function () {
+            const {logs} = await this.marketplace.delistToken(firstTokenId, {from: tokenOwner});
+            expectEvent.inLogs(
+                logs,
+                `DelistedToken`,
+                {_seller: tokenOwner, _tokenId: firstTokenId}
+            );
+
+            (await this.marketplace.listedTokenPrice(firstTokenId)).should.be.bignumber.equal('0');
+        });
+
+        it('should revert if not owner', async function () {
+            await shouldFail.reverting(this.marketplace.delistToken(firstTokenId, {from: anyone}));
+        });
+
+        it('should revert if paused', async function () {
+            // give approval
+            await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+
+            await this.marketplace.pause({from: creator});
+            await shouldFail.reverting(this.marketplace.delistToken(firstTokenId, {from: tokenOwner}));
+        });
+    });
+
+    context('buy now', function () {
         it('successfully buys token', async function () {
             (await this.futballCards.ownerOf(firstTokenId)).should.be.equal(tokenOwner);
 
-            const preWalletBalance = await balance.current(wallet);
-            const preTokenOwnerBalance = await balance.current(tokenOwner);
-
             // give approval
             await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+
+            const preWalletBalance = await balance.current(wallet);
+            const preTokenOwnerBalance = await balance.current(tokenOwner);
 
             const {logs} = await this.marketplace.buyNow(firstTokenId, {from: anyone, value: listPrice});
             expectEvent.inLogs(
@@ -128,12 +153,10 @@ contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...
 
             // list price times commission percentage
             const listPriceCommission = listPrice.div(new BN(100)).mul(commission);
-            console.log(listPriceCommission.toString());
-            console.log(preWalletBalance.toString(), postWalletBalance.toString(), postWalletBalance.sub(preWalletBalance).toString());
             console.log(preTokenOwnerBalance.toString(), postTokenOwnerBalance.toString());
 
             postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(listPriceCommission));
-            // postTokenOwnerBalance.should.be.bignumber.equal(preTokenOwnerBalance.add(listPrice.sub(listPriceCommission)));
+            postTokenOwnerBalance.should.be.bignumber.equal(preTokenOwnerBalance.add(listPrice.sub(listPriceCommission)));
         });
 
         it('should revert if not listed', async function () {

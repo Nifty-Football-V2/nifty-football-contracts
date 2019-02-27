@@ -8,6 +8,7 @@ contract BuyNowMarketplace is Pausable {
 
     event BoughtNow(address indexed _buyer, uint _tokenId, uint256 _priceInWei);
     event ListedToken(address indexed _seller, uint indexed _tokenId, uint256 _priceInWei);
+    event DelistedToken(address indexed _seller, uint indexed _tokenId);
     event ListedTokenPriceUpdate(address indexed _seller, uint indexed _tokenId, uint256 _priceInWei);
 
     modifier onlyWhenTokenOwner(uint256 _tokenId) {
@@ -55,6 +56,9 @@ contract BuyNowMarketplace is Pausable {
 
     function delistToken(uint256 _tokenId) public whenNotPaused onlyWhenTokenOwner(_tokenId) returns (bool) {
         tokenIdToPrice[_tokenId] = 0;
+
+        emit DelistedToken(msg.sender, _tokenId);
+
         return true;
     }
 
