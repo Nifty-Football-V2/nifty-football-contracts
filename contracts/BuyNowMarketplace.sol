@@ -15,11 +15,6 @@ contract BuyNowMarketplace is Pausable {
         _;
     }
 
-    modifier onlyWhenTokenExists(uint256 _tokenId) {
-        require(nft.ownerOf(_tokenId) != address(0), "Token must exist");
-        _;
-    }
-
     ERC721 public nft;
     uint256 public commission;
     address payable wallet;
@@ -37,6 +32,8 @@ contract BuyNowMarketplace is Pausable {
         require(tokenIdToPrice[_tokenId] == 0, "Must not be already listed");
         require(_priceInWei > 0, "Must have a positive price");
 
+        // FIXME check approval?
+
         tokenIdToPrice[_tokenId] = _priceInWei;
         listedTokenIds.push(_tokenId);
 
@@ -47,6 +44,7 @@ contract BuyNowMarketplace is Pausable {
 
     function updateListedTokenPrice(uint256 _tokenId, uint256 _priceInWei) public whenNotPaused onlyWhenTokenOwner(_tokenId) returns (bool) {
         require(tokenIdToPrice[_tokenId] != 0, "Must be already listed");
+        require(_priceInWei > 0, "Must have a positive price");
 
         tokenIdToPrice[_tokenId] = _priceInWei;
 
@@ -56,7 +54,7 @@ contract BuyNowMarketplace is Pausable {
     }
 
     function delistToken(uint256 _tokenId) public whenNotPaused onlyWhenTokenOwner(_tokenId) returns (bool) {
-        delete tokenIdToPrice[_tokenId];
+        tokenIdToPrice[_tokenId] = 0;
         return true;
     }
 
@@ -68,7 +66,7 @@ contract BuyNowMarketplace is Pausable {
         return tokenIdToPrice[_tokenId];
     }
 
-    function buyNow(uint256 _tokenId) public payable whenNotPaused onlyWhenTokenExists(_tokenId) {
+    function buyNow(uint256 _tokenId) public payable whenNotPaused {
         require(tokenIdToPrice[_tokenId] > 0, "Token not listed");
         require(msg.value >= tokenIdToPrice[_tokenId], "Value is below asking price");
 
@@ -82,6 +80,9 @@ contract BuyNowMarketplace is Pausable {
         // send value minus commission to token seller
         address payable tokenSellerPayable = address(uint160(tokenSeller));
         tokenSellerPayable.transfer(msg.value.sub(buyNowCommission));
+
+        // delist
+        tokenIdToPrice[_tokenId] = 0;
 
         emit BoughtNow(msg.sender, _tokenId, msg.value);
     }

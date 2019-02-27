@@ -3,7 +3,7 @@ const BuyNowMarketplace = artifacts.require('BuyNowMarketplace');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
+contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);
@@ -11,6 +11,7 @@ contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, cle
     const forthTokenId = new BN(3);
     const unknownTokenId = new BN(999);
     const listPrice = new BN(1000000);
+    const commission = new BN(3);
 
     const baseURI = 'http://futball-cards/';
 
@@ -22,7 +23,7 @@ contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, cle
         await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
         await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
-        this.marketplace = await BuyNowMarketplace.new(wallet, this.futballCards.address, 3, {from: creator});
+        this.marketplace = await BuyNowMarketplace.new(wallet, this.futballCards.address, commission, {from: creator});
 
         const {logs} = await this.marketplace.listToken(firstTokenId, listPrice, {from: tokenOwner});
         expectEvent.inLogs(
@@ -88,6 +89,10 @@ contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, cle
             await shouldFail.reverting(this.marketplace.updateListedTokenPrice(unknownTokenId, listPrice, {from: tokenOwner}));
         });
 
+        it('should revert if no price', async function () {
+            await shouldFail.reverting(this.marketplace.updateListedTokenPrice(secondTokenId, 0, {from: tokenOwner}));
+        });
+
         it('should revert if not owner', async function () {
             await shouldFail.reverting(this.marketplace.updateListedTokenPrice(thirdTokenId, 456, {from: anyone}));
         });
@@ -96,19 +101,58 @@ contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, cle
             await this.marketplace.pause({from: creator});
             await shouldFail.reverting(this.marketplace.updateListedTokenPrice(forthTokenId, 456, {from: tokenOwner}));
         });
+    });
 
-        // it('delists token', async function () {
-        //     await this.marketplace.listToken(secondTokenId, listPrice, {from: tokenOwner});
-        //
-        //     let listed = await this.marketplace.listedTokens();
-        //
-        //     listed.length.should.be.equal(2);
-        //
-        //     await this.marketplace.delistToken(firstTokenId, {from: tokenOwner});
-        //
-        //     listed = await this.marketplace.listedTokens();
-        //     console.log(listed);
-        //     listed.length.should.be.equal(1);
-        // });
+    context.only('buy now', function () {
+        it('successfully buys token', async function () {
+            (await this.futballCards.ownerOf(firstTokenId)).should.be.equal(tokenOwner);
+
+            const preWalletBalance = await balance.current(wallet);
+            const preTokenOwnerBalance = await balance.current(tokenOwner);
+
+            // give approval
+            await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+
+            const {logs} = await this.marketplace.buyNow(firstTokenId, {from: anyone, value: listPrice});
+            expectEvent.inLogs(
+                logs,
+                `BoughtNow`,
+                {_buyer: anyone, _tokenId: firstTokenId, _priceInWei: listPrice}
+            );
+
+            // transferred to new home!
+            (await this.futballCards.ownerOf(firstTokenId)).should.be.equal(anyone);
+
+            const postWalletBalance = await balance.current(wallet);
+            const postTokenOwnerBalance = await balance.current(tokenOwner);
+
+            // list price times commission percentage
+            const listPriceCommission = listPrice.div(new BN(100)).mul(commission);
+            console.log(listPriceCommission.toString());
+            console.log(preWalletBalance.toString(), postWalletBalance.toString(), postWalletBalance.sub(preWalletBalance).toString());
+            console.log(preTokenOwnerBalance.toString(), postTokenOwnerBalance.toString());
+
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(listPriceCommission));
+            // postTokenOwnerBalance.should.be.bignumber.equal(preTokenOwnerBalance.add(listPrice.sub(listPriceCommission)));
+        });
+
+        it('should revert if not listed', async function () {
+            await shouldFail.reverting(this.marketplace.buyNow(unknownTokenId, {from: anyone, value: listPrice}));
+        });
+
+        it('should revert if no price', async function () {
+            // give approval
+            await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+
+            await shouldFail.reverting(this.marketplace.buyNow(firstTokenId, {from: anyone, value: 0}));
+        });
+
+        it('should revert if paused', async function () {
+            // give approval
+            await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+
+            await this.marketplace.pause({from: creator});
+            await shouldFail.reverting(this.marketplace.buyNow(firstTokenId, {from: anyone, value: listPrice}));
+        });
     });
 });
