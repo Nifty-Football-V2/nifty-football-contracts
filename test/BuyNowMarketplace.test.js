@@ -3,7 +3,7 @@ const BuyNowMarketplace = artifacts.require('BuyNowMarketplace');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accounts]) => {
+contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);

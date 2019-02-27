@@ -39,8 +39,6 @@ contract BuyNowMarketplace is Pausable {
         require(tokenIdToPrice[_tokenId] == 0, "Must not be already listed");
         require(_priceInWei > 0, "Must have a positive price");
 
-        // FIXME check approval?
-
         tokenIdToPrice[_tokenId] = _priceInWei;
 
         listedTokenIds.push(_tokenId);
@@ -77,7 +75,7 @@ contract BuyNowMarketplace is Pausable {
         return tokenIdToPrice[_tokenId];
     }
 
-    function buyNow(uint256 _tokenId) public payable whenNotPaused {
+    function buyNow(uint256 _tokenId) public payable whenNotPaused onlyWhenMarketplaceIsApproved(_tokenId) {
         require(tokenIdToPrice[_tokenId] > 0, "Token not listed");
         require(msg.value >= tokenIdToPrice[_tokenId], "Value is below asking price");
 
