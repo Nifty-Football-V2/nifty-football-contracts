@@ -27,10 +27,16 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             );
 
             (await this.futballCards.totalCards()).should.be.bignumber.equal('1');
+            (await this.futballCards.name()).should.be.equal('FutballCard');
+            (await this.futballCards.symbol()).should.be.equal('FUT');
         });
     });
 
     context('ensure only owner can base URI', function () {
+        it('should revert if empty', async function () {
+            await shouldFail.reverting(this.futballCards.updateTokenBaseURI('', {from: creator}));
+        });
+
         it('should revert if not owner', async function () {
             await shouldFail.reverting(this.futballCards.updateTokenBaseURI('fc.xyz', {from: tokenOwner}));
         });
@@ -47,6 +53,10 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
     });
 
     context('ensure only owner can base IPFS URI', function () {
+        it('should revert if empty', async function () {
+            await shouldFail.reverting(this.futballCards.updateTokenBaseIpfsURI('', {from: creator}));
+        });
+
         it('should revert if not owner', async function () {
             await shouldFail.reverting(this.futballCards.updateTokenBaseIpfsURI('fc.xyz', {from: tokenOwner}));
         });
@@ -94,6 +104,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await shouldFail.reverting(this.futballCards.setAttributes(firstTokenId, 1, 1, 1, 1, {from: tokenOwner}));
         });
 
+        it('set attributes must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setAttributes(unknownTokenId, 1, 1, 1, 1, {from: creator}));
+        });
+
         it('set name', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
@@ -108,6 +124,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
             await shouldFail.reverting(this.futballCards.setName(firstTokenId, 2, 2, {from: tokenOwner}));
+        });
+
+        it('set name must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setName(unknownTokenId, 2, 2, {from: creator}));
         });
 
         it('set special', async function () {
@@ -128,6 +150,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
             await shouldFail.reverting(this.futballCards.setSpecial(firstTokenId, 3, {from: tokenOwner}));
+        });
+
+        it('set special must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setSpecial(unknownTokenId, 3, {from: creator}));
         });
     });
 
@@ -153,6 +181,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await shouldFail.reverting(this.futballCards.setBadge(firstTokenId, 4, {from: tokenOwner}));
         });
 
+        it('set badge must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setBadge(unknownTokenId, 4, {from: creator}));
+        });
+
         it('set sponsor', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
@@ -171,6 +205,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
             await shouldFail.reverting(this.futballCards.setSponsor(firstTokenId, 4, {from: tokenOwner}));
+        });
+
+        it('set sponsor must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setSponsor(unknownTokenId, 4, {from: creator}));
         });
 
         it('set number', async function () {
@@ -193,6 +233,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await shouldFail.reverting(this.futballCards.setNumber(firstTokenId, 4, {from: tokenOwner}));
         });
 
+        it('set number must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setNumber(unknownTokenId, 4, {from: creator}));
+        });
+
         it('set boots', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
@@ -211,6 +257,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
             await shouldFail.reverting(this.futballCards.setBoots(firstTokenId, 4, {from: tokenOwner}));
+        });
+
+        it('set boots must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setBoots(unknownTokenId, 4, {from: creator}));
         });
 
         it('add star', async function () {
@@ -233,6 +285,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await shouldFail.reverting(this.futballCards.addStar(firstTokenId, {from: tokenOwner}));
         });
 
+        it('add star must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.addStar(unknownTokenId, {from: creator}));
+        });
+
         it('add xp', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
@@ -251,6 +309,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
             await shouldFail.reverting(this.futballCards.addXp(firstTokenId, 4, {from: tokenOwner}));
+        });
+
+        it('add xp must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.addXp(unknownTokenId, 4, {from: creator}));
         });
     });
 
@@ -294,6 +358,10 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             beforeEach(async function () {
                 await this.futballCards.addWhitelisted(anyone, {from: creator});
                 (await this.futballCards.isWhitelisted(anyone)).should.be.true;
+            });
+
+            it('cannot set empty hash', async function () {
+                await shouldFail.reverting(this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, '', {from: anyone}));
             });
 
             it('can set static IPFS hash', async function () {
@@ -342,9 +410,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
             it('will go back to using dynamic  URI if static set and then cleared', async function () {
                 await this.futballCards.overrideDynamicImageWithIpfsLink(firstTokenId, staticIpfsHash, {from: tokenOwner});
-                this.futballCards.clearIpfsImageUri(firstTokenId, {from: tokenOwner});
-                const tokenURI = await this.futballCards.tokenURI(firstTokenId);
-                tokenURI.should.be.equal("http://futball-cards/0");
+                const newTokenURI = await this.futballCards.tokenURI(firstTokenId);
+                newTokenURI.should.be.equal("https://ipfs.infura.io/ipfs/123-abc-456-def");
+
+                await this.futballCards.clearIpfsImageUri(firstTokenId, {from: tokenOwner});
+                const resetTokenURI = await this.futballCards.tokenURI(firstTokenId);
+                resetTokenURI.should.be.equal("http://futball-cards/0");
             });
         });
 

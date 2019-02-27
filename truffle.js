@@ -39,7 +39,7 @@ module.exports = {
       network_id: '5777', // Match any network id
     },
     coverage: {
-      host: '127.0.0.1',
+      host: 'localhost',
       port: 7545,
       network_id: "*", // <-- If you change this, also set the port option in .solcover.js.
       gas: 0xfffffffffff, // <-- Use this high gas value

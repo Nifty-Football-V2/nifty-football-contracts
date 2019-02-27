@@ -327,6 +327,112 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
             });
 
         });
+
+        context('reMatch a game', async function () {
+
+            beforeEach(async function () {
+                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
+                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
+            });
+
+            it('can rematch when drawn', async function () {
+                const _gameId = new BN(1);
+
+                await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
+
+                // mock result to 3 so we draw
+                await this.resulter.setResult(2);
+
+                // Result game
+                await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
+                const {state} = await this.headToHead.getGame(_gameId);
+                state.should.be.bignumber.equal(State.DRAW);
+
+                // mock to result
+                await this.resulter.setResult(3);
+
+                await this.headToHead.reMatch(_gameId, {from: tokenOwner2});
+
+                const {state: wonGame} = await this.headToHead.getGame(_gameId);
+                wonGame.should.be.bignumber.equal(State.AWAY_WIN);
+            });
+
+        });
+
+        context('withdrawing from a game', async function () {
+
+            beforeEach(async function () {
+                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
+                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
+            });
+
+            it('can withdraw once entered', async function () {
+                const _gameId = new BN(1);
+
+                await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
+
+                const {homeTokenId, homeOwner, awayTokenId, awayOwner, state} = await this.headToHead.getGame(_gameId);
+                homeTokenId.should.be.bignumber.equal(_tokenId1);
+                homeOwner.should.be.equal(tokenOwner1);
+                awayTokenId.should.be.bignumber.equal('0');
+                awayOwner.should.be.equal(ZERO_ADDRESS);
+                state.should.be.bignumber.equal(State.OPEN);
+
+                await this.headToHead.withdrawFromGame(_gameId, {from: tokenOwner1});
+
+                const {state: updatedState} = await this.headToHead.getGame(_gameId);
+                updatedState.should.be.bignumber.equal(State.CLOSED);
+            });
+
+            it('can withdraw when drawn', async function () {
+                const _gameId = new BN(1);
+
+                await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
+
+                // mock result to 3 so we draw
+                await this.resulter.setResult(2);
+
+                // Result game
+                await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
+                const {state} = await this.headToHead.getGame(_gameId);
+                state.should.be.bignumber.equal(State.DRAW);
+
+                // withdraw from game
+                await this.headToHead.withdrawFromGame(_gameId, {from: tokenOwner1});
+                const {state: updatedState} = await this.headToHead.getGame(_gameId);
+                updatedState.should.be.bignumber.equal(State.CLOSED);
+            });
+
+            it('cannot withdraw when not owner', async function () {
+                const _gameId = new BN(1);
+
+                await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
+
+                await shouldFail.reverting.withMessage(
+                    this.headToHead.withdrawFromGame(_gameId, {from: tokenOwner2}),
+                    "Cannot close a game you are not part of"
+                );
+            });
+
+            it('cannot withdraw when not the winner', async function () {
+                const _gameId = new BN(1);
+
+                await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
+
+                // mock result
+                await this.resulter.setResult(3);
+
+                await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
+
+                const {state} = await this.headToHead.getGame(_gameId);
+                state.should.be.bignumber.equal(State.AWAY_WIN);
+
+                await shouldFail.reverting.withMessage(
+                    this.headToHead.withdrawFromGame(_gameId, {from: tokenOwner2}),
+                    "Game not open"
+                );
+            });
+        });
     });
 
 });
