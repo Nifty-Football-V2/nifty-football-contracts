@@ -54,7 +54,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
     context('ensure only owner can base IPFS URI', function () {
         it('should revert if empty', async function () {
-            await shouldFail.reverting(this.futballCards.updateTokenBaseIpfsURI('', {from: tokenOwner}));
+            await shouldFail.reverting(this.futballCards.updateTokenBaseIpfsURI('', {from: creator}));
         });
 
         it('should revert if not owner', async function () {
@@ -207,6 +207,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await shouldFail.reverting(this.futballCards.setSponsor(firstTokenId, 4, {from: tokenOwner}));
         });
 
+        it('set sponsor must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setSponsor(unknownTokenId, 4, {from: creator}));
+        });
+
         it('set number', async function () {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
@@ -225,6 +231,12 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
             await shouldFail.reverting(this.futballCards.setNumber(firstTokenId, 4, {from: tokenOwner}));
+        });
+
+        it('set number must have token', async function () {
+            await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+
+            await shouldFail.reverting(this.futballCards.setNumber(unknownTokenId, 4, {from: creator}));
         });
 
         it('set boots', async function () {
