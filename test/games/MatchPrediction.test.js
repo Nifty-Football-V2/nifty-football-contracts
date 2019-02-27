@@ -66,9 +66,16 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         context('when match #1 is chosen', async () => {
             it('should handle a basic prediction', async () => {
                 // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
-                await this.matchPrediction.makeFirstPrediction(_match1._matchId, _tokenId1, Outcomes.HOME_WIN);
-
-                (await this.matchPrediction.wasPredictionTrue()).should.be.true;
+                const expectedGameId = new BN(1);
+                const {logs} = await this.matchPrediction.makeFirstPrediction(_match1._matchId, _tokenId1, Outcomes.HOME_WIN, {from: tokenOwner1});
+                expectEvent.inLogs(logs,
+                    'GameCreated',
+                    {
+                        gameId: expectedGameId,
+                        player1: tokenOwner1,
+                        p1TokenId: _tokenId1
+                    }
+                );
             });
         });
     });
