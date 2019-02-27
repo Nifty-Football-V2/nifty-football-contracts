@@ -85,6 +85,7 @@ contract HeadToHead is Ownable, Pausable {
         _;
     }
 
+    // FIXME check regular approval too?
     modifier onlyWhenContractIsApproved() {
         require(nft.isApprovedForAll(msg.sender, address(this)), "NFT not approved to play");
         _;

@@ -5,5 +5,5 @@ module.exports = async function (deployer, network, accounts) {
 
     const _futballCards = await FutballCards.deployed();
 
-    await deployer.deploy(BuyNowMarketplace, _futballCards.address, accounts[0], 3, {from: accounts[0]});
+    await deployer.deploy(BuyNowMarketplace, accounts[0], _futballCards.address, 3, {from: accounts[0]});
 };

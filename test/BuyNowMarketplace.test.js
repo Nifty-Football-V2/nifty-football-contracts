@@ -3,7 +3,7 @@ const BuyNowMarketplace = artifacts.require('BuyNowMarketplace');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accounts]) => {
+contract.only('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);
@@ -24,6 +24,9 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
         await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
         this.marketplace = await BuyNowMarketplace.new(wallet, this.futballCards.address, commission, {from: creator});
+
+        // approve markeplace to sell card on behalf of token owner
+        await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
 
         const {logs} = await this.marketplace.listToken(firstTokenId, listPrice, {from: tokenOwner});
         expectEvent.inLogs(
@@ -103,7 +106,7 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
         });
     });
 
-    context.only('delist token', function () {
+    context('delist token', function () {
         it('sets price to zero when delisting', async function () {
             const {logs} = await this.marketplace.delistToken(firstTokenId, {from: tokenOwner});
             expectEvent.inLogs(
@@ -153,7 +156,6 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
 
             // list price times commission percentage
             const listPriceCommission = listPrice.div(new BN(100)).mul(commission);
-            console.log(preTokenOwnerBalance.toString(), postTokenOwnerBalance.toString());
 
             postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(listPriceCommission));
             postTokenOwnerBalance.should.be.bignumber.equal(preTokenOwnerBalance.add(listPrice.sub(listPriceCommission)));

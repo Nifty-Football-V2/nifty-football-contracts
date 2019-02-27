@@ -16,6 +16,12 @@ contract BuyNowMarketplace is Pausable {
         _;
     }
 
+    modifier onlyWhenMarketplaceIsApproved(uint256 _tokenId) {
+        address owner = nft.ownerOf(_tokenId);
+        require(nft.getApproved(_tokenId) == address(this) || nft.isApprovedForAll(owner, address(this)), "Card not approved to sell");
+        _;
+    }
+
     ERC721 public nft;
     uint256 public commission;
     address payable wallet;
@@ -29,13 +35,14 @@ contract BuyNowMarketplace is Pausable {
         commission = _commission;
     }
 
-    function listToken(uint256 _tokenId, uint256 _priceInWei) public whenNotPaused onlyWhenTokenOwner(_tokenId) returns (bool) {
+    function listToken(uint256 _tokenId, uint256 _priceInWei) public whenNotPaused onlyWhenTokenOwner(_tokenId) onlyWhenMarketplaceIsApproved(_tokenId) returns (bool) {
         require(tokenIdToPrice[_tokenId] == 0, "Must not be already listed");
         require(_priceInWei > 0, "Must have a positive price");
 
         // FIXME check approval?
 
         tokenIdToPrice[_tokenId] = _priceInWei;
+
         listedTokenIds.push(_tokenId);
 
         emit ListedToken(msg.sender, _tokenId, _priceInWei);
