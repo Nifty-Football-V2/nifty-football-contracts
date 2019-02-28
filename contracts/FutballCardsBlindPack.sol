@@ -2,6 +2,7 @@ pragma solidity 0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
 import "./generators/FutballCardsGenerator.sol";
 
@@ -9,7 +10,7 @@ import "./libs/Strings.sol";
 import "./IFutballCardsCreator.sol";
 
 
-contract FutballCardsBlindPack is Ownable {
+contract FutballCardsBlindPack is Ownable, Pausable {
     using SafeMath for uint256;
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
@@ -39,44 +40,73 @@ contract FutballCardsBlindPack is Ownable {
         wallet = _wallet;
     }
 
-    function blindPack() public payable returns (uint256 _tokenId) {
+    function blindPack() whenNotPaused public payable returns (uint256 _tokenId) {
         return blindPackTo(msg.sender);
     }
 
-    function blindPackTo(address _to) public payable returns (uint256 _tokenId) {
+    function blindPackTo(address _to) whenNotPaused public payable returns (uint256 _tokenId) {
         require(
             credits[msg.sender] > 0 || msg.value >= priceInWei,
             "Must supply at least the required minimum purchase value or have credit"
         );
 
-        // generate card
+        uint256 tokenId = _generateAndAssignCard(_to);
+
+        _takePayment(1);
+
+        return tokenId;
+    }
+
+    function buyBatch(uint256 _numberToPurchase) whenNotPaused public payable returns (uint256[] memory _tokenIds){
+        return buyBatchTo(msg.sender, _numberToPurchase);
+    }
+
+    function buyBatchTo(address _to, uint256 _numberToPurchase) whenNotPaused public payable returns (uint256[] memory _tokenIds){
+        require(
+            credits[msg.sender] >= _numberToPurchase || msg.value >= priceInWei.mul(_numberToPurchase),
+            "Must supply at least the required minimum purchase value or have credit"
+        );
+
+        uint256[] memory generatedTokeIds = new uint256[](_numberToPurchase);
+
+        for (uint i = 0; i < _numberToPurchase; i++) {
+            generatedTokeIds[i] = _generateAndAssignCard(_to);
+        }
+
+        _takePayment(_numberToPurchase);
+
+        return generatedTokeIds;
+    }
+
+    function _generateAndAssignCard(address _to) internal returns (uint256 _tokenId) {
+        // Generate card
         (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generateCard(msg.sender);
 
         // cardType is 0 for genesis (initially)
         uint256 tokenId = futballCardsNFT.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
 
-        // generate attributes
+        // Generate attributes
         (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender, attributesBase);
         futballCardsNFT.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
 
         (uint256 _firstName, uint256 _lastName) = futballCardsGenerator.generateName(msg.sender);
         futballCardsNFT.setName(tokenId, _firstName, _lastName);
 
-        // use credits first
-        if (credits[msg.sender] > 0) {
-            credits[msg.sender] = credits[msg.sender].sub(1);
-            // any trapped ether can be withdrawn with withdraw()
-        } else {
-            totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
-            wallet.transfer(msg.value);
-        }
-
         emit BlindPackPulled(tokenId, _to);
 
         return tokenId;
     }
 
-    // batch buy
+    function _takePayment(uint256 _numberToPurchase) internal {
+        // use credits first
+        if (credits[msg.sender] >= _numberToPurchase) {
+            credits[msg.sender] = credits[msg.sender].sub(_numberToPurchase);
+        } else {
+            // any trapped ether can be withdrawn with withdraw()
+            totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
+            wallet.transfer(msg.value);
+        }
+    }
 
     function setCardTypeDefault(uint256 _newDefaultCardType) public onlyOwner returns (bool) {
         cardTypeDefault = _newDefaultCardType;
@@ -104,6 +134,14 @@ contract FutballCardsBlindPack is Ownable {
 
     function addCredit(address _to) public onlyOwner returns (bool) {
         credits[_to] = credits[_to].add(1);
+
+        emit CreditAdded(_to);
+
+        return true;
+    }
+
+    function addCredits(address _to, uint256 _creditsToAdd) public onlyOwner returns (bool) {
+        credits[_to] = credits[_to].add(_creditsToAdd);
 
         emit CreditAdded(_to);
 

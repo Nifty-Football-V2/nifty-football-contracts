@@ -14,7 +14,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
     const firstURI = 'http://futball-cards';
     const baseURI = 'http://futball-cards';
 
-    before(async function () {
+    beforeEach(async function () {
         // Create 721 contract
         this.futballCards = await FutballCards.new(baseURI, {from: creator});
 
@@ -250,5 +250,57 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
             postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
 
         });
+    });
+
+    context.only('batch buy', async function () {
+
+        context('to the caller', async function () {
+
+            it('fails if caller does not have enough credits', async function () {
+                await this.blindPack.addCredits(tokenOwner, 9, {from: creator});
+                await shouldFail.reverting.withMessage(
+                    this.blindPack.buyBatch(10, {from: tokenOwner}),
+                    "Must supply at least the required minimum purchase value or have credit"
+                );
+            });
+
+            it('fails if not enough ETH sent', async function () {
+                await shouldFail.reverting.withMessage(
+                    this.blindPack.buyBatch(10, {from: tokenOwner, value: this.basePrice.mul(new BN(9))}),
+                    "Must supply at least the required minimum purchase value or have credit"
+                );
+            });
+
+            it('successful if caller has enough credits', async function () {
+                await this.blindPack.addCredits(tokenOwner, 10, {from: creator});
+
+                await this.blindPack.buyBatch(10, {from: tokenOwner});
+
+                const tokensOfOwner = await this.futballCards.tokensOfOwner(tokenOwner);
+                tokensOfOwner.map(e => e.toNumber()).should.be.deep.equal([
+                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+                ]);
+
+                const remainingCredits = await this.blindPack.credits(tokenOwner);
+                remainingCredits.should.be.bignumber.eq('0');
+            });
+
+            it('successful if caller sends enough ETH', async function () {
+                const value = this.basePrice.mul(new BN(10));
+
+                await this.blindPack.buyBatch(10, {from: tokenOwner, value: value});
+
+                const tokensOfOwner = await this.futballCards.tokensOfOwner(tokenOwner);
+                tokensOfOwner.map(e => e.toNumber()).should.be.deep.equal([
+                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+                ]);
+            });
+
+        });
+
+        context('to specific address', async function () {
+
+        });
+
     });
 });
