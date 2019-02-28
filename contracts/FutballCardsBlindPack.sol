@@ -30,9 +30,21 @@ contract FutballCardsBlindPack is Ownable, Pausable {
     mapping(address => uint256) public credits;
 
     uint256 public totalPurchasesInWei = 0;
-    uint256 public priceInWei = 100;
     uint256 public cardTypeDefault = 0;
     uint256 public attributesBase = 30;
+
+    uint256[] public pricePerCard = [
+    11000000, // 1 @ = 0.011 ETH / $1.5
+    11000000, // 2 @ = 0.011 ETH / $1.5
+    7300000, //  3 @ = 0.01 ETH / $1
+    7300000, //  4 @ = 0.01 ETH / $1
+    7300000, //  5 @ = 0.01 ETH / $1
+    6200000, //  6 @ = 0.0062 ETH / $0.85
+    6200000, //  7 @ = 0.0062 ETH / $0.85
+    6200000, //  8 @ = 0.0062 ETH / $0.85
+    6200000, //  9 @ = 0.0062 ETH / $0.85
+    5500000 //  10 @ = 0.0055 ETH / $0.75
+    ];
 
     constructor (address payable _wallet, FutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
         futballCardsGenerator = _futballCardsGenerator;
@@ -46,7 +58,7 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     function blindPackTo(address _to) whenNotPaused public payable returns (uint256 _tokenId) {
         require(
-            credits[msg.sender] > 0 || msg.value >= priceInWei,
+            credits[msg.sender] > 0 || msg.value >= totalPrice(1),
             "Must supply at least the required minimum purchase value or have credit"
         );
 
@@ -57,23 +69,23 @@ contract FutballCardsBlindPack is Ownable, Pausable {
         return tokenId;
     }
 
-    function buyBatch(uint256 _numberToPurchase) whenNotPaused public payable returns (uint256[] memory _tokenIds){
-        return buyBatchTo(msg.sender, _numberToPurchase);
+    function buyBatch(uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
+        return buyBatchTo(msg.sender, _numberOfCards);
     }
 
-    function buyBatchTo(address _to, uint256 _numberToPurchase) whenNotPaused public payable returns (uint256[] memory _tokenIds){
+    function buyBatchTo(address _to, uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
         require(
-            credits[msg.sender] >= _numberToPurchase || msg.value >= priceInWei.mul(_numberToPurchase),
+            credits[msg.sender] >= _numberOfCards || msg.value >= totalPrice(_numberOfCards),
             "Must supply at least the required minimum purchase value or have credit"
         );
 
-        uint256[] memory generatedTokeIds = new uint256[](_numberToPurchase);
+        uint256[] memory generatedTokeIds = new uint256[](_numberOfCards);
 
-        for (uint i = 0; i < _numberToPurchase; i++) {
+        for (uint i = 0; i < _numberOfCards; i++) {
             generatedTokeIds[i] = _generateAndAssignCard(_to);
         }
 
-        _takePayment(_numberToPurchase);
+        _takePayment(_numberOfCards);
 
         return generatedTokeIds;
     }
@@ -97,10 +109,10 @@ contract FutballCardsBlindPack is Ownable, Pausable {
         return tokenId;
     }
 
-    function _takePayment(uint256 _numberToPurchase) internal {
+    function _takePayment(uint256 _numberOfCards) internal {
         // use credits first
-        if (credits[msg.sender] >= _numberToPurchase) {
-            credits[msg.sender] = credits[msg.sender].sub(_numberToPurchase);
+        if (credits[msg.sender] >= _numberOfCards) {
+            credits[msg.sender] = credits[msg.sender].sub(_numberOfCards);
         } else {
             // any trapped ether can be withdrawn with withdraw()
             totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
@@ -124,11 +136,8 @@ contract FutballCardsBlindPack is Ownable, Pausable {
         return true;
     }
 
-    function setPriceInWei(uint256 _newPriceInWei) public onlyOwner returns (bool) {
-        emit PriceInWeiChanged(priceInWei, _newPriceInWei);
-
-        priceInWei = _newPriceInWei;
-
+    function updatePricePerCardAtIndex(uint256 _index, uint256 _priceInWei) public onlyOwner returns (bool) {
+        pricePerCard[_index] = _priceInWei;
         return true;
     }
 
@@ -151,5 +160,13 @@ contract FutballCardsBlindPack is Ownable, Pausable {
     function withdraw() public onlyOwner returns (bool) {
         wallet.transfer(address(this).balance);
         return true;
+    }
+
+
+    function totalPrice(uint256 _numberOfCards) public view returns (uint256) {
+        if (_numberOfCards > pricePerCard.length) {
+            return pricePerCard[pricePerCard.length - 1].mul(_numberOfCards);
+        }
+        return pricePerCard[_numberOfCards - 1].mul(_numberOfCards);
     }
 }
