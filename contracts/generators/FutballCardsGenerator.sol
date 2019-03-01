@@ -6,8 +6,8 @@ contract FutballCardsGenerator is Ownable {
 
     uint256 internal randNonce = 0;
 
-    uint256 public nameLength = 256;
-    uint256 public maxAttributeScore = 100;
+    uint256 public constant nameLength = 256;
+    uint256 public constant maxAttributeScore = 100;
 
     uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 3, 3];
     uint256[] internal nationalities = [0, 1, 2, 3, 4];
@@ -24,12 +24,13 @@ contract FutballCardsGenerator is Ownable {
         uint256 _kit,
         uint256 _colour
     ) {
+        bytes32 hash = blockhash(block.number);
         return (
-        nationalities[generate(_sender, nationalities.length)],
-        positions[generate(_sender, positions.length)],
-        ethnicities[generate(_sender, ethnicities.length)],
-        kits[generate(_sender, kits.length)],
-        colours[generate(_sender, colours.length)]
+        nationalities[generate(_sender, nationalities.length, hash)],
+        positions[generate(_sender, positions.length, hash)],
+        ethnicities[generate(_sender, ethnicities.length, hash)],
+        kits[generate(_sender, kits.length, hash)],
+        colours[generate(_sender, colours.length, hash)]
         );
     }
 
@@ -41,11 +42,12 @@ contract FutballCardsGenerator is Ownable {
         uint256 intelligence,
         uint256 skill
     ) {
+        bytes32 hash = blockhash(block.number);
         return (
-        _base + generate(_sender, maxAttributeScore - _base),
-        _base + generate(_sender, maxAttributeScore - _base),
-        _base + generate(_sender, maxAttributeScore - _base),
-        _base + generate(_sender, maxAttributeScore - _base)
+        _base + generate(_sender, maxAttributeScore - _base, hash),
+        _base + generate(_sender, maxAttributeScore - _base, hash),
+        _base + generate(_sender, maxAttributeScore - _base, hash),
+        _base + generate(_sender, maxAttributeScore - _base, hash)
         );
     }
 
@@ -55,9 +57,10 @@ contract FutballCardsGenerator is Ownable {
         uint256 firstName,
         uint256 lastName
     ) {
+        bytes32 hash = blockhash(block.number);
         return (
-        generate(_sender, nameLength),
-        generate(_sender, nameLength)
+        generate(_sender, nameLength, hash),
+        generate(_sender, nameLength, hash)
         );
     }
 
@@ -171,9 +174,9 @@ contract FutballCardsGenerator is Ownable {
         ethnicities.length--;
     }
 
-    function generate(address _sender, uint256 _max) internal returns (uint256) {
+    function generate(address _sender, uint256 _max, bytes32 _hash) internal returns (uint256) {
         randNonce++;
-        bytes memory packed = abi.encodePacked(blockhash(block.number), _sender, randNonce);
+        bytes memory packed = abi.encodePacked(_hash, _sender, randNonce);
         return uint256(keccak256(packed)) % _max;
     }
 }
