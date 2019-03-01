@@ -21,8 +21,8 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
     const _tokenId1 = new BN(0);
     const _tokenId2 = new BN(1);
 
-    const SECONDS_IN_A_DAY = 24 * 60 * 60;
-    const predictFrom = Math.floor(((new Date()).getTime() / 1000) - 15);
+    const SECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
+    const predictFrom = Math.floor(((new Date()).getTime()) - 15);
     const predictTo = predictFrom + SECONDS_IN_A_DAY;
 
     const _match1 = {
@@ -31,7 +31,15 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         _predictTo: new BN(predictTo)
     };
 
-    before(async () => {
+    function whenANewMatchIsAdded(contract, sender) {
+        return contract.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: sender});
+    }
+
+    function givenABasicPrediction(contract, sender) {
+        return contract.makeFirstPrediction(_match1._matchId, _tokenId1, Outcomes.HOME_WIN, {from: sender});
+    }
+
+    beforeEach(async () => {
         this.futballCards = await FutballCards.new(baseURI, {from: creator});
         this.matchPrediction = await MatchPrediction.new(this.futballCards.address, oracle, {from: creator});
 
@@ -39,21 +47,38 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
     });
 
     context('validation', async () => {
+        context('when paused', async () => {
+            beforeEach(async () => {
+                await this.matchPrediction.pause({from: creator});
+                (await this.matchPrediction.paused()).should.be.true;
+            });
+
+            it('cant add match', async () => {
+               await shouldFail.reverting(whenANewMatchIsAdded(this.matchPrediction, oracle));
+            });
+
+            it('cant create a game', async () => {
+                await shouldFail.reverting(givenABasicPrediction(this.matchPrediction, tokenOwner1));
+            });
+        });
+
         context('when adding matches', async () => {
             it('should be successful with valid parameters', async () => {
-                await this.matchPrediction.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: oracle});
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
             });
 
             it('should block any non-oracle address', async () => {
                 await shouldFail.reverting.withMessage(
-                    this.matchPrediction.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: tokenOwner1}),
+                    whenANewMatchIsAdded(this.matchPrediction, tokenOwner1),
                     validationErrorContentKeys.notOracle
                 );
             });
 
             it('should not allow the same match to be added twice', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
                 await shouldFail.reverting.withMessage(
-                    this.matchPrediction.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: oracle}),
+                    whenANewMatchIsAdded(this.matchPrediction, oracle),
                     validationErrorContentKeys.matchExists
                 );
             });
@@ -66,8 +91,9 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         context('when match #1 is chosen', async () => {
             it('should handle a basic prediction', async () => {
                 // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
+                const {logs} = await givenABasicPrediction(this.matchPrediction, tokenOwner1);
+
                 const expectedGameId = new BN(1);
-                const {logs} = await this.matchPrediction.makeFirstPrediction(_match1._matchId, _tokenId1, Outcomes.HOME_WIN, {from: tokenOwner1});
                 expectEvent.inLogs(logs,
                     'GameCreated',
                     {

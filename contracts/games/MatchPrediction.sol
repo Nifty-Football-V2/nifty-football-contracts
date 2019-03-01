@@ -65,7 +65,7 @@ contract MatchPrediction is FutballCardGame {
     }
 
     modifier onlyWhenTimesValid(uint256 _predictFrom, uint256 _predictTo) {
-        require(_predictFrom >= block.timestamp, "match.prediction.validation.error.predict.from.invalid");
+        require(_predictFrom >= now, "match.prediction.validation.error.predict.from.invalid");
         require(_predictTo > _predictFrom, "match.prediction.validation.error.predict.to.before.from");
         _;
     }
@@ -119,7 +119,7 @@ contract MatchPrediction is FutballCardGame {
     onlyWhenOracle
     onlyWhenMatchIdValid(_matchId)
     onlyWhenNewMatch(_matchId)
-        //onlyWhenTimesValid(_predictFrom, _predictTo) todo: tests break with this - will do further investigation
+    onlyWhenTimesValid(_predictFrom, _predictTo)
     public {
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
@@ -153,13 +153,6 @@ contract MatchPrediction is FutballCardGame {
         emit GameCreated(newGameId, msg.sender, _tokenId);
 
         return newGameId;
-    }
-
-    function wasPredictionTrue(uint256 _gameId)
-    public view returns (bool) {
-        Outcome fixedResult = Outcome.HOME_WIN;
-        Outcome prediction = gameIdToGameMapping[_gameId].p1Prediction;
-        return fixedResult == prediction;
     }
 
     function updateOracle(address _newOracle)
