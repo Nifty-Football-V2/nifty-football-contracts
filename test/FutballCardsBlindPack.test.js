@@ -5,7 +5,7 @@ const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
+contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
 
     const firstTokenId = new BN(0);
     const secondTokenId = new BN(1);
@@ -147,7 +147,8 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
             await shouldFail.reverting(this.futballCards.burn(firstTokenId, {from: anyone}));
         });
 
-        it.skip('should burn if owner', async function () {
+        it('should burn if owner', async function () {
+            await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
             const {logs} = await this.futballCards.burn(firstTokenId, {from: tokenOwner});
             expectEvent.inLogs(
                 logs,

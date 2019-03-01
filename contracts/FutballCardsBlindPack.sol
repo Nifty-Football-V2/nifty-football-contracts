@@ -79,15 +79,15 @@ contract FutballCardsBlindPack is Ownable, Pausable {
             "Must supply at least the required minimum purchase value or have credit"
         );
 
-        uint256[] memory generatedTokeIds = new uint256[](_numberOfCards);
+        uint256[] memory generatedTokenIds = new uint256[](_numberOfCards);
 
         for (uint i = 0; i < _numberOfCards; i++) {
-            generatedTokeIds[i] = _generateAndAssignCard(_to);
+            generatedTokenIds[i] = _generateAndAssignCard(_to);
         }
 
         _takePayment(_numberOfCards);
 
-        return generatedTokeIds;
+        return generatedTokenIds;
     }
 
     function _generateAndAssignCard(address _to) internal returns (uint256 _tokenId) {
