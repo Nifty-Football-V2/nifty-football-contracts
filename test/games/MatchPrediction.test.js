@@ -3,14 +3,15 @@ const MatchPrediction = artifacts.require('MatchPrediction');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, tokenOwner2, oracle, ...accounts]) => {
+contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, tokenOwner2, oracle, oracle2, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 
     const validationErrorContentKeys = {
         notOracle: "match.prediction.validation.error.not.oracle",
         matchExists: "match.prediction.validation.error.match.exists",
         predictFromInvalid: "match.prediction.validation.error.predict.from.invalid",
-        predictToBeforeFrom: "match.prediction.validation.error.predict.to.before.from"
+        predictToBeforeFrom: "match.prediction.validation.error.predict.to.before.from",
+        zeroAddress: "match.prediction.validation.error.address.zero"
     };
 
     const Outcomes = {
@@ -55,6 +56,7 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
 
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
         (await this.matchPrediction.totalGames()).should.be.bignumber.equal('0');
+        (await this.matchPrediction.oracle()).should.be.equal(oracle);
     });
 
     context('validation', async () => {
@@ -122,6 +124,19 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
                    whenASpecificMatchIsAdded(this.matchPrediction, matchWithInvalidTo, oracle),
                    validationErrorContentKeys.predictToBeforeFrom
                );
+            });
+        });
+
+        context('when updating oracle address', async () => {
+            it('should update as owner', async () => {
+                await this.matchPrediction.updateOracle(oracle2, {from: creator});
+            });
+
+            it('should prevent oracle being updated to address(0)', async () => {
+                await shouldFail.reverting.withMessage(
+                    this.matchPrediction.updateOracle(constants.ZERO_ADDRESS, {from: creator}),
+                    validationErrorContentKeys.zeroAddress
+                );
             });
         });
     });

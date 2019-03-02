@@ -4,10 +4,22 @@ import "./abstract/FutballCardGame.sol";
 
 contract MatchPrediction is FutballCardGame {
 
-    event GameCreated(
+    event GameCreated (
         uint256 indexed gameId,
         address indexed player1,
         uint256 indexed p1TokenId
+    );
+
+    event GameResulted (
+        uint256 indexed id,
+        address indexed player1,
+        address indexed player2,
+        State result
+    );
+
+    event MatchOutcome (
+        uint256 indexed id,
+        Outcome indexed outcome
     );
 
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
@@ -32,7 +44,7 @@ contract MatchPrediction is FutballCardGame {
         uint256 openGamesListIndex;
     }
 
-    address oracle;
+    address public oracle;
 
     uint256 public totalGames = 0;
 
@@ -56,8 +68,8 @@ contract MatchPrediction is FutballCardGame {
     // Modifiers //
     ///////////////
 
-    modifier onlyWhenNotAddressZero() {
-        require(msg.sender != address(0), "match.prediction.validation.error.address.zero");
+    modifier onlyWhenNotAddressZero(address addr) {
+        require(addr != address(0), "match.prediction.validation.error.address.zero");
         _;
     }
 
@@ -166,7 +178,7 @@ contract MatchPrediction is FutballCardGame {
     function updateOracle(address _newOracle)
     whenNotPaused
     onlyOwner
-    onlyWhenNotAddressZero public {
+    onlyWhenNotAddressZero(_newOracle) public {
         oracle = _newOracle;
     }
 }
