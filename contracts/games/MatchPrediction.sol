@@ -89,8 +89,8 @@ contract MatchPrediction is FutballCardGame {
         _;
     }
 
-    modifier onlyWhenMatchValid(uint256 _matchId) {
-        require(_isMatchValid(_matchId), "match.prediction.validation.error.invalid.match.id");
+    modifier onlyWhenMatchExists(uint256 _matchId) {
+        require(_doesMatchExist(_matchId), "match.prediction.validation.error.invalid.match.id");
         _;
     }
 
@@ -119,10 +119,6 @@ contract MatchPrediction is FutballCardGame {
     }
 
     function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
-        return (matchIdToMatchMapping[_matchId].predictFrom != matchIdToMatchMapping[_matchId].predictTo);
-    }
-
-    function _isMatchValid(uint256 _matchId) internal view returns (bool) {
         return (matchIdToMatchMapping[_matchId].predictTo > matchIdToMatchMapping[_matchId].predictFrom);
     }
 
@@ -147,7 +143,8 @@ contract MatchPrediction is FutballCardGame {
     // todo: investigate if prediction needs a validation modifier
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
-    onlyWhenMatchValid(_matchId)
+    onlyWhenMatchExists(_matchId)
+
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     public returns (uint256 _gameId) {
         uint256 newGameId = totalGames.add(1);

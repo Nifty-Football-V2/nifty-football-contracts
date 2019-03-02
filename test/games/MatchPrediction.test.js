@@ -6,12 +6,15 @@ const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-help
 contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, tokenOwner2, oracle, oracle2, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 
+    const thenExpectTheFollowingEvent = expectEvent;
+
     const validationErrorContentKeys = {
         notOracle: "match.prediction.validation.error.not.oracle",
         matchExists: "match.prediction.validation.error.match.exists",
         predictFromInvalid: "match.prediction.validation.error.predict.from.invalid",
         predictToBeforeFrom: "match.prediction.validation.error.predict.to.before.from",
-        zeroAddress: "match.prediction.validation.error.address.zero"
+        zeroAddress: "match.prediction.validation.error.address.zero",
+        matchIdInvalid: "match.prediction.validation.error.invalid.match.id"
     };
 
     const Outcomes = {
@@ -43,11 +46,11 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
     }
 
     function givenABasicFirstPrediction(contract, sender) {
-        return makeAFirstPredictionFor(contract, _match1, _tokenId1, Outcomes.HOME_WIN, sender);
+        return makeAFirstPredictionFor(contract, _match1._matchId, _tokenId1, Outcomes.HOME_WIN, sender);
     }
 
-    function makeAFirstPredictionFor(contract, match, tokenId, prediction, sender) {
-        return contract.makeFirstPrediction(match._matchId, tokenId, prediction, {from: sender});
+    function makeAFirstPredictionFor(contract, matchId, tokenId, prediction, sender) {
+        return contract.makeFirstPrediction(matchId, tokenId, prediction, {from: sender});
     }
 
     beforeEach(async () => {
@@ -139,20 +142,17 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
                 );
             });
         });
-    });
 
-    context('playing the game', async () => {
-        context('when match #1 is chosen', async () => {
-            it('should handle a basic prediction', async () => {
-                // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
+        context('when creating the first prediction', async () => {
+            //todo: update this test to test ownership, approval etc.
+            it('should handle a prediction given valid parameters', async () => {
                 whenANewMatchIsAdded(this.matchPrediction, oracle);
-                const {logs} = await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
-                const expectedGameId = new BN(1);
-                expectEvent.inLogs(logs,
+                const {logs} = await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+                thenExpectTheFollowingEvent.inLogs(logs,
                     'GameCreated',
                     {
-                        gameId: expectedGameId,
+                        gameId: new BN(1),
                         player1: tokenOwner1,
                         p1TokenId: _tokenId1
                     }
@@ -160,7 +160,18 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
 
                 (await this.matchPrediction.totalGames()).should.be.bignumber.equal('1');
             });
+
+            //todo: add further unit tests around supplying an invalid match id etc.
         });
     });
+
+    /*context('playing the game', async () => {
+        context('when match #1 is chosen', async () => {
+            it('should handle a basic prediction', async () => {
+                // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
+
+            });
+        });
+    });*/
 
 });
