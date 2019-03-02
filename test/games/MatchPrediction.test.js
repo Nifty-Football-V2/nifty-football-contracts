@@ -35,8 +35,12 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         return contract.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: sender});
     }
 
-    function givenABasicPrediction(contract, sender) {
-        return contract.makeFirstPrediction(_match1._matchId, _tokenId1, Outcomes.HOME_WIN, {from: sender});
+    function givenABasicFirstPrediction(contract, sender) {
+        return makeAFirstPredictionFor(contract, _match1, _tokenId1, Outcomes.HOME_WIN, sender);
+    }
+
+    function makeAFirstPredictionFor(contract, match, tokenId, prediction, sender) {
+        return contract.makeFirstPrediction(match._matchId, tokenId, prediction, {from: sender});
     }
 
     beforeEach(async () => {
@@ -53,12 +57,12 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
                 (await this.matchPrediction.paused()).should.be.true;
             });
 
-            it('cant add match', async () => {
+            it('should fail to add a match', async () => {
                await shouldFail.reverting(whenANewMatchIsAdded(this.matchPrediction, oracle));
             });
 
-            it('cant create a game', async () => {
-                await shouldFail.reverting(givenABasicPrediction(this.matchPrediction, tokenOwner1));
+            it('should fail to create a game', async () => {
+                await shouldFail.reverting(givenABasicFirstPrediction(this.matchPrediction, tokenOwner1));
             });
         });
 
@@ -91,7 +95,7 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         context('when match #1 is chosen', async () => {
             it('should handle a basic prediction', async () => {
                 // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
-                const {logs} = await givenABasicPrediction(this.matchPrediction, tokenOwner1);
+                const {logs} = await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
                 const expectedGameId = new BN(1);
                 expectEvent.inLogs(logs,

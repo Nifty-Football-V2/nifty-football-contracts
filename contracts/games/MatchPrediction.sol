@@ -70,13 +70,8 @@ contract MatchPrediction is FutballCardGame {
         _;
     }
 
-    modifier onlyWhenMatchIdValid(uint256 _matchId) {
-        require(_matchId > 0, "match.prediction.validation.error.match.id.zero");
-        _;
-    }
-
-    modifier onlyWhenNewMatch(uint256 _matchId) {
-        require(matchIdToMatchMapping[_matchId].id == 0, "match.prediction.validation.error.match.exists");
+    modifier onlyWhenMatchDoesNotExist(uint256 _matchId) {
+        require(!_doesMatchExist(_matchId), "match.prediction.validation.error.match.exists");
         _;
     }
 
@@ -110,6 +105,10 @@ contract MatchPrediction is FutballCardGame {
         return false;
     }
 
+    function _doesMatchExist(uint256 _matchId) internal returns (bool) {
+        return (matchIdToMatchMapping[_matchId].predictFrom != matchIdToMatchMapping[_matchId].predictTo);
+    }
+
     ///////////////
     // Functions //
     ///////////////
@@ -117,8 +116,7 @@ contract MatchPrediction is FutballCardGame {
     function addMatch(uint256 _matchId, uint256 _predictFrom, uint256 _predictTo)
     whenNotPaused
     onlyWhenOracle
-    onlyWhenMatchIdValid(_matchId)
-    onlyWhenNewMatch(_matchId)
+    onlyWhenMatchDoesNotExist(_matchId)
     onlyWhenTimesValid(_predictFrom, _predictTo)
     public {
         matchIdToMatchMapping[_matchId] = Match({
@@ -156,7 +154,9 @@ contract MatchPrediction is FutballCardGame {
     }
 
     function updateOracle(address _newOracle)
-    onlyOwner onlyWhenNotAddressZero public {
+    whenNotPaused
+    onlyOwner
+    onlyWhenNotAddressZero public {
         oracle = _newOracle;
     }
 }
