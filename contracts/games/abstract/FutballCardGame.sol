@@ -16,42 +16,42 @@ contract FutballCardGame is Ownable, Pausable {
     ///////////////
 
     modifier onlyWhenTokenOwner(uint256 _tokenId) {
-        require(nft.ownerOf(_tokenId) == msg.sender, "You cannot enter if you dont own the card");
+        require(nft.ownerOf(_tokenId) == msg.sender, "futball.card.game.error.not.nft.owner");
         _;
     }
 
     modifier onlyWhenContractIsApprovedForAllNFTs() {
-        require(nft.isApprovedForAll(msg.sender, address(this)), "No NFTs approved for play");
+        require(nft.isApprovedForAll(msg.sender, address(this)), "futball.card.game.error.no.nft.approved");
         _;
     }
 
     modifier onlyWhenContractIsApproved(uint256 _tokenId) {
-        require(nft.getApproved(_tokenId) == address(this), "NFT not approved for play");
+        require(nft.getApproved(_tokenId) == address(this), "futball.card.game.error.nft.not.approved");
         _;
     }
 
     modifier onlyWhenRealGame(uint256 _gameId) {
-        require(_isValidGame(_gameId), "Game not setup");
+        require(_isValidGame(_gameId), "futball.card.game.error.invalid.game");
         _;
     }
 
     modifier onlyWhenGameOpen(uint256 _gameId) {
-        require(_isGameOpen(_gameId), "Game not open");
+        require(_isGameOpen(_gameId), "futball.card.game.error.game.closed");
         _;
     }
 
     modifier onlyWhenGameDrawn(uint256 _gameId) {
-        require(_isGameDraw(_gameId), "Game not in drawn state");
+        require(_isGameDraw(_gameId), "futball.card.game.error.not.draw");
         _;
     }
 
     modifier onlyWhenGameNotComplete(uint256 _gameId) {
-        require(_isGameIncomplete(_gameId), "Game not complete");
+        require(_isGameIncomplete(_gameId), "futball.card.game.error.game.complete");
         _;
     }
 
     modifier onlyWhenTokenNotAlreadyPlaying(uint256 _tokenId) {
-        require(_isTokenNotAlreadyPlaying(_tokenId), "Token already playing a game");
+        require(_isTokenNotAlreadyPlaying(_tokenId), "futball.card.game.error.token.playing");
         _;
     }
 
@@ -59,11 +59,11 @@ contract FutballCardGame is Ownable, Pausable {
     // Function Signatures //
     /////////////////////////
 
-    function _isValidGame(uint256 _gameId) internal returns (bool);
-    function _isGameOpen(uint256 _gameId) internal returns (bool);
-    function _isGameDraw(uint256 _gameId) internal returns (bool);
-    function _isGameIncomplete(uint256 _gameId) internal returns (bool);
-    function _isTokenNotAlreadyPlaying(uint256 _tokenId) internal returns (bool);
+    function _isValidGame(uint256 _gameId) internal view returns (bool);
+    function _isGameOpen(uint256 _gameId) internal view returns (bool);
+    function _isGameDraw(uint256 _gameId) internal view returns (bool);
+    function _isGameIncomplete(uint256 _gameId) internal view returns (bool);
+    function _isTokenNotAlreadyPlaying(uint256 _tokenId) internal view returns (bool);
 
     // todo: Add nft / resulter contract update methods
 }

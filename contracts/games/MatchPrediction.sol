@@ -11,7 +11,7 @@ contract MatchPrediction is FutballCardGame {
     );
 
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
-    enum State {OPEN, PLAYER_1_WIN, PLAYER_2_WIN, DRAW, CLOSED}
+    enum State {UNINITIALISED, OPEN, PLAYER_1_WIN, PLAYER_2_WIN, DRAW, CLOSED}
 
     struct Match {
         uint256 id;
@@ -29,6 +29,7 @@ contract MatchPrediction is FutballCardGame {
         Outcome p2Prediction;
         State state;
         uint256 matchId;
+        uint256 openGamesListIndex;
     }
 
     address oracle;
@@ -54,6 +55,7 @@ contract MatchPrediction is FutballCardGame {
     ///////////////
     // Modifiers //
     ///////////////
+
     modifier onlyWhenNotAddressZero() {
         require(msg.sender != address(0), "match.prediction.validation.error.address.zero");
         _;
@@ -76,37 +78,40 @@ contract MatchPrediction is FutballCardGame {
     }
 
     modifier onlyWhenMatchValid(uint256 _matchId) {
-        require(matchIdToMatchMapping[_matchId].id > 0, "match.prediction.validation.error.invalid.match.id");
+        require(_isMatchValid(_matchId), "match.prediction.validation.error.invalid.match.id");
         _;
     }
 
-    //////////////////////////
-    // Interface Functions  //
-    //////////////////////////
-    // todo: Implement these functions so they can be called in the modifier guards
+    ////////////////////////////////////////
+    // Interface and Internal Functions  //
+    ///////////////////////////////////////
 
-    function _isValidGame(uint256 _gameId) internal returns (bool) {
-        return false;
+    function _isValidGame(uint256 _gameId) internal view returns (bool) {
+        return gameIdToGameMapping[_gameId].id > 0 && gameIdToGameMapping[_gameId].state == State.OPEN;
     }
 
-    function _isGameOpen(uint256 _gameId) internal returns (bool) {
-        return false;
+    function _isGameOpen(uint256 _gameId) internal view returns (bool) {
+        return _isGameIncomplete(_gameId);
     }
 
-    function _isGameDraw(uint256 _gameId) internal returns (bool) {
-        return false;
+    function _isGameDraw(uint256 _gameId) internal view returns (bool) {
+        return gameIdToGameMapping[_gameId].state == State.DRAW;
     }
 
-    function _isGameIncomplete(uint256 _gameId) internal returns (bool) {
-        return false;
+    function _isGameIncomplete(uint256 _gameId) internal view returns (bool) {
+        return gameIdToGameMapping[_gameId].state == State.OPEN;
     }
 
-    function _isTokenNotAlreadyPlaying(uint256 _tokenId) internal returns (bool) {
-        return false;
+    function _isTokenNotAlreadyPlaying(uint256 _tokenId) internal view returns (bool) {
+        return tokenIdToGameIdMapping[_tokenId] == 0;
     }
 
-    function _doesMatchExist(uint256 _matchId) internal returns (bool) {
+    function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
         return (matchIdToMatchMapping[_matchId].predictFrom != matchIdToMatchMapping[_matchId].predictTo);
+    }
+
+    function _isMatchValid(uint256 _matchId) internal view returns (bool) {
+        return (matchIdToMatchMapping[_matchId].predictTo > matchIdToMatchMapping[_matchId].predictFrom);
     }
 
     ///////////////
@@ -123,16 +128,18 @@ contract MatchPrediction is FutballCardGame {
             id: _matchId,
             predictFrom: _predictFrom,
             predictTo: _predictTo
-            });
+        });
     }
 
-    // todo: add modifier which checks if the Match ID is valid
     // todo: use inherited token validation modifiers
     // todo: investigate if prediction needs a validation modifier
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
+    onlyWhenMatchValid(_matchId)
+    onlyWhenTokenNotAlreadyPlaying(_tokenId)
     public returns (uint256 _gameId) {
         uint256 newGameId = totalGames.add(1);
+        uint256 openGamesForSpecifiedMatchCount = matchIdToOpenGameIdListMapping[_matchId].length;
 
         gameIdToGameMapping[newGameId] = Game({
             id: newGameId,
@@ -143,9 +150,12 @@ contract MatchPrediction is FutballCardGame {
             p1Prediction: _prediction,
             p2Prediction: Outcome.UNINITIALISED,
             state: State.OPEN,
-            matchId: _matchId
-            });
+            matchId: _matchId,
+            openGamesListIndex: openGamesForSpecifiedMatchCount
+        });
 
+        tokenIdToGameIdMapping[_tokenId] = newGameId;
+        matchIdToOpenGameIdListMapping[_matchId].push(newGameId);
         totalGames = newGameId;
 
         emit GameCreated(newGameId, msg.sender, _tokenId);
