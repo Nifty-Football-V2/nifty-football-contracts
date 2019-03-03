@@ -17,7 +17,9 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         matchIdInvalid: "match.prediction.validation.error.invalid.match.id",
         nftNotApproved: "futball.card.game.error.nft.not.approved",
         notNFTOwner: "futball.card.game.error.not.nft.owner",
-        tokenAlreadyPlaying: "futball.card.game.error.token.playing"
+        tokenAlreadyPlaying: "futball.card.game.error.token.playing",
+        oracleAddressZero: "match.prediction.error.oracle.address.zero",
+        nftAddressZero: "match.prediction.error.nft.contract.address.zero"
     };
 
     const Outcomes = {
@@ -67,6 +69,22 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
     });
 
     context('validation', async () => {
+        context('when creating the contract', async () => {
+            it('should fail to create contract with address(0) oracle', async () => {
+                await shouldFail.reverting.withMessage(
+                    MatchPrediction.new(this.futballCards.address, constants.ZERO_ADDRESS, {from: creator}),
+                    validationErrorContentKeys.oracleAddressZero
+                );
+            });
+
+            it('should fail to create contract with address(0) nft contract', async () => {
+               await shouldFail.reverting.withMessage(
+                   MatchPrediction.new(constants.ZERO_ADDRESS, oracle, {from: creator}),
+                   validationErrorContentKeys.nftAddressZero
+               );
+            });
+        });
+
         context('when paused', async () => {
             beforeEach(async () => {
                 await this.matchPrediction.pause({from: creator});
@@ -88,7 +106,14 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
 
         context('when adding matches', async () => {
             it('should be successful with valid parameters', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                const {logs} = await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
+                thenExpectTheFollowingEvent.inLogs(logs,
+                    "MatchAdded",
+                    {
+                        id: _match1._matchId
+                    }
+                );
             });
 
             it('should block any non-oracle address', async () => {

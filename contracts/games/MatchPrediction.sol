@@ -17,6 +17,10 @@ contract MatchPrediction is FutballCardGame {
         State result
     );
 
+    event MatchAdded (
+        uint256 indexed id
+    );
+
     event MatchOutcome (
         uint256 indexed id,
         Outcome indexed outcome
@@ -62,9 +66,9 @@ contract MatchPrediction is FutballCardGame {
     // todo: it may also be useful to have a list of gameId keys
 
     constructor (IFutballCardsAttributes _nft, address _oracle) public {
-        // todo: add validation on all to ensure constructor is not supplied address(0) on any params
-        // todo: should this be done in modifiers?
-        // todo: add contract deployer as owner of this contract
+        require(address(_nft) != address(0), "match.prediction.error.nft.contract.address.zero");
+        require(_oracle != address(0), "match.prediction.error.oracle.address.zero");
+
         nft = _nft;
         oracle = _oracle;
     }
@@ -142,6 +146,8 @@ contract MatchPrediction is FutballCardGame {
             predictFrom: _predictFrom,
             predictTo: _predictTo
         });
+
+        emit MatchAdded(_matchId);
     }
 
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
