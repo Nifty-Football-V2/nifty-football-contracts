@@ -15,7 +15,9 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         predictToBeforeFrom: "match.prediction.validation.error.predict.to.before.from",
         zeroAddress: "match.prediction.validation.error.address.zero",
         matchIdInvalid: "match.prediction.validation.error.invalid.match.id",
-        nftNotApproved: "futball.card.game.error.nft.not.approved"
+        nftNotApproved: "futball.card.game.error.nft.not.approved",
+        notNFTOwner: "futball.card.game.error.not.nft.owner",
+        tokenAlreadyPlaying: "futball.card.game.error.token.playing"
     };
 
     const Outcomes = {
@@ -134,7 +136,19 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
 
         context('when updating oracle address', async () => {
             it('should update as owner', async () => {
-                await this.matchPrediction.updateOracle(oracle2, {from: creator});
+                const {logs} = await this.matchPrediction.updateOracle(oracle2, {from: creator});
+
+                thenExpectTheFollowingEvent.inLogs(logs,
+                    'OracleUpdated',
+                    {
+                        previous: oracle,
+                        current: oracle2
+                    }
+                );
+            });
+
+            it('should fail when not owner', async () => {
+                await shouldFail.reverting(this.matchPrediction.updateOracle(oracle2, {from: random}));
             });
 
             it('should prevent oracle being updated to address(0)', async () => {
@@ -160,9 +174,8 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
                 (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
             });
 
-            //todo: update this test to test ownership, approval etc.
-            it('should handle a prediction given valid parameters', async () => {
-                whenANewMatchIsAdded(this.matchPrediction, oracle);
+            it('should be successful with valid parameters', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
 
                 const {logs} = await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
                 thenExpectTheFollowingEvent.inLogs(logs,
@@ -177,7 +190,43 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
                 (await this.matchPrediction.totalGames()).should.be.bignumber.equal('1');
             });
 
-            //todo: add further unit tests around supplying an invalid match id etc.
+            it('should fail on referencing an invalid match', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
+                const invalidMatchId = new BN(2);
+                await shouldFail.reverting.withMessage(
+                    makeAFirstPredictionFor(this.matchPrediction, invalidMatchId, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
+                    validationErrorContentKeys.matchIdInvalid
+                );
+            });
+
+            it('should fail when contract not approved for token', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    makeAFirstPredictionFor(this.matchPrediction, _match1._matchId, _tokenId2, Outcomes.UNINITIALISED, tokenOwner2),
+                    validationErrorContentKeys.nftNotApproved
+                );
+            });
+
+            it('should fail when sender is not owner of token', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    makeAFirstPredictionFor(this.matchPrediction, _match1._matchId, _tokenId1, Outcomes.UNINITIALISED, tokenOwner2),
+                    validationErrorContentKeys.notNFTOwner
+                );
+            });
+
+            it('should fail when token is already playing', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+
+                await shouldFail.reverting.withMessage(
+                    givenABasicFirstPrediction(this.matchPrediction, tokenOwner1),
+                    validationErrorContentKeys.tokenAlreadyPlaying
+                );
+            });
         });
     });
 

@@ -22,6 +22,11 @@ contract MatchPrediction is FutballCardGame {
         Outcome indexed outcome
     );
 
+    event OracleUpdated (
+        address indexed previous,
+        address indexed current
+    );
+
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
     enum State {UNINITIALISED, OPEN, PLAYER_1_WIN, PLAYER_2_WIN, DRAW, CLOSED}
 
@@ -139,7 +144,6 @@ contract MatchPrediction is FutballCardGame {
         });
     }
 
-    // todo: investigate if prediction needs a validation modifier
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
     onlyWhenMatchExists(_matchId)
@@ -176,6 +180,9 @@ contract MatchPrediction is FutballCardGame {
     whenNotPaused
     onlyOwner
     onlyWhenNotAddressZero(_newOracle) public {
+        address previous = oracle;
         oracle = _newOracle;
+
+        emit OracleUpdated(previous, oracle);
     }
 }
