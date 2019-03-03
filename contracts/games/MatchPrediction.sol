@@ -17,6 +17,12 @@ contract MatchPrediction is FutballCardGame {
         State result
     );
 
+    event PredictionsReceived (
+        uint256 indexed gameId,
+        address indexed player1,
+        address indexed player2
+    );
+
     event MatchAdded (
         uint256 indexed id
     );
@@ -32,7 +38,7 @@ contract MatchPrediction is FutballCardGame {
     );
 
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
-    enum State {UNINITIALISED, OPEN, PLAYER_1_WIN, PLAYER_2_WIN, DRAW, CLOSED}
+    enum State {UNINITIALISED, OPEN, PREDICTIONS_RECEIVED, PLAYER_1_WIN, PLAYER_2_WIN, DRAW, CLOSED}
 
     struct Match {
         uint256 id;
@@ -103,12 +109,17 @@ contract MatchPrediction is FutballCardGame {
         _;
     }
 
+    modifier onlyWhenPredictionValid(Outcome _prediction) {
+        require(_prediction != Outcome.UNINITIALISED, "match.prediction.validation.error.invalid.prediction");
+        _;
+    }
+
     ////////////////////////////////////////
     // Interface and Internal Functions  //
     ///////////////////////////////////////
 
     function _isValidGame(uint256 _gameId) internal view returns (bool) {
-        return gameIdToGameMapping[_gameId].id > 0 && gameIdToGameMapping[_gameId].state == State.OPEN;
+        return gameIdToGameMapping[_gameId].id > 0;
     }
 
     function _isGameOpen(uint256 _gameId) internal view returns (bool) {
@@ -156,6 +167,7 @@ contract MatchPrediction is FutballCardGame {
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
+    onlyWhenPredictionValid(_prediction)
     public returns (uint256 _gameId) {
         uint256 newGameId = totalGames.add(1);
         uint256 openGamesForSpecifiedMatchCount = matchIdToOpenGameIdListMapping[_matchId].length;
@@ -181,6 +193,23 @@ contract MatchPrediction is FutballCardGame {
 
         return newGameId;
     }
+
+    function makeSecondPrediction(uint256 _gameId, uint256 _tokenId, Outcome _prediction)
+    whenNotPaused
+    onlyWhenRealGame(_gameId)
+    onlyWhenGameNotComplete(_gameId)
+    onlyWhenContractIsApproved(_tokenId)
+    onlyWhenTokenOwner(_tokenId)
+    onlyWhenPredictionValid(_prediction) public {
+        gameIdToGameMapping[_gameId].p2TokenId = _tokenId;
+        gameIdToGameMapping[_gameId].p2Address = msg.sender;
+        gameIdToGameMapping[_gameId].p2Prediction = _prediction;
+        gameIdToGameMapping[_gameId].state = State.PREDICTIONS_RECEIVED;
+
+        emit PredictionsReceived(_gameId, gameIdToGameMapping[_gameId].p1Address, msg.sender);
+    }
+
+    //todo: add match result function that oracle can call into
 
     function updateOracle(address _newOracle)
     whenNotPaused

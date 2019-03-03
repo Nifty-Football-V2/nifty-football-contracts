@@ -3,7 +3,8 @@ const MatchPrediction = artifacts.require('MatchPrediction');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, tokenOwner2, oracle, oracle2, random, ...accounts]) => {
+contract.only('Match Prediction Contract Tests',
+             ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 
     const thenExpectTheFollowingEvent = expectEvent;
@@ -19,7 +20,10 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         notNFTOwner: "futball.card.game.error.not.nft.owner",
         tokenAlreadyPlaying: "futball.card.game.error.token.playing",
         oracleAddressZero: "match.prediction.error.oracle.address.zero",
-        nftAddressZero: "match.prediction.error.nft.contract.address.zero"
+        nftAddressZero: "match.prediction.error.nft.contract.address.zero",
+        invalidGameId: "futball.card.game.error.invalid.game",
+        gameComplete: "futball.card.game.error.game.complete",
+        invalidPrediction: "match.prediction.validation.error.invalid.prediction"
     };
 
     const Outcomes = {
@@ -32,6 +36,8 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
     const _tokenId1 = new BN(0);
     const _tokenId2 = new BN(1);
     const _tokenId3 = new BN(2);
+
+    const _game1Id = new BN(1);
 
     const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
     const predictFrom = Math.floor((new Date()).getTime());
@@ -57,6 +63,14 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
 
     function makeAFirstPredictionFor(contract, matchId, tokenId, prediction, sender) {
         return contract.makeFirstPrediction(matchId, tokenId, prediction, {from: sender});
+    }
+
+    function givenABasicSecondPrediction(contract, sender) {
+        return makeASecondPredictionFor(contract, _game1Id, _tokenId2, Outcomes.AWAY_WIN, sender);
+    }
+
+    function makeASecondPredictionFor(contract, gameId, tokenId, prediction, sender) {
+        return contract.makeSecondPrediction(gameId, tokenId, prediction, {from: sender});
     }
 
     beforeEach(async () => {
@@ -97,6 +111,10 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
 
             it('should fail to create a game', async () => {
                 await shouldFail.reverting(givenABasicFirstPrediction(this.matchPrediction, tokenOwner1));
+            });
+
+            it('should fail on an attempt to do a second prediction', async () => {
+                await shouldFail.reverting(givenABasicSecondPrediction(this.matchPrediction, tokenOwner2));
             });
 
             it('should fail to update the oracle address', async () => {
@@ -184,7 +202,7 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
             });
         });
 
-        context('when creating the first prediction', async () => {
+        context('when making the first prediction', async () => {
             beforeEach(async () => {
                 await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
                 await this.futballCards.setAttributes(_tokenId1, 10, 10, 10, 10, {from: creator});
@@ -193,10 +211,7 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
                 await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
                 await this.futballCards.setAttributes(_tokenId2, 5, 10, 20, 20, {from: creator});
 
-                await this.futballCards.mintCard(3, 3, 3, 3, 3, 3, random, {from: creator});
-                await this.futballCards.setAttributes(_tokenId3, 30, 30, 30, 30, {from: creator});
-
-                (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
+                (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
             });
 
             it('should be successful with valid parameters', async () => {
@@ -206,7 +221,7 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
                 thenExpectTheFollowingEvent.inLogs(logs,
                     'GameCreated',
                     {
-                        gameId: new BN(1),
+                        gameId: _game1Id,
                         player1: tokenOwner1,
                         p1TokenId: _tokenId1
                     }
@@ -250,6 +265,97 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
                 await shouldFail.reverting.withMessage(
                     givenABasicFirstPrediction(this.matchPrediction, tokenOwner1),
                     validationErrorContentKeys.tokenAlreadyPlaying
+                );
+            });
+
+            it('should fail when prediction is invalid', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await shouldFail.reverting.withMessage(
+                    makeAFirstPredictionFor(this.matchPrediction, _match1._matchId, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
+                    validationErrorContentKeys.invalidPrediction
+                );
+            });
+        });
+
+        context('when making the second prediction', async () => {
+            beforeEach(async () => {
+                await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+                await this.futballCards.setAttributes(_tokenId1, 10, 10, 10, 10, {from: creator});
+                await this.futballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
+
+                await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
+                await this.futballCards.setAttributes(_tokenId2, 5, 10, 20, 20, {from: creator});
+                await this.futballCards.approve(this.matchPrediction.address, _tokenId2, {from: tokenOwner2});
+
+                await this.futballCards.mintCard(3, 3, 3, 3, 3, 3, random, {from: creator});
+                await this.futballCards.setAttributes(_tokenId3, 30, 30, 30, 30, {from: creator});
+
+                (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
+            });
+
+            it('should be successful with valid parameters', async () => {
+               await whenANewMatchIsAdded(this.matchPrediction, oracle);
+               await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+
+               const {logs} = await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
+               thenExpectTheFollowingEvent.inLogs(logs,
+                   'PredictionsReceived',
+                   {
+                       gameId: _game1Id,
+                       player1: tokenOwner1,
+                       player2: tokenOwner2
+                   }
+               );
+            });
+
+            it('should fail on referencing an invalid game', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+
+                await shouldFail.reverting.withMessage(
+                    makeASecondPredictionFor(this.matchPrediction, new BN(2), _tokenId3, Outcomes.UNINITIALISED, random),
+                    validationErrorContentKeys.invalidGameId
+                );
+            });
+
+            it('should fail when trying to amend second prediction', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+                await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
+
+                await shouldFail.reverting.withMessage(
+                    givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
+                    validationErrorContentKeys.gameComplete
+                );
+            });
+
+            it('should fail when contract is not approved for token', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+
+                await shouldFail.reverting.withMessage(
+                    makeASecondPredictionFor(this.matchPrediction, _game1Id, _tokenId3, Outcomes.UNINITIALISED, tokenOwner3),
+                    validationErrorContentKeys.nftNotApproved
+                );
+            });
+
+            it('should fail when sender is not owner of token', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+
+                await shouldFail.reverting.withMessage(
+                    makeASecondPredictionFor(this.matchPrediction, _game1Id, _tokenId2, Outcomes.UNINITIALISED, tokenOwner3),
+                    validationErrorContentKeys.notNFTOwner
+                );
+            });
+
+            it('should fail when prediction is invalid', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+
+                await shouldFail.reverting.withMessage(
+                    makeASecondPredictionFor(this.matchPrediction, _game1Id, _tokenId2, Outcomes.UNINITIALISED, tokenOwner2),
+                    validationErrorContentKeys.invalidPrediction
                 );
             });
         });
