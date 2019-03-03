@@ -139,12 +139,12 @@ contract MatchPrediction is FutballCardGame {
         });
     }
 
-    // todo: use inherited token validation modifiers
     // todo: investigate if prediction needs a validation modifier
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
     onlyWhenMatchExists(_matchId)
-
+    onlyWhenContractIsApproved(_tokenId)
+    onlyWhenTokenOwner(_tokenId)
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     public returns (uint256 _gameId) {
         uint256 newGameId = totalGames.add(1);

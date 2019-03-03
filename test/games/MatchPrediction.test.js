@@ -3,7 +3,7 @@ const MatchPrediction = artifacts.require('MatchPrediction');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, tokenOwner2, oracle, oracle2, ...accounts]) => {
+contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, tokenOwner2, oracle, oracle2, random, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 
     const thenExpectTheFollowingEvent = expectEvent;
@@ -14,7 +14,8 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         predictFromInvalid: "match.prediction.validation.error.predict.from.invalid",
         predictToBeforeFrom: "match.prediction.validation.error.predict.to.before.from",
         zeroAddress: "match.prediction.validation.error.address.zero",
-        matchIdInvalid: "match.prediction.validation.error.invalid.match.id"
+        matchIdInvalid: "match.prediction.validation.error.invalid.match.id",
+        nftNotApproved: "futball.card.game.error.nft.not.approved"
     };
 
     const Outcomes = {
@@ -26,6 +27,7 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
 
     const _tokenId1 = new BN(0);
     const _tokenId2 = new BN(1);
+    const _tokenId3 = new BN(2);
 
     const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
     const predictFrom = Math.floor((new Date()).getTime());
@@ -144,6 +146,20 @@ contract.only('Match Prediction Contract Tests', ([_, creator, tokenOwner1, toke
         });
 
         context('when creating the first prediction', async () => {
+            beforeEach(async () => {
+                await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+                await this.futballCards.setAttributes(_tokenId1, 10, 10, 10, 10, {from: creator});
+                await this.futballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
+
+                await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
+                await this.futballCards.setAttributes(_tokenId2, 5, 10, 20, 20, {from: creator});
+
+                await this.futballCards.mintCard(3, 3, 3, 3, 3, 3, random, {from: creator});
+                await this.futballCards.setAttributes(_tokenId3, 30, 30, 30, 30, {from: creator});
+
+                (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
+            });
+
             //todo: update this test to test ownership, approval etc.
             it('should handle a prediction given valid parameters', async () => {
                 whenANewMatchIsAdded(this.matchPrediction, oracle);

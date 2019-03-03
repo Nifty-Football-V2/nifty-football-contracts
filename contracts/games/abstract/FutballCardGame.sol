@@ -20,13 +20,8 @@ contract FutballCardGame is Ownable, Pausable {
         _;
     }
 
-    modifier onlyWhenContractIsApprovedForAllNFTs() {
-        require(nft.isApprovedForAll(msg.sender, address(this)), "futball.card.game.error.no.nft.approved");
-        _;
-    }
-
     modifier onlyWhenContractIsApproved(uint256 _tokenId) {
-        require(nft.getApproved(_tokenId) == address(this), "futball.card.game.error.nft.not.approved");
+        require(nft.getApproved(_tokenId) == address(this) || nft.isApprovedForAll(msg.sender, address(this)), "futball.card.game.error.nft.not.approved");
         _;
     }
 
