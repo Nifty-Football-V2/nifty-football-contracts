@@ -29,7 +29,7 @@ module.exports = {
       port: 7545,
       gas: 6721975, // <-- Use this high gas value
       gasPrice: 1000000000,    // <-- Use this low gas price
-      network_id: '5777', // Match any network id
+      network_id: "*", // Match any network id
     },
     ganache: {
       host: '127.0.0.1',
