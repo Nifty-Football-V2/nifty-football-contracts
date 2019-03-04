@@ -6,7 +6,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "truffle test",
+    "test": "truffle test --network development",
     "coverage": "./node_modules/.bin/solidity-coverage"
   },
   "author": "BlockRocket.tech",
@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "eth-gas-reporter": "^0.1.12",
-    "ethjs": "^0.4.0",
+    "ethjs": "^0.4.0",development
     "lodash": "^4.17.11",
     "truffle": "^5.0.5",
     "truffle-hdwallet-provider": "^1.0.4"
