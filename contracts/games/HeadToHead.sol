@@ -85,9 +85,9 @@ contract HeadToHead is Ownable, Pausable {
         _;
     }
 
-    // FIXME check regular approval too?
-    modifier onlyWhenContractIsApproved() {
-        require(nft.isApprovedForAll(msg.sender, address(this)), "NFT not approved to play");
+    modifier onlyWhenContractIsApproved(uint256 _tokenId) {
+        address owner = nft.ownerOf(_tokenId);
+        require(nft.getApproved(_tokenId) == address(this) || nft.isApprovedForAll(owner, address(this)), "Card not approved to sell");
         _;
     }
 
@@ -122,7 +122,7 @@ contract HeadToHead is Ownable, Pausable {
 
     function createGame(uint256 _tokenId)
     whenNotPaused
-    onlyWhenContractIsApproved
+    onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     public returns (uint256 _gameId) {
@@ -153,7 +153,7 @@ contract HeadToHead is Ownable, Pausable {
 
     function resultGame(uint256 _gameId, uint256 _tokenId)
     whenNotPaused
-    onlyWhenContractIsApproved
+    onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenRealGame(_gameId)
@@ -189,12 +189,13 @@ contract HeadToHead is Ownable, Pausable {
 
     function reMatch(uint256 _gameId)
     whenNotPaused
-    onlyWhenContractIsApproved
     onlyWhenGameDrawn(_gameId)
     public returns (bool) {
 
         address homeOwner = games[_gameId].homeOwner;
         address awayOwner = games[_gameId].awayOwner;
+
+        // FIXME should this check approval of both again?
 
         // Allow both players or the contract owner to result the game
         require(awayOwner == msg.sender || homeOwner == msg.sender || isOwner(), "Can only re-match when you are playing");
