@@ -59,7 +59,7 @@ contract HeadToHead is Ownable, Pausable {
     mapping(uint256 => uint256) tokenToGameMapping;
 
     // A list of open game IDS
-    uint256[] openGames;
+    uint256[] public openGames;
 
     // A mapping for the list of GameID => Position in open games array
     mapping(uint256 => uint256) gamesIndex;
@@ -240,6 +240,10 @@ contract HeadToHead is Ownable, Pausable {
         );
     }
 
+    function openGamesSize() public view returns (uint256 _size) {
+        return openGames.length;
+    }
+
     function _resultGame(uint256 _gameId) internal {
         address homeOwner = games[_gameId].homeOwner;
         uint256 homeTokenId = games[_gameId].homeTokenId;
@@ -286,4 +290,5 @@ contract HeadToHead is Ownable, Pausable {
         // Delete the game once its finished
         delete openGames[gamesIndex[_gameId]];
     }
+
 }
