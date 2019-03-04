@@ -8,7 +8,7 @@ import "../../IFutballCardsAttributes.sol";
 contract FutballCardGame is Ownable, Pausable {
     using SafeMath for uint256;
 
-    IFutballCardsAttributes public nft;
+    IERC721 public nft;
     // todo: abstract resulter / oracle to enable creation of update methods
 
     ///////////////

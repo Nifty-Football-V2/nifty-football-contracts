@@ -71,7 +71,7 @@ contract MatchPrediction is FutballCardGame {
     // todo: it may be useful to have an array of matchId keys that can be externally audited
     // todo: it may also be useful to have a list of gameId keys
 
-    constructor (IFutballCardsAttributes _nft, address _oracle) public {
+    constructor (IERC721 _nft, address _oracle) public {
         require(address(_nft) != address(0), "match.prediction.error.nft.contract.address.zero");
         require(_oracle != address(0), "match.prediction.error.oracle.address.zero");
 
@@ -220,4 +220,5 @@ contract MatchPrediction is FutballCardGame {
 
         emit OracleUpdated(previous, oracle);
     }
+    
 }
