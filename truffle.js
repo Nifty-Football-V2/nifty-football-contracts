@@ -1,6 +1,6 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
-const infuraApikey = '8d878f1ce20b4e2fa9eea01668281193'; // FIXME get new key
-let mnemonic = require('./mnemonic');
+const infuraApikey = '6e7a3de11d3745fe8763bab4466ec8de';
+const mnemonic = process.env.TEST_MNEMONIC || require('./mnemonic');
 
 // Check gas prices before live deploy - https://ethgasstation.info/
 
