@@ -38,7 +38,7 @@ contract HeadToHead is Ownable, Pausable {
         address indexed closer
     );
 
-    enum State {OPEN, HOME_WIN, AWAY_WIN, DRAW, CLOSED}
+    enum State {UNSET, OPEN, HOME_WIN, AWAY_WIN, DRAW, CLOSED}
 
     struct Game {
         uint256 id;
@@ -53,16 +53,16 @@ contract HeadToHead is Ownable, Pausable {
     uint256 public totalGames = 1;
 
     // Game ID -> Game
-    mapping(uint256 => Game) games;
+    mapping(uint256 => Game) public games;
 
     // Token ID -> Game ID - once resulted or withdraw from game we remove from here
-    mapping(uint256 => uint256) tokenToGameMapping;
+    mapping(uint256 => uint256) public tokenToGameMapping;
 
     // A list of open game IDS
     uint256[] public openGames;
 
     // A mapping for the list of GameID => Position in open games array
-    mapping(uint256 => uint256) gamesIndex;
+    mapping(uint256 => uint256) public gamesIndex;
 
     IFutballCardsAttributes public nft;
     HeadToHeadResulter public resulter;
@@ -279,6 +279,19 @@ contract HeadToHead is Ownable, Pausable {
 
             emit GameDraw(homeOwner, awayOwner, _gameId, home[result], away[result], result);
         }
+    }
+
+    function getGameForToken(uint256 _tokenId) public view returns (uint256 gameId, uint256 homeTokenId, address homeOwner, uint256 awayTokenId, address awayOwner, State state) {
+        uint256 _gameId = tokenToGameMapping[_tokenId];
+        Game storage _game = games[_gameId];
+        return (
+        _game.id,
+        _game.homeTokenId,
+        _game.homeOwner,
+        _game.awayTokenId,
+        _game.awayOwner,
+        _game.state
+        );
     }
 
     function _cleanUpGame(uint256 _gameId, uint256 _homeTokenId, uint256 _awayTokenId) internal {

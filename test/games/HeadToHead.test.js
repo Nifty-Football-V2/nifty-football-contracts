@@ -9,11 +9,12 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
     const State = {
-        OPEN: new BN(0),
-        HOME_WIN: new BN(1),
-        AWAY_WIN: new BN(2),
-        DRAW: new BN(3),
-        CLOSED: new BN(4)
+        UNSET: new BN(0),
+        OPEN: new BN(1),
+        HOME_WIN: new BN(2),
+        AWAY_WIN: new BN(3),
+        DRAW: new BN(4),
+        CLOSED: new BN(5)
     };
 
     const _tokenId1 = new BN(0);
