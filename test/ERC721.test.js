@@ -14,7 +14,7 @@ contract('ERC721', function ([_, creator, tokenOwner, anyone, ...accounts]) {
     shouldBehaveLikeERC721(creator, creator, accounts);
 
     describe('internal functions', function () {
-        const tokenId = new BN('0');
+        const tokenId = new BN('1');
 
         describe('_mint(address, uint256)', function () {
             context('with minted token', async function () {
@@ -41,7 +41,7 @@ contract('ERC721', function ([_, creator, tokenOwner, anyone, ...accounts]) {
         });
 
         context('with minted token', function () {
-            const tokenId = new BN('0');
+            const tokenId = new BN('1');
 
             beforeEach(async function () {
                 ({logs: this.logs} = await this.token.mintCard(1, 1, 1, 1, 1, 1, anyone, {from: creator}));

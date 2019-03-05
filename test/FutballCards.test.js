@@ -4,8 +4,8 @@ const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-help
 
 contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
-    const firstTokenId = new BN(0);
-    const secondTokenId = new BN(1);
+    const firstTokenId = new BN(1);
+    const secondTokenId = new BN(2);
     const unknownTokenId = new BN(999);
 
     const firstURI = 'http://futball-cards/';
@@ -23,7 +23,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             expectEvent.inLogs(
                 logs,
                 `CardMinted`,
-                {_tokenId: new BN(0), _to: tokenOwner}
+                {_tokenId: firstTokenId, _to: tokenOwner}
             );
 
             (await this.futballCards.totalCards()).should.be.bignumber.equal('1');
@@ -139,7 +139,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             expectEvent.inLogs(
                 logs,
                 `SpecialSet`,
-                {_tokenId: new BN(0), _value: new BN(3)}
+                {_tokenId: firstTokenId, _value: new BN(3)}
             );
 
             const attrsAndName = await this.futballCards.attributesAndName(firstTokenId);
@@ -168,7 +168,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             expectEvent.inLogs(
                 logs,
                 `BadgeSet`,
-                {_tokenId: new BN(0), _value: new BN(4)}
+                {_tokenId: firstTokenId, _value: new BN(4)}
             );
 
             const extras = await this.futballCards.extras(firstTokenId);
@@ -194,7 +194,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             expectEvent.inLogs(
                 logs,
                 `SponsorSet`,
-                {_tokenId: new BN(0), _value: new BN(5)}
+                {_tokenId: firstTokenId, _value: new BN(5)}
             );
 
             const extras = await this.futballCards.extras(firstTokenId);
@@ -220,7 +220,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             expectEvent.inLogs(
                 logs,
                 `NumberSet`,
-                {_tokenId: new BN(0), _value: new BN(6)}
+                {_tokenId: firstTokenId, _value: new BN(6)}
             );
 
             const extras = await this.futballCards.extras(firstTokenId);
@@ -246,7 +246,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             expectEvent.inLogs(
                 logs,
                 `BootsSet`,
-                {_tokenId: new BN(0), _value: new BN(7)}
+                {_tokenId: firstTokenId, _value: new BN(7)}
             );
 
             const extras = await this.futballCards.extras(firstTokenId);
@@ -272,7 +272,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             expectEvent.inLogs(
                 logs,
                 `StarAdded`,
-                {_tokenId: new BN(0), _value: new BN(1)}
+                {_tokenId: firstTokenId, _value: new BN(1)}
             );
 
             const extras = await this.futballCards.extras(firstTokenId);
@@ -298,7 +298,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             expectEvent.inLogs(
                 logs,
                 `XpAdded`,
-                {_tokenId: new BN(0), _value: new BN(99)}
+                {_tokenId: firstTokenId, _value: new BN(99)}
             );
 
             const extras = await this.futballCards.extras(firstTokenId);
@@ -415,7 +415,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
                 await this.futballCards.clearIpfsImageUri(firstTokenId, {from: tokenOwner});
                 const resetTokenURI = await this.futballCards.tokenURI(firstTokenId);
-                resetTokenURI.should.be.equal("http://futball-cards/0");
+                resetTokenURI.should.be.equal(`http://futball-cards/${firstTokenId}`);
             });
         });
 

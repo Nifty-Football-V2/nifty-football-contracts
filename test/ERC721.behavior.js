@@ -10,8 +10,8 @@ function shouldBehaveLikeERC721 (
     [owner, approved, anotherApproved, operator, anyone]
 ) {
 
-    const firstTokenId = new BN(0);
-    const secondTokenId = new BN(1);
+    const firstTokenId = new BN(1);
+    const secondTokenId = new BN(2);
     const unknownTokenId = new BN(999);
 
     const firstURI = 'http://futball-cards';
