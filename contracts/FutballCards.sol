@@ -75,7 +75,7 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
     );
 
     uint256 public totalCards = 0;
-    uint256 public tokenIdPointer = 0;
+    uint256 public tokenIdPointer = 1;
 
     struct Card {
         uint256 cardType;

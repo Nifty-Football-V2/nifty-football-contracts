@@ -5,10 +5,10 @@ const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helper
 
 contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accounts]) => {
 
-    const firstTokenId = new BN(0);
-    const secondTokenId = new BN(1);
-    const thirdTokenId = new BN(2);
-    const forthTokenId = new BN(3);
+    const firstTokenId = new BN(1);
+    const secondTokenId = new BN(2);
+    const thirdTokenId = new BN(3);
+    const forthTokenId = new BN(4);
     const unknownTokenId = new BN(999);
     const listPrice = new BN(1000000);
     const commission = new BN(3);

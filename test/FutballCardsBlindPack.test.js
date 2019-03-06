@@ -7,8 +7,8 @@ const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helper
 
 contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
 
-    const firstTokenId = new BN(0);
-    const secondTokenId = new BN(1);
+    const firstTokenId = new BN(1);
+    const secondTokenId = new BN(2);
     const unknownTokenId = new BN(999);
 
     const firstURI = 'http://futball-cards';
@@ -307,7 +307,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
 
                 const tokensOfOwner = await this.futballCards.tokensOfOwner(tokenOwner);
                 tokensOfOwner.map(e => e.toNumber()).should.be.deep.equal([
-                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                 ]);
 
                 const remainingCredits = await this.blindPack.credits(tokenOwner);
@@ -321,7 +321,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
 
                 const tokensOfOwner = await this.futballCards.tokensOfOwner(tokenOwner);
                 tokensOfOwner.map(e => e.toNumber()).should.be.deep.equal([
-                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                 ]);
             });
 

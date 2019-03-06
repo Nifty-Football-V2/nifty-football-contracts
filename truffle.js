@@ -1,6 +1,6 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
-const infuraApikey = '8d878f1ce20b4e2fa9eea01668281193'; // FIXME get new key
-let mnemonic = require('./mnemonic');
+const infuraApikey = '6e7a3de11d3745fe8763bab4466ec8de';
+const mnemonic = process.env.TEST_MNEMONIC || require('./mnemonic');
 
 // Check gas prices before live deploy - https://ethgasstation.info/
 
@@ -29,7 +29,7 @@ module.exports = {
       port: 7545,
       gas: 6721975, // <-- Use this high gas value
       gasPrice: 1000000000,    // <-- Use this low gas price
-      network_id: '5777', // Match any network id
+      network_id: '*', // Match any network id
     },
     ganache: {
       host: '127.0.0.1',
