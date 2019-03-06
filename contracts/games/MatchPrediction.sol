@@ -191,7 +191,7 @@ contract MatchPrediction is FutballCardGame {
 
         emit GameCreated(newGameId, msg.sender, _tokenId);
 
-        return newGameId;
+        _gameId = newGameId;
     }
 
     function makeSecondPrediction(uint256 _gameId, uint256 _tokenId, Outcome _prediction)

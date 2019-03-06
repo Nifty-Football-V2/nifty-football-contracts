@@ -3,7 +3,7 @@ pragma solidity 0.5.0;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../IFutballCardsAttributes.sol";
+import "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 
 contract FutballCardGame is Ownable, Pausable {
     using SafeMath for uint256;
