@@ -252,7 +252,7 @@ contract HeadToHead is Ownable, Pausable {
         uint256 awayTokenId = games[_gameId].awayTokenId;
 
         // indexes are zero based
-        uint256 result = resulter.result(_gameId, msg.sender).sub(1);
+        uint256 result = resulter.result(_gameId, msg.sender);
 
         uint256[5] memory home = nft.attributesFlat(homeTokenId);
         uint256[5] memory away = nft.attributesFlat(awayTokenId);
