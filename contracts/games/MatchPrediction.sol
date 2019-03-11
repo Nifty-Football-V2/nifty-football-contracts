@@ -14,7 +14,7 @@ contract MatchPrediction is FutballCardGame {
         uint256 indexed id,
         address indexed player1,
         address indexed player2,
-        State result
+        GameState result
     );
 
     event PredictionsReceived (
@@ -24,6 +24,10 @@ contract MatchPrediction is FutballCardGame {
     );
 
     event MatchAdded (
+        uint256 indexed id
+    );
+
+    event MatchPostponed (
         uint256 indexed id
     );
 
@@ -38,12 +42,17 @@ contract MatchPrediction is FutballCardGame {
     );
 
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
-    enum State {UNINITIALISED, OPEN, PREDICTIONS_RECEIVED, PLAYER_1_WIN, PLAYER_2_WIN, DRAW, CLOSED}
+
+    enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED}
+
+    // A game's state can only be cancelled if a match's state is cancelled
+    enum GameState {UNINITIALISED, OPEN, PREDICTIONS_RECEIVED, PLAYER_1_WIN, PLAYER_2_WIN, DRAW, CANCELLED, CLOSED}
 
     struct Match {
         uint256 id;
         uint256 predictFrom;
         uint256 predictTo;
+        MatchState state;
     }
 
     struct Game {
@@ -54,7 +63,7 @@ contract MatchPrediction is FutballCardGame {
         address p2Address;
         Outcome p1Prediction;
         Outcome p2Prediction;
-        State state;
+        GameState state;
         uint256 matchId;
         uint256 openGamesListIndex;
     }
@@ -109,6 +118,11 @@ contract MatchPrediction is FutballCardGame {
         _;
     }
 
+    modifier onlyWhenMatchNotPostponed(uint256 _matchId) {
+        require(matchIdToMatchMapping[_matchId].state != MatchState.POSTPONED, "match.prediction.validation.error.match.postponed");
+        _;
+    }
+
     modifier onlyWhenPredictionValid(Outcome _prediction) {
         require(_prediction != Outcome.UNINITIALISED, "match.prediction.validation.error.invalid.prediction");
         _;
@@ -127,11 +141,11 @@ contract MatchPrediction is FutballCardGame {
     }
 
     function _isGameDraw(uint256 _gameId) internal view returns (bool) {
-        return gameIdToGameMapping[_gameId].state == State.DRAW;
+        return gameIdToGameMapping[_gameId].state == GameState.DRAW;
     }
 
     function _isGameIncomplete(uint256 _gameId) internal view returns (bool) {
-        return gameIdToGameMapping[_gameId].state == State.OPEN;
+        return gameIdToGameMapping[_gameId].state == GameState.OPEN;
     }
 
     function _isTokenNotAlreadyPlaying(uint256 _tokenId) internal view returns (bool) {
@@ -139,7 +153,7 @@ contract MatchPrediction is FutballCardGame {
     }
 
     function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
-        return (matchIdToMatchMapping[_matchId].predictTo > matchIdToMatchMapping[_matchId].predictFrom);
+        return (_matchId > 0 && matchIdToMatchMapping[_matchId].predictTo > matchIdToMatchMapping[_matchId].predictFrom);
     }
 
     ///////////////
@@ -150,16 +164,26 @@ contract MatchPrediction is FutballCardGame {
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchDoesNotExist(_matchId)
-    onlyWhenTimesValid(_predictFrom, _predictTo)
-    public {
+    onlyWhenTimesValid(_predictFrom, _predictTo) public {
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
             predictFrom: _predictFrom,
-            predictTo: _predictTo
+            predictTo: _predictTo,
+            state: MatchState.UPCOMING
         });
 
         emit MatchAdded(_matchId);
     }
+
+    function postponeMatch(uint256 _matchId)
+    whenNotPaused
+    onlyWhenOracle
+    onlyWhenMatchExists(_matchId)
+    onlyWhenMatchNotPostponed(_matchId) public {
+        matchIdToMatchMapping[_matchId].state = MatchState.POSTPONED;
+
+        emit MatchPostponed(_matchId);
+    }//todo: add unit tests
 
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
@@ -169,6 +193,8 @@ contract MatchPrediction is FutballCardGame {
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenPredictionValid(_prediction)
     public returns (uint256 _gameId) {
+        // todo: before creating the game, first attempt to escrow the nifty being played
+
         uint256 newGameId = totalGames.add(1);
         uint256 openGamesForSpecifiedMatchCount = matchIdToOpenGameIdListMapping[_matchId].length;
 
@@ -180,7 +206,7 @@ contract MatchPrediction is FutballCardGame {
             p2Address: address(0),
             p1Prediction: _prediction,
             p2Prediction: Outcome.UNINITIALISED,
-            state: State.OPEN,
+            state: GameState.OPEN,
             matchId: _matchId,
             openGamesListIndex: openGamesForSpecifiedMatchCount
         });
@@ -204,7 +230,7 @@ contract MatchPrediction is FutballCardGame {
         gameIdToGameMapping[_gameId].p2TokenId = _tokenId;
         gameIdToGameMapping[_gameId].p2Address = msg.sender;
         gameIdToGameMapping[_gameId].p2Prediction = _prediction;
-        gameIdToGameMapping[_gameId].state = State.PREDICTIONS_RECEIVED;
+        gameIdToGameMapping[_gameId].state = GameState.PREDICTIONS_RECEIVED;
 
         emit PredictionsReceived(_gameId, gameIdToGameMapping[_gameId].p1Address, msg.sender);
     }

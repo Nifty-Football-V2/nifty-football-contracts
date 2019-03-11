@@ -33,9 +33,9 @@ contract.only('Match Prediction Contract Tests',
         DRAW: new BN(3)
     };
 
-    const _tokenId1 = new BN(0);
-    const _tokenId2 = new BN(1);
-    const _tokenId3 = new BN(2);
+    const _tokenId1 = new BN(1);
+    const _tokenId2 = new BN(2);
+    const _tokenId3 = new BN(3);
 
     const _game1Id = new BN(1);
 
