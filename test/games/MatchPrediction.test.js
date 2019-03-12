@@ -23,7 +23,8 @@ contract.only('Match Prediction Contract Tests',
         nftAddressZero: "match.prediction.error.nft.contract.address.zero",
         invalidGameId: "futball.card.game.error.invalid.game",
         gameComplete: "futball.card.game.error.game.complete",
-        invalidPrediction: "match.prediction.validation.error.invalid.prediction"
+        invalidPrediction: "match.prediction.validation.error.invalid.prediction",
+        matchPostponed: "match.prediction.validation.error.match.postponed"
     };
 
     const Outcomes = {
@@ -55,6 +56,10 @@ contract.only('Match Prediction Contract Tests',
 
     function whenASpecificMatchIsAdded(contract, match, sender) {
         return contract.addMatch(match._matchId, match._predictFrom, match._predictTo, {from: sender});
+    }
+
+    function whenAMatchIsPostponed(contract, matchId, sender) {
+        return contract.postponeMatch(matchId, {from: sender});
     }
 
     function givenABasicFirstPrediction(contract, sender) {
@@ -107,6 +112,10 @@ contract.only('Match Prediction Contract Tests',
 
             it('should fail to add a match', async () => {
                await shouldFail.reverting(whenANewMatchIsAdded(this.matchPrediction, oracle));
+            });
+
+            it('should fail to postpone a match', async () => {
+               await shouldFail.reverting(whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, oracle));
             });
 
             it('should fail to create a game', async () => {
@@ -174,6 +183,49 @@ contract.only('Match Prediction Contract Tests',
                    whenASpecificMatchIsAdded(this.matchPrediction, matchWithInvalidTo, oracle),
                    validationErrorContentKeys.predictToBeforeFrom
                );
+            });
+        });
+
+        context('when postponing a match', async () => {
+            beforeEach(async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+            });
+
+            it('should be successful with valid parameters', async () => {
+                const {logs} = await whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, oracle);
+
+                thenExpectTheFollowingEvent.inLogs(logs,
+                    'MatchPostponed',
+                    {
+                        id: _match1._matchId
+                    }
+                );
+            });
+
+            it('should block any non-oracle address', async () => {
+                await shouldFail.reverting.withMessage(
+                    whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, random),
+                    validationErrorContentKeys.notOracle
+                );
+            });
+
+            it('should fail when match does not exist', async () => {
+                const invalidMatchId = new BN(5);
+
+                await shouldFail.reverting.withMessage(
+                    whenAMatchIsPostponed(this.matchPrediction, invalidMatchId, oracle),
+                    validationErrorContentKeys.matchIdInvalid
+                );
+            });
+
+
+            it('should fail when match not already postponed', async () => {
+                await whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, oracle),
+                    validationErrorContentKeys.matchPostponed
+                );
             });
         });
 
