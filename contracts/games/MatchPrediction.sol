@@ -192,6 +192,7 @@ contract MatchPrediction is FutballCardGame {
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
     onlyWhenMatchExists(_matchId)
+    onlyWhenMatchNotPostponed(_matchId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
     onlyWhenTokenNotAlreadyPlaying(_tokenId)

@@ -34,6 +34,13 @@ contract.only('Match Prediction Contract Tests',
         DRAW: new BN(3)
     };
 
+    const MatchState = {
+        UNINITIALISED: new BN(0),
+        UPCOMING: new BN(1),
+        POSTPONED: new BN(2),
+        CANCELLED: new BN(3)
+    };
+
     const _tokenId1 = new BN(1);
     const _tokenId2 = new BN(2);
     const _tokenId3 = new BN(3);
@@ -44,26 +51,31 @@ contract.only('Match Prediction Contract Tests',
     const predictFrom = Math.floor((new Date()).getTime());
     const predictTo = predictFrom + MILLISECONDS_IN_A_DAY;
 
-    const _match1 = {
-        _matchId: new BN(34564543),
-        _predictFrom: new BN(predictFrom),
-        _predictTo: new BN(predictTo)
+    const match1 = {
+        id: new BN(34564543),
+        predictFrom: new BN(predictFrom),
+        predictTo: new BN(predictTo),
+        state: MatchState.UPCOMING
     };
 
     function whenANewMatchIsAdded(contract, sender) {
-        return contract.addMatch(_match1._matchId, _match1._predictFrom, _match1._predictTo, {from: sender});
+        return contract.addMatch(match1.id, match1.predictFrom, match1.predictTo, {from: sender});
     }
 
     function whenASpecificMatchIsAdded(contract, match, sender) {
-        return contract.addMatch(match._matchId, match._predictFrom, match._predictTo, {from: sender});
+        return contract.addMatch(match.id, match.predictFrom, match.predictTo, {from: sender});
     }
 
-    function whenAMatchIsPostponed(contract, matchId, sender) {
+    function whenAMatchIsPostponed(contract, sender) {
+        return whenASpecificMatchIsPostponed(contract, match1.id, sender);
+    }
+
+    function whenASpecificMatchIsPostponed(contract, matchId, sender) {
         return contract.postponeMatch(matchId, {from: sender});
     }
 
     function givenABasicFirstPrediction(contract, sender) {
-        return makeAFirstPredictionFor(contract, _match1._matchId, _tokenId1, Outcomes.HOME_WIN, sender);
+        return makeAFirstPredictionFor(contract, match1.id, _tokenId1, Outcomes.HOME_WIN, sender);
     }
 
     function makeAFirstPredictionFor(contract, matchId, tokenId, prediction, sender) {
@@ -115,7 +127,7 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail to postpone a match', async () => {
-               await shouldFail.reverting(whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, oracle));
+               await shouldFail.reverting(whenAMatchIsPostponed(this.matchPrediction, oracle));
             });
 
             it('should fail to create a game', async () => {
@@ -138,7 +150,7 @@ contract.only('Match Prediction Contract Tests',
                 thenExpectTheFollowingEvent.inLogs(logs,
                     "MatchAdded",
                     {
-                        id: _match1._matchId
+                        id: match1.id
                     }
                 );
             });
@@ -161,9 +173,9 @@ contract.only('Match Prediction Contract Tests',
 
             it('should not allow predict from time to be in the past', async () => {
                 const matchWithInvalidFrom = {
-                    _matchId: new BN(1),
-                    _predictFrom: new BN(0),
-                    _predictTo: new BN(predictTo)
+                    id: new BN(1),
+                    predictFrom: new BN(0),
+                    predictTo: new BN(predictTo)
                 };
 
                 await shouldFail.reverting.withMessage(
@@ -174,9 +186,9 @@ contract.only('Match Prediction Contract Tests',
 
             it('should not allow predict to time to be before allowed from time', async () => {
                const matchWithInvalidTo = {
-                   _matchId: new BN(1),
-                   _predictFrom: new BN(predictFrom),
-                   _predictTo: new BN(0)
+                   id: new BN(1),
+                   predictFrom: new BN(predictFrom),
+                   predictTo: new BN(0)
                };
 
                await shouldFail.reverting.withMessage(
@@ -192,19 +204,19 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should be successful with valid parameters', async () => {
-                const {logs} = await whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, oracle);
+                const {logs} = await whenAMatchIsPostponed(this.matchPrediction, oracle);
 
                 thenExpectTheFollowingEvent.inLogs(logs,
                     'MatchPostponed',
                     {
-                        id: _match1._matchId
+                        id: match1.id
                     }
                 );
             });
 
             it('should block any non-oracle address', async () => {
                 await shouldFail.reverting.withMessage(
-                    whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, random),
+                    whenAMatchIsPostponed(this.matchPrediction, random),
                     validationErrorContentKeys.notOracle
                 );
             });
@@ -213,17 +225,17 @@ contract.only('Match Prediction Contract Tests',
                 const invalidMatchId = new BN(5);
 
                 await shouldFail.reverting.withMessage(
-                    whenAMatchIsPostponed(this.matchPrediction, invalidMatchId, oracle),
+                    whenASpecificMatchIsPostponed(this.matchPrediction, invalidMatchId, oracle),
                     validationErrorContentKeys.matchIdInvalid
                 );
             });
 
 
             it('should fail when match not already postponed', async () => {
-                await whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, oracle);
+                await whenAMatchIsPostponed(this.matchPrediction, oracle);
 
                 await shouldFail.reverting.withMessage(
-                    whenAMatchIsPostponed(this.matchPrediction, _match1._matchId, oracle),
+                    whenAMatchIsPostponed(this.matchPrediction, oracle),
                     validationErrorContentKeys.matchPostponed
                 );
             });
@@ -292,11 +304,21 @@ contract.only('Match Prediction Contract Tests',
                 );
             });
 
+            it('should fail when match has been postponed', async () => {
+               await whenANewMatchIsAdded(this.matchPrediction, oracle);
+               await whenAMatchIsPostponed(this.matchPrediction, oracle);
+
+               await shouldFail.reverting.withMessage(
+                   makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
+                   validationErrorContentKeys.matchPostponed
+               );
+            });
+
             it('should fail when contract not approved for token', async () => {
                 await whenANewMatchIsAdded(this.matchPrediction, oracle);
 
                 await shouldFail.reverting.withMessage(
-                    makeAFirstPredictionFor(this.matchPrediction, _match1._matchId, _tokenId2, Outcomes.UNINITIALISED, tokenOwner2),
+                    makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId2, Outcomes.UNINITIALISED, tokenOwner2),
                     validationErrorContentKeys.nftNotApproved
                 );
             });
@@ -305,7 +327,7 @@ contract.only('Match Prediction Contract Tests',
                 await whenANewMatchIsAdded(this.matchPrediction, oracle);
 
                 await shouldFail.reverting.withMessage(
-                    makeAFirstPredictionFor(this.matchPrediction, _match1._matchId, _tokenId1, Outcomes.UNINITIALISED, tokenOwner2),
+                    makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner2),
                     validationErrorContentKeys.notNFTOwner
                 );
             });
@@ -323,7 +345,7 @@ contract.only('Match Prediction Contract Tests',
             it('should fail when prediction is invalid', async () => {
                 await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await shouldFail.reverting.withMessage(
-                    makeAFirstPredictionFor(this.matchPrediction, _match1._matchId, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
+                    makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
                     validationErrorContentKeys.invalidPrediction
                 );
             });
