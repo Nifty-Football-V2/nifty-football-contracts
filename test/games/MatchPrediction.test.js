@@ -392,6 +392,17 @@ contract.only('Match Prediction Contract Tests',
                 );
             });
 
+            it('should fail when match has been postponed', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+                await whenAMatchIsPostponed(this.matchPrediction, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
+                    validationErrorContentKeys.matchPostponed
+                );
+            });
+
             it('should fail when trying to amend second prediction', async () => {
                 await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);

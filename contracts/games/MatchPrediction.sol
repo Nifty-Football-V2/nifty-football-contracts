@@ -1,8 +1,9 @@
 pragma solidity 0.5.0;
 
 import "./abstract/FutballCardGame.sol";
+import "openzeppelin-solidity/contracts/token/ERC721/ERC721Holder.sol";
 
-contract MatchPrediction is FutballCardGame {
+contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     event GameCreated (
         uint256 indexed gameId,
@@ -15,6 +16,10 @@ contract MatchPrediction is FutballCardGame {
         address indexed player1,
         address indexed player2,
         GameState result
+    );
+
+    event EscrowFailed (
+        uint256 indexed gameId
     );
 
     event PredictionsReceived (
@@ -111,7 +116,13 @@ contract MatchPrediction is FutballCardGame {
     }
 
     modifier onlyWhenMatchNotPostponed(uint256 _matchId) {
-        require(matchIdToMatchMapping[_matchId].state != MatchState.POSTPONED, "match.prediction.validation.error.match.postponed");
+        require(!_hasMatchBeenPostponed(_matchId), "match.prediction.validation.error.match.postponed");
+        _;
+    }
+
+    modifier onlyWhenGameMatchNotPostponed(uint256 _gameId) {
+        uint256 matchId = gameIdToGameMapping[_gameId].matchId;
+        require(!_hasMatchBeenPostponed(matchId), "match.prediction.validation.error.match.postponed");
         _;
     }
 
@@ -119,6 +130,12 @@ contract MatchPrediction is FutballCardGame {
         require(_prediction != Outcome.UNINITIALISED, "match.prediction.validation.error.invalid.prediction");
         _;
     }
+
+    modifier onlyWhenPlayer1NotRevokedTransferApproval(uint256 _gameId) {
+        Game memory game = gameIdToGameMapping[_gameId];
+        require(nft.getApproved(game.p1TokenId) == address(this), "match.prediction.validation.error.p1.revoked.approval");
+        _;
+    }//todo: write unit tests around this functionality
 
     ////////////////////////////////////////
     // Interface and Internal Functions  //
@@ -147,6 +164,17 @@ contract MatchPrediction is FutballCardGame {
     function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
         return (_matchId > 0 && matchIdToMatchMapping[_matchId].predictTo > matchIdToMatchMapping[_matchId].predictFrom);
     }
+
+    function _hasMatchBeenPostponed(uint256 _matchId) internal view returns (bool) {
+        return matchIdToMatchMapping[_matchId].state == MatchState.POSTPONED;
+    }
+
+    function _escrowPlayerCards(uint256 _gameId) internal returns (bool) {
+        Game memory game = gameIdToGameMapping[_gameId];
+        nft.safeTransferFrom(game.p1Address, address(this), game.p1TokenId);
+        nft.safeTransferFrom(game.p2Address, address(this), game.p2TokenId);
+        return true;
+    }//todo: add unit tests
 
     /////////////////
     // Constructor //
@@ -189,6 +217,9 @@ contract MatchPrediction is FutballCardGame {
         emit MatchPostponed(_matchId);
     }
 
+    //todo: Add a retrieve fn for retrieving an escrowed card for a game in the following states: postponed, cancelled
+    //todo: Specifically for a winning state, a withdrawal fn should enable withdrawal of 2 cards.
+
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
     onlyWhenMatchExists(_matchId)
@@ -198,8 +229,6 @@ contract MatchPrediction is FutballCardGame {
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenPredictionValid(_prediction)
     public returns (uint256 _gameId) {
-        // todo: before creating the game, first attempt to escrow the nifty being played
-
         uint256 newGameId = totalGames.add(1);
         uint256 openGamesForSpecifiedMatchCount = matchIdToOpenGameIdListMapping[_matchId].length;
 
@@ -228,16 +257,25 @@ contract MatchPrediction is FutballCardGame {
     function makeSecondPrediction(uint256 _gameId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
     onlyWhenRealGame(_gameId)
+    onlyWhenGameMatchNotPostponed(_gameId)
     onlyWhenGameNotComplete(_gameId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
+    onlyWhenPlayer1NotRevokedTransferApproval(_gameId)
     onlyWhenPredictionValid(_prediction) public {
         gameIdToGameMapping[_gameId].p2TokenId = _tokenId;
         gameIdToGameMapping[_gameId].p2Address = msg.sender;
         gameIdToGameMapping[_gameId].p2Prediction = _prediction;
         gameIdToGameMapping[_gameId].state = GameState.PREDICTIONS_RECEIVED;
 
-        emit PredictionsReceived(_gameId, gameIdToGameMapping[_gameId].p1Address, msg.sender);
+        bool result = _escrowPlayerCards(_gameId);
+
+        if (result) {
+            emit PredictionsReceived(_gameId, gameIdToGameMapping[_gameId].p1Address, msg.sender);
+        } else {
+            gameIdToGameMapping[_gameId].state = GameState.OPEN;
+            //todo: emit that the escrow failed?
+        }
     }
 
     //todo: add match result function that oracle can call into
