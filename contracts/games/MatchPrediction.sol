@@ -79,7 +79,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     mapping(uint256 => uint256[]) public matchIdToOpenGameIdListMapping;
     mapping(uint256 => Match) public matchIdToMatchMapping;
 
-    uint256[] public matchIds;
+    uint256[] public matchIds;//todo: unit test
 
     ///////////////
     // Modifiers //
@@ -127,11 +127,13 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
+    //todo: add prediction valid check for second player where their choice does not match p1's choice i.e it's the remaining 2/3 options
+
     modifier onlyWhenPlayer1NotRevokedTransferApproval(uint256 _gameId) {
         Game storage game = gameIdToGameMapping[_gameId];
         require(nft.getApproved(game.p1TokenId) == address(this), "match.prediction.validation.error.p1.revoked.approval");
         _;
-    }//todo: write unit tests around this functionality
+    }
 
     ////////////////////////////////////////
     // Interface and Internal Functions  //
@@ -168,7 +170,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     function _escrowPlayerCards(Game storage game) internal {
         nft.safeTransferFrom(game.p1Address, address(this), game.p1TokenId);
         nft.safeTransferFrom(game.p2Address, address(this), game.p2TokenId);
-    }//todo: add unit tests
+    }
 
     /////////////////
     // Constructor //
@@ -215,6 +217,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         emit MatchPostponed(_matchId);
     }
 
+    //todo: add functionality around a match being cancelled
+
     //todo: Add a retrieve fn for retrieving an escrowed card for a game in the following states: postponed, cancelled
     //todo: Specifically for a winning state, a withdrawal fn should enable withdrawal of 2 cards.
 
@@ -224,7 +228,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenMatchNotPostponed(_matchId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
-    onlyWhenTokenNotAlreadyPlaying(_tokenId)
+    onlyWhenTokenNotAlreadyPlaying(_tokenId)//todo: move this to after paused check
     onlyWhenPredictionValid(_prediction)
     public returns (uint256 _gameId) {
         uint256 newGameId = totalGamesCreated.add(1);
@@ -254,6 +258,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function makeSecondPrediction(uint256 _gameId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
+    onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenRealGame(_gameId)
     onlyWhenGameMatchNotPostponed(_gameId)
     onlyWhenGameNotComplete(_gameId)
@@ -266,6 +271,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         game.p2Address = msg.sender;
         game.p2Prediction = _prediction;
         game.state = GameState.PREDICTIONS_RECEIVED;
+
+        tokenIdToGameIdMapping[_tokenId] = _gameId;
 
         _escrowPlayerCards(game);
 

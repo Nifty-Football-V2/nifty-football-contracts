@@ -397,6 +397,10 @@ contract.only('Match Prediction Contract Tests',
                        player2: tokenOwner2
                    }
                );
+
+               // Ensures cards have been successfully escrowed
+               (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(this.matchPrediction.address);
+               (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(this.matchPrediction.address);
             });
 
             it('should fail on referencing an invalid game', async () => {
@@ -426,7 +430,7 @@ contract.only('Match Prediction Contract Tests',
                 await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
 
                 await shouldFail.reverting.withMessage(
-                    givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
+                    makeASecondPredictionFor(this.matchPrediction, _game1Id, _tokenId3, Outcomes.DRAW, tokenOwner3),
                     validationErrorContentKeys.gameComplete
                 );
             });
@@ -448,6 +452,17 @@ contract.only('Match Prediction Contract Tests',
                 await shouldFail.reverting.withMessage(
                     makeASecondPredictionFor(this.matchPrediction, _game1Id, _tokenId2, Outcomes.UNINITIALISED, tokenOwner3),
                     validationErrorContentKeys.notNFTOwner
+                );
+            });
+
+            it('should fail when token is already playing', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+                await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
+
+                await shouldFail.reverting.withMessage(
+                    makeASecondPredictionFor(this.matchPrediction, _game1Id, _tokenId2, Outcomes.DRAW, tokenOwner2),
+                    validationErrorContentKeys.tokenAlreadyPlaying
                 );
             });
 
