@@ -24,7 +24,10 @@ contract.only('Match Prediction Contract Tests',
         invalidGameId: "futball.card.game.error.invalid.game",
         gameComplete: "futball.card.game.error.game.complete",
         invalidPrediction: "match.prediction.validation.error.invalid.prediction",
-        matchPostponed: "match.prediction.validation.error.match.postponed"
+        matchPostponed: "match.prediction.validation.error.match.postponed",
+        oracleEqOwner: "match.prediction.error.oracle.address.eq.owner",
+        nftContractEqOwner: "match.prediction.error.nft.contract.eq.owner",
+        p1RevokedApproval: "match.prediction.validation.error.p1.revoked.approval"
     };
 
     const Outcomes = {
@@ -95,7 +98,7 @@ contract.only('Match Prediction Contract Tests',
         this.matchPrediction = await MatchPrediction.new(this.futballCards.address, oracle, {from: creator});
 
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
-        (await this.matchPrediction.totalGames()).should.be.bignumber.equal('0');
+        (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('0');
         (await this.matchPrediction.oracle()).should.be.equal(oracle);
     });
 
@@ -108,11 +111,25 @@ contract.only('Match Prediction Contract Tests',
                 );
             });
 
+            it('should fail to create contract when oracle and owner are the same address', async () => {
+                await shouldFail.reverting.withMessage(
+                    MatchPrediction.new(this.futballCards.address, creator, {from: creator}),
+                    validationErrorContentKeys.oracleEqOwner
+                );
+            });
+
             it('should fail to create contract with address(0) nft contract', async () => {
                await shouldFail.reverting.withMessage(
                    MatchPrediction.new(constants.ZERO_ADDRESS, oracle, {from: creator}),
                    validationErrorContentKeys.nftAddressZero
                );
+            });
+
+            it('should fail to create contract when nft contract and owner are the same address', async () => {
+                await shouldFail.reverting.withMessage(
+                    MatchPrediction.new(creator, oracle, {from: creator}),
+                    validationErrorContentKeys.nftContractEqOwner
+                );
             });
         });
 
@@ -291,7 +308,7 @@ contract.only('Match Prediction Contract Tests',
                     }
                 );
 
-                (await this.matchPrediction.totalGames()).should.be.bignumber.equal('1');
+                (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('1');
             });
 
             it('should fail on referencing an invalid match', async () => {
@@ -431,6 +448,21 @@ contract.only('Match Prediction Contract Tests',
                 await shouldFail.reverting.withMessage(
                     makeASecondPredictionFor(this.matchPrediction, _game1Id, _tokenId2, Outcomes.UNINITIALISED, tokenOwner3),
                     validationErrorContentKeys.notNFTOwner
+                );
+            });
+
+            it('should fail when player 1 has revoked transfer approval', async () => {
+                function revokePlayer1TransferApproval(futballCards) {
+                    return futballCards.approve(constants.ZERO_ADDRESS, _tokenId1, {from: tokenOwner1});
+                }
+
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+                await revokePlayer1TransferApproval(this.futballCards);
+
+                await shouldFail.reverting.withMessage(
+                    givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
+                    validationErrorContentKeys.p1RevokedApproval
                 );
             });
 

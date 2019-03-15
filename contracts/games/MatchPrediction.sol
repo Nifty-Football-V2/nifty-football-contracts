@@ -18,10 +18,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         GameState result
     );
 
-    event EscrowFailed (
-        uint256 indexed gameId
-    );
-
     event PredictionsReceived (
         uint256 indexed gameId,
         address indexed player1,
@@ -75,15 +71,15 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     address public oracle;
 
-    uint256 public totalGames = 0;
+    uint256 public totalGamesCreated = 0;
 
-    mapping(uint256 => uint256) tokenIdToGameIdMapping;
-    mapping(uint256 => Game) gameIdToGameMapping;
-    mapping(uint256 => Outcome) matchIdToResultMapping; // todo: result fn should emit outcome
-    mapping(uint256 => uint256[]) matchIdToOpenGameIdListMapping;
-    mapping(uint256 => Match) matchIdToMatchMapping;
-    // todo: it may be useful to have an array of matchId keys that can be externally audited
-    // todo: it may also be useful to have a list of gameId keys
+    mapping(uint256 => uint256) public tokenIdToGameIdMapping;
+    mapping(uint256 => Game) public gameIdToGameMapping;
+    mapping(uint256 => Outcome) public matchIdToResultMapping; // todo: result fn should emit outcome
+    mapping(uint256 => uint256[]) public matchIdToOpenGameIdListMapping;
+    mapping(uint256 => Match) public matchIdToMatchMapping;
+
+    uint256[] public matchIds;
 
     ///////////////
     // Modifiers //
@@ -132,7 +128,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     }
 
     modifier onlyWhenPlayer1NotRevokedTransferApproval(uint256 _gameId) {
-        Game memory game = gameIdToGameMapping[_gameId];
+        Game storage game = gameIdToGameMapping[_gameId];
         require(nft.getApproved(game.p1TokenId) == address(this), "match.prediction.validation.error.p1.revoked.approval");
         _;
     }//todo: write unit tests around this functionality
@@ -180,7 +176,9 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     constructor (IERC721 _nft, address _oracle) public {
         require(address(_nft) != address(0), "match.prediction.error.nft.contract.address.zero");
+        require(address(_nft) != msg.sender, "match.prediction.error.nft.contract.eq.owner");
         require(_oracle != address(0), "match.prediction.error.oracle.address.zero");
+        require(_oracle != msg.sender, "match.prediction.error.oracle.address.eq.owner");
 
         nft = _nft;
         oracle = _oracle;
@@ -194,13 +192,15 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchDoesNotExist(_matchId)
-    onlyWhenTimesValid(_predictFrom, _predictTo) public {
+    onlyWhenTimesValid(_predictFrom, _predictTo) public {//todo: further unit testing around time
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
             predictFrom: _predictFrom,
             predictTo: _predictTo,
             state: MatchState.UPCOMING
         });
+
+        matchIds.push(_matchId);//todo: unit tests to check the matchId list is what we expect
 
         emit MatchAdded(_matchId);
     }
@@ -227,7 +227,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenPredictionValid(_prediction)
     public returns (uint256 _gameId) {
-        uint256 newGameId = totalGames.add(1);
+        uint256 newGameId = totalGamesCreated.add(1);
         uint256 openGamesForSpecifiedMatchCount = matchIdToOpenGameIdListMapping[_matchId].length;
 
         gameIdToGameMapping[newGameId] = Game({
@@ -245,7 +245,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
         tokenIdToGameIdMapping[_tokenId] = newGameId;
         matchIdToOpenGameIdListMapping[_matchId].push(newGameId);
-        totalGames = newGameId;
+        totalGamesCreated = newGameId;
 
         emit GameCreated(newGameId, msg.sender, _tokenId);
 
