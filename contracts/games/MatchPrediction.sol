@@ -169,11 +169,9 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         return matchIdToMatchMapping[_matchId].state == MatchState.POSTPONED;
     }
 
-    function _escrowPlayerCards(uint256 _gameId) internal returns (bool) {
-        Game memory game = gameIdToGameMapping[_gameId];
+    function _escrowPlayerCards(Game storage game) internal {
         nft.safeTransferFrom(game.p1Address, address(this), game.p1TokenId);
         nft.safeTransferFrom(game.p2Address, address(this), game.p2TokenId);
-        return true;
     }//todo: add unit tests
 
     /////////////////
@@ -263,19 +261,15 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenTokenOwner(_tokenId)
     onlyWhenPlayer1NotRevokedTransferApproval(_gameId)
     onlyWhenPredictionValid(_prediction) public {
-        gameIdToGameMapping[_gameId].p2TokenId = _tokenId;
-        gameIdToGameMapping[_gameId].p2Address = msg.sender;
-        gameIdToGameMapping[_gameId].p2Prediction = _prediction;
-        gameIdToGameMapping[_gameId].state = GameState.PREDICTIONS_RECEIVED;
+        Game storage game = gameIdToGameMapping[_gameId];
+        game.p2TokenId = _tokenId;
+        game.p2Address = msg.sender;
+        game.p2Prediction = _prediction;
+        game.state = GameState.PREDICTIONS_RECEIVED;
 
-        bool result = _escrowPlayerCards(_gameId);
+        _escrowPlayerCards(game);
 
-        if (result) {
-            emit PredictionsReceived(_gameId, gameIdToGameMapping[_gameId].p1Address, msg.sender);
-        } else {
-            gameIdToGameMapping[_gameId].state = GameState.OPEN;
-            //todo: emit that the escrow failed?
-        }
+        emit PredictionsReceived(_gameId, game.p1Address, msg.sender);
     }
 
     //todo: add match result function that oracle can call into
