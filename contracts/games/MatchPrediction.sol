@@ -127,6 +127,16 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
+    modifier onlyWhenPredictionValidForSecondPlayer(uint256 _gameId, Outcome _prediction2) {
+        bool prediction2Valid = _prediction2 != Outcome.UNINITIALISED;
+
+        Game storage game = gameIdToGameMapping[_gameId];
+        prediction2Valid = prediction2Valid && _prediction2 != game.p1Prediction;
+
+        require(prediction2Valid, "match.prediction.validation.error.p2.prediction.invalid");
+        _;
+    }
+
     //todo: add prediction valid check for second player where their choice does not match p1's choice i.e it's the remaining 2/3 options
 
     modifier onlyWhenPlayer1NotRevokedTransferApproval(uint256 _gameId) {
@@ -202,7 +212,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
             state: MatchState.UPCOMING
         });
 
-        matchIds.push(_matchId);//todo: unit tests to check the matchId list is what we expect
+        matchIds.push(_matchId);
 
         emit MatchAdded(_matchId);
     }
@@ -224,11 +234,11 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
+    onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchNotPostponed(_matchId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
-    onlyWhenTokenNotAlreadyPlaying(_tokenId)//todo: move this to after paused check
     onlyWhenPredictionValid(_prediction)
     public returns (uint256 _gameId) {
         uint256 newGameId = totalGamesCreated.add(1);

@@ -170,6 +170,8 @@ contract.only('Match Prediction Contract Tests',
                         id: match1.id
                     }
                 );
+
+                (await this.matchPrediction.matchIds(0)).should.be.bignumber.equal(`${match1.id}`);
             });
 
             it('should block any non-oracle address', async () => {
@@ -308,6 +310,7 @@ contract.only('Match Prediction Contract Tests',
                     }
                 );
 
+                (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId1)).should.be.bignumber.equal(`${_game1Id}`);
                 (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('1');
             });
 
@@ -397,6 +400,11 @@ contract.only('Match Prediction Contract Tests',
                        player2: tokenOwner2
                    }
                );
+
+               (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('1');
+
+               (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId1)).should.be.bignumber.equal(`${_game1Id}`);
+               (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId2)).should.be.bignumber.equal(`${_game1Id}`);
 
                // Ensures cards have been successfully escrowed
                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(this.matchPrediction.address);
