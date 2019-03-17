@@ -28,7 +28,8 @@ contract.only('Match Prediction Contract Tests',
         oracleEqOwner: "match.prediction.error.oracle.address.eq.owner",
         nftContractEqOwner: "match.prediction.error.nft.contract.eq.owner",
         p1RevokedApproval: "match.prediction.validation.error.p1.revoked.approval",
-        p2PredictionInvalid: "match.prediction.validation.error.p2.prediction.invalid"
+        p2PredictionInvalid: "match.prediction.validation.error.p2.prediction.invalid",
+        matchNotUpcoming: "match.prediction.validation.error.match.not.upcoming"
     };
 
     const Outcomes = {
@@ -76,6 +77,14 @@ contract.only('Match Prediction Contract Tests',
 
     function whenASpecificMatchIsPostponed(contract, matchId, sender) {
         return contract.postponeMatch(matchId, {from: sender});
+    }
+
+    function whenAMatchIsCancelled(contract, sender) {
+        return whenASpecificMatchIsCancelled(contract, match1.id, sender);
+    }
+
+    function whenASpecificMatchIsCancelled(contract, matchId, sender) {
+        return contract.cancelMatch(matchId, {from: sender});
     }
 
     function givenABasicFirstPrediction(contract, sender) {
@@ -146,6 +155,10 @@ contract.only('Match Prediction Contract Tests',
 
             it('should fail to postpone a match', async () => {
                await shouldFail.reverting(whenAMatchIsPostponed(this.matchPrediction, oracle));
+            });
+
+            it('should fail to cancel a match', async () => {
+               await shouldFail.reverting(whenAMatchIsCancelled(this.matchPrediction, oracle));
             });
 
             it('should fail to create a game', async () => {
@@ -251,12 +264,12 @@ contract.only('Match Prediction Contract Tests',
             });
 
 
-            it('should fail when match not already postponed', async () => {
+            it('should fail when match already postponed', async () => {
                 await whenAMatchIsPostponed(this.matchPrediction, oracle);
 
                 await shouldFail.reverting.withMessage(
                     whenAMatchIsPostponed(this.matchPrediction, oracle),
-                    validationErrorContentKeys.matchPostponed
+                    validationErrorContentKeys.matchNotUpcoming
                 );
             });
         });

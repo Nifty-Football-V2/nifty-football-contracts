@@ -32,6 +32,10 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         uint256 indexed id
     );
 
+    event MatchCancelled (
+        uint256 indexed id
+    );
+
     event MatchOutcome (
         uint256 indexed id,
         Outcome indexed outcome
@@ -113,6 +117,11 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     modifier onlyWhenMatchNotPostponed(uint256 _matchId) {
         require(!_hasMatchBeenPostponed(_matchId), "match.prediction.validation.error.match.postponed");
+        _;
+    }
+
+    modifier onlyWhenMatchUpcoming(uint256 _matchId) {
+        require(matchIdToMatchMapping[_matchId].state == MatchState.UPCOMING, "match.prediction.validation.error.match.not.upcoming");
         _;
     }
 
@@ -211,13 +220,21 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
-    onlyWhenMatchNotPostponed(_matchId) public {
+    onlyWhenMatchUpcoming(_matchId) public {
         matchIdToMatchMapping[_matchId].state = MatchState.POSTPONED;
 
         emit MatchPostponed(_matchId);
     }
 
-    //todo: add functionality around a match being cancelled
+    function cancelMatch(uint256 _matchId)
+    whenNotPaused
+    onlyWhenOracle
+    onlyWhenMatchExists(_matchId)
+    onlyWhenMatchUpcoming(_matchId) public {
+        matchIdToMatchMapping[_matchId].state = MatchState.CANCELLED;
+
+        emit MatchCancelled(_matchId);
+    }
 
     //todo: Add a retrieve fn for retrieving an escrowed card for a game in the following states: postponed, cancelled
     //todo: Specifically for a winning state, a withdrawal fn should enable withdrawal of 2 cards.
