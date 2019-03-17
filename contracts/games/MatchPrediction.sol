@@ -79,7 +79,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     mapping(uint256 => uint256[]) public matchIdToOpenGameIdListMapping;
     mapping(uint256 => Match) public matchIdToMatchMapping;
 
-    uint256[] public matchIds;//todo: unit test
+    uint256[] public matchIds;
 
     ///////////////
     // Modifiers //
@@ -124,16 +124,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     modifier onlyWhenPredictionValid(Outcome _prediction) {
         require(_prediction != Outcome.UNINITIALISED, "match.prediction.validation.error.invalid.prediction");
-        _;
-    }
-
-    modifier onlyWhenPredictionValidForSecondPlayer(uint256 _gameId, Outcome _prediction2) {
-        bool prediction2Valid = _prediction2 != Outcome.UNINITIALISED;
-
-        Game storage game = gameIdToGameMapping[_gameId];
-        prediction2Valid = prediction2Valid && _prediction2 != game.p1Prediction;
-
-        require(prediction2Valid, "match.prediction.validation.error.p2.prediction.invalid");
         _;
     }
 
@@ -280,6 +270,9 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         game.p2TokenId = _tokenId;
         game.p2Address = msg.sender;
         game.p2Prediction = _prediction;
+
+        require(game.p2Prediction != game.p1Prediction, "match.prediction.validation.error.p2.prediction.invalid");
+
         game.state = GameState.PREDICTIONS_RECEIVED;
 
         tokenIdToGameIdMapping[_tokenId] = _gameId;

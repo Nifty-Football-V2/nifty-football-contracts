@@ -27,7 +27,8 @@ contract.only('Match Prediction Contract Tests',
         matchPostponed: "match.prediction.validation.error.match.postponed",
         oracleEqOwner: "match.prediction.error.oracle.address.eq.owner",
         nftContractEqOwner: "match.prediction.error.nft.contract.eq.owner",
-        p1RevokedApproval: "match.prediction.validation.error.p1.revoked.approval"
+        p1RevokedApproval: "match.prediction.validation.error.p1.revoked.approval",
+        p2PredictionInvalid: "match.prediction.validation.error.p2.prediction.invalid"
     };
 
     const Outcomes = {
@@ -498,13 +499,22 @@ contract.only('Match Prediction Contract Tests',
                     validationErrorContentKeys.invalidPrediction
                 );
             });
+
+            it('should fail when player 2s prediction is the same as player 1', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+
+                await shouldFail.reverting.withMessage(
+                    makeASecondPredictionFor(this.matchPrediction, _game1Id, _tokenId2, Outcomes.HOME_WIN, tokenOwner2),
+                    validationErrorContentKeys.p2PredictionInvalid
+                );
+            });
         });
     });
 
     /*context('playing the game', async () => {
         context('when match #1 is chosen', async () => {
             it('should handle a basic prediction', async () => {
-                // todo: Extend this by minting a card and checking the onlyWhenTokenOwner guard and others work
 
             });
         });
