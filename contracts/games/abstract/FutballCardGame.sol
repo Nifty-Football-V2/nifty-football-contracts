@@ -35,11 +35,6 @@ contract FutballCardGame is Ownable, Pausable {
         _;
     }
 
-    modifier onlyWhenGameDrawn(uint256 _gameId) {
-        require(_isGameDraw(_gameId), "futball.card.game.error.not.draw");
-        _;
-    }
-
     modifier onlyWhenGameNotComplete(uint256 _gameId) {
         require(_isGameIncomplete(_gameId), "futball.card.game.error.game.complete");
         _;
@@ -56,7 +51,6 @@ contract FutballCardGame is Ownable, Pausable {
 
     function _isValidGame(uint256 _gameId) internal view returns (bool);
     function _isGameOpen(uint256 _gameId) internal view returns (bool);
-    function _isGameDraw(uint256 _gameId) internal view returns (bool);
     function _isGameIncomplete(uint256 _gameId) internal view returns (bool);
     function _isTokenNotAlreadyPlaying(uint256 _tokenId) internal view returns (bool);
 

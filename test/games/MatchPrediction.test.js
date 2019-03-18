@@ -24,12 +24,12 @@ contract.only('Match Prediction Contract Tests',
         invalidGameId: "futball.card.game.error.invalid.game",
         gameComplete: "futball.card.game.error.game.complete",
         invalidPrediction: "match.prediction.validation.error.invalid.prediction",
-        matchPostponed: "match.prediction.validation.error.match.postponed",
         oracleEqOwner: "match.prediction.error.oracle.address.eq.owner",
         nftContractEqOwner: "match.prediction.error.nft.contract.eq.owner",
         p1RevokedApproval: "match.prediction.validation.error.p1.revoked.approval",
         p2PredictionInvalid: "match.prediction.validation.error.p2.prediction.invalid",
-        matchNotUpcoming: "match.prediction.validation.error.match.not.upcoming"
+        matchNotUpcoming: "match.prediction.validation.error.match.not.upcoming",
+        neitherPlayerWinner: "match.prediction.validation.error.neither.player.winner"
     };
 
     const Outcomes = {
@@ -103,6 +103,10 @@ contract.only('Match Prediction Contract Tests',
         return contract.makeSecondPrediction(gameId, tokenId, prediction, {from: sender});
     }
 
+    function givenAWithdrawalTookPlace(contract, sender) {
+        return contract.withdraw(_game1Id, {from: sender});
+    }
+
     beforeEach(async () => {
         this.futballCards = await FutballCards.new(baseURI, {from: creator});
         this.matchPrediction = await MatchPrediction.new(this.futballCards.address, oracle, {from: creator});
@@ -159,6 +163,10 @@ contract.only('Match Prediction Contract Tests',
 
             it('should fail to cancel a match', async () => {
                await shouldFail.reverting(whenAMatchIsCancelled(this.matchPrediction, oracle));
+            });
+
+            it('should fail to withdraw cards', async () => {
+               await shouldFail.reverting(givenAWithdrawalTookPlace(this.matchPrediction, random));
             });
 
             it('should fail to create a game', async () => {
@@ -272,6 +280,64 @@ contract.only('Match Prediction Contract Tests',
                     validationErrorContentKeys.matchNotUpcoming
                 );
             });
+
+            it('should fail when a match has already been cancelled', async () => {
+               await whenAMatchIsCancelled(this.matchPrediction, oracle);
+
+               await shouldFail.reverting.withMessage(
+                   whenAMatchIsPostponed(this.matchPrediction, oracle),
+                   validationErrorContentKeys.matchNotUpcoming
+               );
+            });
+        });
+
+        context('when cancelling a match', async () => {
+            beforeEach(async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+            });
+
+            it('should be successful with valid parameters', async () => {
+               const {logs} = await whenAMatchIsCancelled(this.matchPrediction, oracle);
+
+               thenExpectTheFollowingEvent.inLogs(logs,
+                   'MatchCancelled',
+                   {
+                       id: match1.id
+                   }
+               );
+            });
+
+            it('should block any non-oracle address', async () => {
+               await shouldFail.reverting.withMessage(
+                   whenAMatchIsCancelled(this.matchPrediction, random),
+                   validationErrorContentKeys.notOracle
+               );
+            });
+
+            it('should fail when a match doesnt exist', async () => {
+               await shouldFail.reverting.withMessage(
+                   whenASpecificMatchIsCancelled(this.matchPrediction, new BN(5), oracle),
+                   validationErrorContentKeys.matchIdInvalid
+               );
+            });
+
+            it('should fail when match already cancelled', async () => {
+               await whenAMatchIsCancelled(this.matchPrediction, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    whenAMatchIsCancelled(this.matchPrediction, oracle),
+                    validationErrorContentKeys.matchNotUpcoming
+               );
+            });
+
+            it('should fail when a match has previously been postponed', async () => {
+               await whenAMatchIsPostponed(this.matchPrediction, oracle);
+
+               await shouldFail.reverting.withMessage(
+                 whenAMatchIsCancelled(this.matchPrediction, oracle),
+                 validationErrorContentKeys.matchNotUpcoming
+               );
+            });
         });
 
         context('when updating oracle address', async () => {
@@ -344,7 +410,7 @@ contract.only('Match Prediction Contract Tests',
 
                await shouldFail.reverting.withMessage(
                    makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
-                   validationErrorContentKeys.matchPostponed
+                   validationErrorContentKeys.matchNotUpcoming
                );
             });
 
@@ -442,7 +508,7 @@ contract.only('Match Prediction Contract Tests',
 
                 await shouldFail.reverting.withMessage(
                     givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
-                    validationErrorContentKeys.matchPostponed
+                    validationErrorContentKeys.matchNotUpcoming
                 );
             });
 
