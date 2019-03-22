@@ -9,7 +9,6 @@ import "./generators/FutballCardsGenerator.sol";
 import "./libs/Strings.sol";
 import "./IFutballCardsCreator.sol";
 
-
 contract FutballCardsBlindPack is Ownable, Pausable {
     using SafeMath for uint256;
 
@@ -61,6 +60,7 @@ contract FutballCardsBlindPack is Ownable, Pausable {
             credits[msg.sender] > 0 || msg.value >= totalPrice(1),
             "Must supply at least the required minimum purchase value or have credit"
         );
+        require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
         uint256 tokenId = _generateAndAssignCard(_to);
 
@@ -78,6 +78,7 @@ contract FutballCardsBlindPack is Ownable, Pausable {
             credits[msg.sender] >= _numberOfCards || msg.value >= totalPrice(_numberOfCards),
             "Must supply at least the required minimum purchase value or have credit"
         );
+        require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
         uint256[] memory generatedTokenIds = new uint256[](_numberOfCards);
 
@@ -168,5 +169,25 @@ contract FutballCardsBlindPack is Ownable, Pausable {
             return pricePerCard[pricePerCard.length - 1].mul(_numberOfCards);
         }
         return pricePerCard[_numberOfCards - 1].mul(_numberOfCards);
+    }
+
+    /**
+     * Returns whether the target address is a contract
+     * Based on OpenZeppelin Address library
+     * @dev This function will return false if invoked during the constructor of a contract,
+     * as the code is not actually created until after the constructor finishes.
+     * @param account address of the account to check
+     * @return whether the target address is a contract
+     */
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        // XXX Currently there is no better way to check if there is a contract in an address
+        // than to check the size of the code at that address.
+        // See https://ethereum.stackexchange.com/a/14016/36603
+        // for more details about how this works.
+        // contracts then.
+        // solhint-disable-next-line no-inline-assembly
+        assembly {size := extcodesize(account)}
+        return size > 0;
     }
 }

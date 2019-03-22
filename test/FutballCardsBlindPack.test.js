@@ -1,11 +1,12 @@
 const FutballCards = artifacts.require('FutballCards');
 const FutballCardsBlindPack = artifacts.require('FutballCardsBlindPack');
 
+const MockBlindBuyingContract = artifacts.require('MockBlindBuyingContract');
 const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
+contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
 
     const firstTokenId = new BN(1);
     const secondTokenId = new BN(2);
@@ -344,6 +345,30 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
 
             oneCard = await await this.blindPack.totalPrice(1);
             oneCard.should.be.bignumber.eq('100');
+        });
+
+    });
+
+    context('cant buy packs when caller is a contract', async function () {
+
+        beforeEach(async function () {
+            this.mockBuyingContract = await MockBlindBuyingContract.new(this.blindPack.address, {
+                from: creator
+            });
+        });
+
+        it('should fail blind pack if caller is address', async function () {
+            await shouldFail.reverting.withMessage(
+                this.mockBuyingContract.blindPackTo(creator, {value: this.basePrice}),
+                "Unable to buy packs from another contract"
+            );
+        });
+
+        it('should fail batch buy if caller is address', async function () {
+            await shouldFail.reverting.withMessage(
+                this.mockBuyingContract.buyBatchTo(creator, 1, {value: this.basePrice}),
+                "Unable to buy packs from another contract"
+            );
         });
 
     });
