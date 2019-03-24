@@ -38,7 +38,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     event MatchOutcome (
         uint256 indexed id,
-        Outcome indexed outcome
+        Outcome indexed result
     );
 
     event OracleUpdated (
@@ -58,6 +58,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         uint256 predictFrom;
         uint256 predictTo;
         MatchState state;
+        Outcome result;
     }
 
     struct Game {
@@ -79,7 +80,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     mapping(uint256 => uint256) public tokenIdToGameIdMapping;
     mapping(uint256 => Game) public gameIdToGameMapping;
-    mapping(uint256 => Outcome) public matchIdToResultMapping; // todo: result fn should emit outcome
+    mapping(uint256 => Outcome) public matchIdToResultMapping;
     mapping(uint256 => uint256[]) public matchIdToOpenGameIdListMapping;
     mapping(uint256 => Match) public matchIdToMatchMapping;
 
@@ -125,9 +126,9 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
-    modifier onlyWhenGameInWinningState(uint256 _gameId) {
-        Game storage game = gameIdToGameMapping[_gameId];
-        require(game.state == GameState.PLAYER_1_WIN || game.state == GameState.PLAYER_2_WIN, "match.prediction.validation.error.neither.player.winner");
+    modifier onlyWhenGameMatchResultReceived(uint256 _gameId) {
+        Match storage gameMatch = matchIdToMatchMapping[gameIdToGameMapping[_gameId].matchId];
+        require(gameMatch.result != Outcome.UNINITIALISED, "match.prediction.validation.error.game.match.result.not.received");
         _;
     }
 
@@ -139,6 +140,16 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     modifier onlyWhenPlayer1NotRevokedTransferApproval(uint256 _gameId) {
         Game storage game = gameIdToGameMapping[_gameId];
         require(nft.getApproved(game.p1TokenId) == address(this), "match.prediction.validation.error.p1.revoked.approval");
+        _;
+    }
+
+    modifier onlyWhenResultStateValid(Outcome _resultState) {
+        require(_resultState != Outcome.UNINITIALISED, "match.prediction.validation.error.invalid.match.result.state");
+        _;
+    }
+
+    modifier onlyWhenAllPredictionsReceived(uint256 _gameId) {
+        require(gameIdToGameMapping[_gameId].state == GameState.PREDICTIONS_RECEIVED, "match.prediction.validation.error.game.predictions.not.received");
         _;
     }
 
@@ -207,7 +218,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
             id: _matchId,
             predictFrom: _predictFrom,
             predictTo: _predictTo,
-            state: MatchState.UPCOMING
+            state: MatchState.UPCOMING,
+            result: Outcome.UNINITIALISED
         });
 
         matchIds.push(_matchId);
@@ -235,23 +247,16 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         emit MatchCancelled(_matchId);
     }
 
-    function withdraw(uint256 _gameId)
+    function matchResult(uint256 _matchId, Outcome _resultState)
     whenNotPaused
-    onlyWhenRealGame(_gameId)
-    onlyWhenGameInWinningState(_gameId)
-    public {
-        Game storage game = gameIdToGameMapping[_gameId];
-        uint256 tokenId1 = game.p1TokenId;
-        uint256 tokenId2 = game.p2TokenId;
+    onlyWhenOracle
+    onlyWhenMatchExists(_matchId)
+    onlyWhenMatchUpcoming(_matchId)
+    onlyWhenResultStateValid(_resultState) public {
+        matchIdToMatchMapping[_matchId].result = _resultState;
 
-        if(game.state == GameState.PLAYER_1_WIN) {
-            _sendWinnerCards(game.p1Address, tokenId1, tokenId2);
-        } else {
-            _sendWinnerCards(game.p2Address, tokenId1, tokenId2);
-        }
+        emit MatchOutcome(_matchId, _resultState);
     }
-
-    // todo: add ability for player 1 to close a game to free up their card
 
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
@@ -313,14 +318,31 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         emit PredictionsReceived(_gameId, game.p1Address, msg.sender);
     }
 
-    //todo: add match result function that oracle can call into
-    function matchResult(uint256 _matchId)
+    function withdraw(uint256 _gameId)
     whenNotPaused
-    onlyWhenOracle
-    onlyWhenMatchExists(_matchId)
-    onlyWhenMatchUpcoming(_matchId) public {
+    onlyWhenRealGame(_gameId)
+    onlyWhenAllPredictionsReceived(_gameId)
+    onlyWhenGameMatchResultReceived(_gameId) public {
+        Game storage game = gameIdToGameMapping[_gameId];
+        Match storage gameMatch = matchIdToMatchMapping[game.matchId];
 
+        if(game.p1Prediction == gameMatch.result) {
+            game.state = GameState.PLAYER_1_WIN;
+        } else if(game.p2Prediction == gameMatch.result) {
+            game.state = GameState.PLAYER_2_WIN;
+        }
+
+        uint256 tokenId1 = game.p1TokenId;
+        uint256 tokenId2 = game.p2TokenId;
+
+        if(game.state == GameState.PLAYER_1_WIN) {
+            _sendWinnerCards(game.p1Address, tokenId1, tokenId2);
+        } else if(game.state == GameState.PLAYER_2_WIN) {
+            _sendWinnerCards(game.p2Address, tokenId1, tokenId2);
+        }
     }
+
+    // todo: add ability for player 1 to close a game to free up their card
 
     function updateOracle(address _newOracle)
     whenNotPaused

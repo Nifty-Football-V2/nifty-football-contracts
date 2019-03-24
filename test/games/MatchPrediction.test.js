@@ -29,7 +29,10 @@ contract.only('Match Prediction Contract Tests',
         p1RevokedApproval: "match.prediction.validation.error.p1.revoked.approval",
         p2PredictionInvalid: "match.prediction.validation.error.p2.prediction.invalid",
         matchNotUpcoming: "match.prediction.validation.error.match.not.upcoming",
-        neitherPlayerWinner: "match.prediction.validation.error.neither.player.winner"
+        gameMatchResultNotReceived: "match.prediction.validation.error.game.match.result.not.received",
+        invalidMatchResultState: "match.prediction.validation.error.invalid.match.result.state",
+        matchResultStateNotWinning: "match.prediction.validation.error.match.result.state.not.winning",
+        predictionsNotReceived: "match.prediction.validation.error.game.predictions.not.received"
     };
 
     const Outcomes = {
@@ -42,8 +45,11 @@ contract.only('Match Prediction Contract Tests',
     const MatchState = {
         UNINITIALISED: new BN(0),
         UPCOMING: new BN(1),
-        POSTPONED: new BN(2),
-        CANCELLED: new BN(3)
+        HOME_WIN: new BN(2),
+        AWAY_WIN: new BN(3),
+        DRAW: new BN(4),
+        POSTPONED: new BN(5),
+        CANCELLED: new BN(6)
     };
 
     const _tokenId1 = new BN(1);
@@ -107,6 +113,14 @@ contract.only('Match Prediction Contract Tests',
         return contract.withdraw(_game1Id, {from: sender});
     }
 
+    function givenAMatchResultWasSupplied(contract, sender) {
+        return whenASpecificMatchResultSupplied(contract, match1.id, Outcomes.HOME_WIN, sender);
+    }
+
+    function whenASpecificMatchResultSupplied(contract, matchId, result, sender) {
+        return contract.matchResult(matchId, result, {from: sender});
+    }
+
     beforeEach(async () => {
         this.futballCards = await FutballCards.new(baseURI, {from: creator});
         this.matchPrediction = await MatchPrediction.new(this.futballCards.address, oracle, {from: creator});
@@ -163,6 +177,10 @@ contract.only('Match Prediction Contract Tests',
 
             it('should fail to cancel a match', async () => {
                await shouldFail.reverting(whenAMatchIsCancelled(this.matchPrediction, oracle));
+            });
+
+            it('should fail to supply a match result', async () => {
+               await shouldFail.reverting.withMessage(givenAMatchResultWasSupplied(this.matchPrediction, oracle));
             });
 
             it('should fail to withdraw cards', async () => {
@@ -337,6 +355,24 @@ contract.only('Match Prediction Contract Tests',
                  whenAMatchIsCancelled(this.matchPrediction, oracle),
                  validationErrorContentKeys.matchNotUpcoming
                );
+            });
+        });
+
+        context('when supplying a match result', async () => {
+            beforeEach(async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+            });
+
+            it('should be successful with valid parameters', async () => {
+                const {logs} = await givenAMatchResultWasSupplied(this.matchPrediction, oracle);
+
+                thenExpectTheFollowingEvent.inLogs(logs,
+                    'MatchOutcome',
+                    {
+                        id: match1.id,
+                        result: Outcomes.HOME_WIN
+                    }
+                );
             });
         });
 
