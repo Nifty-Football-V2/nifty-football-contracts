@@ -110,7 +110,11 @@ contract.only('Match Prediction Contract Tests',
     }
 
     function givenAWithdrawalTookPlace(contract, sender) {
-        return contract.withdraw(_game1Id, {from: sender});
+        return givenAWithdrawalForASpecificGame(contract, _game1Id, sender);
+    }
+
+    function givenAWithdrawalForASpecificGame(contract, id, sender) {
+        return contract.withdraw(id, {from: sender});
     }
 
     function givenAMatchResultWasSupplied(contract, sender) {
@@ -374,6 +378,36 @@ contract.only('Match Prediction Contract Tests',
                     }
                 );
             });
+
+            it('should block any non-oracle address', async () => {
+                await shouldFail.reverting.withMessage(
+                  whenASpecificMatchResultSupplied(this.matchPrediction, match1.id, Outcomes.HOME_WIN, random),
+                  validationErrorContentKeys.notOracle
+                );
+            });
+
+            it('should fail when a match doesnt exist', async () => {
+               await shouldFail.reverting.withMessage(
+                   whenASpecificMatchResultSupplied(this.matchPrediction, new BN(2), Outcomes.HOME_WIN, oracle),
+                   validationErrorContentKeys.matchIdInvalid
+               );
+            });
+
+            it('should fail when match not upcoming', async () => {
+               await whenAMatchIsCancelled(this.matchPrediction, oracle);
+
+               await shouldFail.reverting.withMessage(
+                   givenAMatchResultWasSupplied(this.matchPrediction, oracle),
+                   validationErrorContentKeys.matchNotUpcoming
+               );
+            });
+
+            it('should fail when result is invalid', async () => {
+               await shouldFail.reverting.withMessage(
+                   whenASpecificMatchResultSupplied(this.matchPrediction, match1.id, Outcomes.UNINITIALISED, oracle),
+                   validationErrorContentKeys.invalidMatchResultState
+               );
+            });
         });
 
         context('when updating oracle address', async () => {
@@ -624,6 +658,19 @@ contract.only('Match Prediction Contract Tests',
                     validationErrorContentKeys.p2PredictionInvalid
                 );
             });
+        });
+
+        context('when a winner withdraws their winnings', async () => {
+           beforeEach(async () => {
+               whenANewMatchIsAdded(this.matchPrediction, oracle);
+               givenABasicFirstPrediction(this.matchPrediction, oracle);
+               givenABasicSecondPrediction(this.matchPrediction, oracle);
+               givenAMatchResultWasSupplied(this.matchPrediction, oracle);
+           });
+
+           it('should be successful with valid parameters', async () => {
+
+           });
         });
     });
 

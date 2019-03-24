@@ -11,10 +11,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         uint256 indexed p1TokenId
     );
 
-    event GameResulted (
+    event GameFinished (
         uint256 indexed id,
-        address indexed player1,
-        address indexed player2,
         GameState result
     );
 
@@ -296,7 +294,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenRealGame(_gameId)
-    onlyWhenGameMatchUpcoming(_gameId)
+    onlyWhenGameMatchUpcoming(_gameId)//todo: add unit tests for testing when a match is cancelled as well as postponed
     onlyWhenGameNotComplete(_gameId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
@@ -340,6 +338,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         } else if(game.state == GameState.PLAYER_2_WIN) {
             _sendWinnerCards(game.p2Address, tokenId1, tokenId2);
         }
+
+        emit GameFinished(_gameId, game.state);
     }
 
     // todo: add ability for player 1 to close a game to free up their card
