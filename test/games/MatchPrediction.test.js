@@ -45,11 +45,17 @@ contract.only('Match Prediction Contract Tests',
     const MatchState = {
         UNINITIALISED: new BN(0),
         UPCOMING: new BN(1),
-        HOME_WIN: new BN(2),
-        AWAY_WIN: new BN(3),
-        DRAW: new BN(4),
-        POSTPONED: new BN(5),
-        CANCELLED: new BN(6)
+        POSTPONED: new BN(2),
+        CANCELLED: new BN(3)
+    };
+
+    const GameState = {
+        UNINITIALISED: new BN(0),
+        OPEN: new BN(1),
+        PREDICTIONS_RECEIVED: new BN(2),
+        PLAYER_1_WIN: new BN(3),
+        PLAYER_2_WIN: new BN(4),
+        CLOSED: new BN(5)
     };
 
     const _tokenId1 = new BN(1);
@@ -393,13 +399,22 @@ contract.only('Match Prediction Contract Tests',
                );
             });
 
-            it('should fail when match not upcoming', async () => {
+            it('should fail when match has been cancelled', async () => {
                await whenAMatchIsCancelled(this.matchPrediction, oracle);
 
                await shouldFail.reverting.withMessage(
                    givenAMatchResultWasSupplied(this.matchPrediction, oracle),
                    validationErrorContentKeys.matchNotUpcoming
                );
+            });
+
+            it('should fail when match has been postponed', async () => {
+                await whenAMatchIsPostponed(this.matchPrediction, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    givenAMatchResultWasSupplied(this.matchPrediction, oracle),
+                    validationErrorContentKeys.matchNotUpcoming
+                );
             });
 
             it('should fail when result is invalid', async () => {
@@ -438,11 +453,9 @@ contract.only('Match Prediction Contract Tests',
         context('when making the first prediction', async () => {
             beforeEach(async () => {
                 await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
-                await this.futballCards.setAttributes(_tokenId1, 10, 10, 10, 10, {from: creator});
                 await this.futballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
 
                 await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
-                await this.futballCards.setAttributes(_tokenId2, 5, 10, 20, 20, {from: creator});
 
                 (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
             });
@@ -482,6 +495,16 @@ contract.only('Match Prediction Contract Tests',
                    makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
                    validationErrorContentKeys.matchNotUpcoming
                );
+            });
+
+            it('should fail when match has been cancelled', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await whenAMatchIsCancelled(this.matchPrediction, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
+                    validationErrorContentKeys.matchNotUpcoming
+                );
             });
 
             it('should fail when contract not approved for token', async () => {
@@ -524,15 +547,12 @@ contract.only('Match Prediction Contract Tests',
         context('when making the second prediction', async () => {
             beforeEach(async () => {
                 await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
-                await this.futballCards.setAttributes(_tokenId1, 10, 10, 10, 10, {from: creator});
                 await this.futballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
 
                 await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
-                await this.futballCards.setAttributes(_tokenId2, 5, 10, 20, 20, {from: creator});
                 await this.futballCards.approve(this.matchPrediction.address, _tokenId2, {from: tokenOwner2});
 
                 await this.futballCards.mintCard(3, 3, 3, 3, 3, 3, random, {from: creator});
-                await this.futballCards.setAttributes(_tokenId3, 30, 30, 30, 30, {from: creator});
 
                 (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
             });
@@ -575,6 +595,17 @@ contract.only('Match Prediction Contract Tests',
                 await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
                 await whenAMatchIsPostponed(this.matchPrediction, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
+                    validationErrorContentKeys.matchNotUpcoming
+                );
+            });
+
+            it('should fail when match has been cancelled', async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
+                await whenAMatchIsCancelled(this.matchPrediction, oracle);
 
                 await shouldFail.reverting.withMessage(
                     givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
@@ -660,21 +691,64 @@ contract.only('Match Prediction Contract Tests',
             });
         });
 
-        context('when a winner withdraws their winnings', async () => {
+        context('when a winner withdraws their cards', async () => {
            beforeEach(async () => {
-               whenANewMatchIsAdded(this.matchPrediction, oracle);
-               givenABasicFirstPrediction(this.matchPrediction, oracle);
-               givenABasicSecondPrediction(this.matchPrediction, oracle);
-               givenAMatchResultWasSupplied(this.matchPrediction, oracle);
+               await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+               await this.futballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
+
+               await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
+               await this.futballCards.approve(this.matchPrediction.address, _tokenId2, {from: tokenOwner2});
+
+               (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
+
+               await whenANewMatchIsAdded(this.matchPrediction, oracle);
+               await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
            });
 
            it('should be successful with valid parameters', async () => {
+               await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
+               await givenAMatchResultWasSupplied(this.matchPrediction, oracle);
+               const {logs} = await givenAWithdrawalTookPlace(this.matchPrediction, tokenOwner1);
 
+               thenExpectTheFollowingEvent.inLogs(logs,
+                   'GameFinished',
+                   {
+                       id: _game1Id,
+                       result: GameState.PLAYER_1_WIN
+                   }
+               );
+
+               (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
+               (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner1);
+           });
+
+           it('should fail when game doesnt exist', async () => {
+              await shouldFail.reverting.withMessage(
+                givenAWithdrawalForASpecificGame(this.matchPrediction, new BN(2), tokenOwner1),
+                validationErrorContentKeys.invalidGameId
+              );
+           });
+
+           it('should fail when not all predictions received', async () => {
+              await shouldFail.reverting.withMessage(
+                  givenAWithdrawalTookPlace(this.matchPrediction, tokenOwner1),
+                  validationErrorContentKeys.predictionsNotReceived
+              );
+           });
+
+           it('should fail when match result not yet received', async () => {
+               await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
+               await shouldFail.reverting.withMessage(
+                   givenAWithdrawalTookPlace(this.matchPrediction, tokenOwner1),
+                   validationErrorContentKeys.gameMatchResultNotReceived
+              );
            });
         });
     });
 
     /*context('playing the game', async () => {
+        //todo: add beforeEach here with at least 2 matches added
+
         context('when match #1 is chosen', async () => {
             it('should handle a basic prediction', async () => {
 

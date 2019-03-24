@@ -294,7 +294,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenRealGame(_gameId)
-    onlyWhenGameMatchUpcoming(_gameId)//todo: add unit tests for testing when a match is cancelled as well as postponed
+    onlyWhenGameMatchUpcoming(_gameId)
     onlyWhenGameNotComplete(_gameId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
