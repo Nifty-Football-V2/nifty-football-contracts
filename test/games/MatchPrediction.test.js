@@ -12,7 +12,6 @@ contract.only('Match Prediction Contract Tests',
     const validationErrorContentKeys = {
         notOracle: "match.prediction.validation.error.not.oracle",
         matchExists: "match.prediction.validation.error.match.exists",
-        predictFromInvalid: "match.prediction.validation.error.predict.from.invalid",
         predictToBeforeFrom: "match.prediction.validation.error.predict.to.before.from",
         zeroAddress: "match.prediction.validation.error.address.zero",
         matchIdInvalid: "match.prediction.validation.error.invalid.match.id",
@@ -64,14 +63,10 @@ contract.only('Match Prediction Contract Tests',
 
     const _game1Id = new BN(1);
 
-    const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
-    const predictFrom = Math.floor((new Date()).getTime());
-    const predictTo = predictFrom + MILLISECONDS_IN_A_DAY;
-
     const match1 = {
         id: new BN(34564543),
-        predictFrom: new BN(predictFrom),
-        predictTo: new BN(predictTo),
+        predictFrom: new BN(3),
+        predictTo: new BN(6),
         state: MatchState.UPCOMING
     };
 
@@ -240,7 +235,7 @@ contract.only('Match Prediction Contract Tests',
                 );
             });
 
-            it('should not allow predict from time to be in the past', async () => {
+            /*it('should not allow predict from time to be in the past', async () => {
                 const matchWithInvalidFrom = {
                     id: new BN(1),
                     predictFrom: new BN(0),
@@ -251,13 +246,13 @@ contract.only('Match Prediction Contract Tests',
                    whenASpecificMatchIsAdded(this.matchPrediction, matchWithInvalidFrom, oracle),
                    validationErrorContentKeys.predictFromInvalid
                );
-            });
+            });*/
 
             it('should not allow predict to time to be before allowed from time', async () => {
                const matchWithInvalidTo = {
                    id: new BN(1),
-                   predictFrom: new BN(predictFrom),
-                   predictTo: new BN(0)
+                   predictFrom: new BN(6),
+                   predictTo: new BN(4)
                };
 
                await shouldFail.reverting.withMessage(

@@ -99,7 +99,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     }
 
     modifier onlyWhenTimesValid(uint256 _predictFrom, uint256 _predictTo) {
-        require(_predictFrom >= now, "match.prediction.validation.error.predict.from.invalid");
         require(_predictTo > _predictFrom, "match.prediction.validation.error.predict.to.before.from");
         _;
     }
