@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
-import "./generators/FutballCardsGenerator.sol";
+import "./generators/IFutballCardsGenerator.sol";
 
 import "./libs/Strings.sol";
 import "./IFutballCardsCreator.sol";
@@ -22,7 +22,9 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     event AttributesBaseChanged(uint256 _new);
 
-    FutballCardsGenerator public futballCardsGenerator;
+    event FutballCardsGeneratorChanged(IFutballCardsGenerator _new);
+
+    IFutballCardsGenerator public futballCardsGenerator;
     IFutballCardsCreator public futballCardsNFT;
     address payable wallet;
 
@@ -45,7 +47,7 @@ contract FutballCardsBlindPack is Ownable, Pausable {
     5500000 //  10 @ = 0.0055 ETH / $0.75
     ];
 
-    constructor (address payable _wallet, FutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
+    constructor (address payable _wallet, IFutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
         futballCardsGenerator = _futballCardsGenerator;
         futballCardsNFT = _fuballCardsNFT;
         wallet = _wallet;
@@ -133,6 +135,14 @@ contract FutballCardsBlindPack is Ownable, Pausable {
         attributesBase = _newAttributesBase;
 
         emit AttributesBaseChanged(_newAttributesBase);
+
+        return true;
+    }
+
+    function setFutballCardsGenerator(IFutballCardsGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
+        futballCardsGenerator = _futballCardsGenerator;
+
+        emit FutballCardsGeneratorChanged(_futballCardsGenerator);
 
         return true;
     }
