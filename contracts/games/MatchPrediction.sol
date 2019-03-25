@@ -214,8 +214,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenTimesValid(_predictFrom, _predictTo) public {//todo: further unit testing around time
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
-            predictFrom: _predictFrom,
-            predictTo: _predictTo,
+            predictFrom: block.number + _predictFrom,
+            predictTo: block.number + _predictTo,
             state: MatchState.UPCOMING,
             result: Outcome.UNINITIALISED
         });
@@ -250,6 +250,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId)
+    //todo: add a modifier that ensures that this function can only be called after the predictTo time
     onlyWhenResultStateValid(_resultState) public {
         matchIdToMatchMapping[_matchId].result = _resultState;
 
@@ -343,6 +344,13 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     }
 
     // todo: add ability for player 1 to close a game to free up their card
+    function closeGame(uint256 _gameId)
+    whenNotPaused
+    onlyWhenRealGame(_gameId)
+    //todo: add modifier to ensure that msg.sender is player 1 - wouldn't want a random address who knows the game ID to close the game
+    public {
+        gameIdToGameMapping[_gameId].state = GameState.CLOSED;
+    }
 
     function updateOracle(address _newOracle)
     whenNotPaused
