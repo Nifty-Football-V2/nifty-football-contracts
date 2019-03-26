@@ -123,6 +123,16 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
+    modifier onlyWhenWithinMatchPredictionWindow(uint256 _matchId) {
+        _isWithinMatchPredictionWindow(_matchId);
+        _;
+    }
+
+    modifier onlyWhenWithinGameMatchPredictionWindow(uint256 _gameId) {
+        _isWithinMatchPredictionWindow(gameIdToGameMapping[_gameId].matchId);
+        _;
+    }
+
     modifier onlyWhenGameMatchResultReceived(uint256 _gameId) {
         Match storage gameMatch = matchIdToMatchMapping[gameIdToGameMapping[_gameId].matchId];
         require(gameMatch.result != Outcome.UNINITIALISED, "match.prediction.validation.error.game.match.result.not.received");
@@ -176,6 +186,11 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function _isMatchUpcoming(uint256 _matchId) internal view {
         require(matchIdToMatchMapping[_matchId].state == MatchState.UPCOMING, "match.prediction.validation.error.match.not.upcoming");
+    }
+
+    function _isWithinMatchPredictionWindow(uint256 _matchId) internal view {
+        Match storage gameMatch = matchIdToMatchMapping[_matchId];
+        require(block.number >= gameMatch.predictFrom && block.number <= gameMatch.predictTo, "match.prediction.validation.error.not.within.match.prediction.window");
     }
 
     function _escrowPlayerCards(Game storage game) internal {
@@ -261,6 +276,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId)
+    onlyWhenWithinMatchPredictionWindow(_matchId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
     onlyWhenPredictionValid(_prediction)
@@ -295,6 +311,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenRealGame(_gameId)
     onlyWhenGameMatchUpcoming(_gameId)
+    onlyWhenWithinGameMatchPredictionWindow(_gameId)
     onlyWhenGameNotComplete(_gameId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)

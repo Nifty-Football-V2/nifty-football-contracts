@@ -31,7 +31,8 @@ contract.only('Match Prediction Contract Tests',
         gameMatchResultNotReceived: "match.prediction.validation.error.game.match.result.not.received",
         invalidMatchResultState: "match.prediction.validation.error.invalid.match.result.state",
         matchResultStateNotWinning: "match.prediction.validation.error.match.result.state.not.winning",
-        predictionsNotReceived: "match.prediction.validation.error.game.predictions.not.received"
+        predictionsNotReceived: "match.prediction.validation.error.game.predictions.not.received",
+        notWithinMatchPredictionWindow: "match.prediction.validation.error.not.within.match.prediction.window"
     };
 
     const Outcomes = {
@@ -65,10 +66,14 @@ contract.only('Match Prediction Contract Tests',
 
     const match1 = {
         id: new BN(34564543),
-        predictFrom: new BN(3),
+        predictFrom: new BN(2),
         predictTo: new BN(6),
         state: MatchState.UPCOMING
     };
+
+    function givenARandomTransaction(futballContract) {
+        return futballContract.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+    }
 
     function whenANewMatchIsAdded(contract, sender) {
         return contract.addMatch(match1.id, match1.predictFrom, match1.predictTo, {from: sender});
@@ -235,19 +240,6 @@ contract.only('Match Prediction Contract Tests',
                 );
             });
 
-            /*it('should not allow predict from time to be in the past', async () => {
-                const matchWithInvalidFrom = {
-                    id: new BN(1),
-                    predictFrom: new BN(0),
-                    predictTo: new BN(predictTo)
-                };
-
-                await shouldFail.reverting.withMessage(
-                   whenASpecificMatchIsAdded(this.matchPrediction, matchWithInvalidFrom, oracle),
-                   validationErrorContentKeys.predictFromInvalid
-               );
-            });*/
-
             it('should not allow predict to time to be before allowed from time', async () => {
                const matchWithInvalidTo = {
                    id: new BN(1),
@@ -258,6 +250,15 @@ contract.only('Match Prediction Contract Tests',
                await shouldFail.reverting.withMessage(
                    whenASpecificMatchIsAdded(this.matchPrediction, matchWithInvalidTo, oracle),
                    validationErrorContentKeys.predictToBeforeFrom
+               );
+            });
+
+            it('should not allow a prediction before the from time', async () => {
+               await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
+               await shouldFail.reverting.withMessage(
+                   givenABasicFirstPrediction(this.matchPrediction, tokenOwner1),
+                   validationErrorContentKeys.notWithinMatchPredictionWindow
                );
             });
         });
@@ -453,11 +454,14 @@ contract.only('Match Prediction Contract Tests',
                 await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
 
                 (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
+
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
+                // This is to bump the block number to push it into the valid prediction window for the match
+                givenARandomTransaction(this.futballCards);
             });
 
             it('should be successful with valid parameters', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
-
                 const {logs} = await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
                 thenExpectTheFollowingEvent.inLogs(logs,
                     'GameCreated',
@@ -473,8 +477,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail on referencing an invalid match', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
-
                 const invalidMatchId = new BN(2);
                 await shouldFail.reverting.withMessage(
                     makeAFirstPredictionFor(this.matchPrediction, invalidMatchId, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
@@ -483,7 +485,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when match has been postponed', async () => {
-               await whenANewMatchIsAdded(this.matchPrediction, oracle);
                await whenAMatchIsPostponed(this.matchPrediction, oracle);
 
                await shouldFail.reverting.withMessage(
@@ -493,7 +494,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when match has been cancelled', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await whenAMatchIsCancelled(this.matchPrediction, oracle);
 
                 await shouldFail.reverting.withMessage(
@@ -503,8 +503,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when contract not approved for token', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
-
                 await shouldFail.reverting.withMessage(
                     makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId2, Outcomes.UNINITIALISED, tokenOwner2),
                     validationErrorContentKeys.nftNotApproved
@@ -512,8 +510,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when sender is not owner of token', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
-
                 await shouldFail.reverting.withMessage(
                     makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner2),
                     validationErrorContentKeys.notNFTOwner
@@ -521,7 +517,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when token is already playing', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
                 await shouldFail.reverting.withMessage(
@@ -531,7 +526,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when prediction is invalid', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await shouldFail.reverting.withMessage(
                     makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
                     validationErrorContentKeys.invalidPrediction
@@ -550,10 +544,14 @@ contract.only('Match Prediction Contract Tests',
                 await this.futballCards.mintCard(3, 3, 3, 3, 3, 3, random, {from: creator});
 
                 (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
+
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
+                // This is to bump the block number to push it into the valid prediction window for the match
+                givenARandomTransaction(this.futballCards);
             });
 
             it('should be successful with valid parameters', async () => {
-               await whenANewMatchIsAdded(this.matchPrediction, oracle);
                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
                const {logs} = await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
@@ -577,7 +575,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail on referencing an invalid game', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
                 await shouldFail.reverting.withMessage(
@@ -587,7 +584,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when match has been postponed', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
                 await whenAMatchIsPostponed(this.matchPrediction, oracle);
 
@@ -598,7 +594,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when match has been cancelled', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
                 await whenAMatchIsCancelled(this.matchPrediction, oracle);
 
@@ -609,7 +604,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when trying to amend second prediction', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
                 await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
 
@@ -620,7 +614,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when contract is not approved for token', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
                 await shouldFail.reverting.withMessage(
@@ -630,7 +623,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when sender is not owner of token', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
                 await shouldFail.reverting.withMessage(
@@ -640,7 +632,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when token is already playing', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
                 await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
 
@@ -655,7 +646,6 @@ contract.only('Match Prediction Contract Tests',
                     return futballCards.approve(constants.ZERO_ADDRESS, _tokenId1, {from: tokenOwner1});
                 }
 
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
                 await revokePlayer1TransferApproval(this.futballCards);
 
@@ -666,7 +656,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when prediction is invalid', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
                 await shouldFail.reverting.withMessage(
@@ -676,7 +665,6 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when player 2s prediction is the same as player 1', async () => {
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
 
                 await shouldFail.reverting.withMessage(
@@ -697,6 +685,10 @@ contract.only('Match Prediction Contract Tests',
                (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
 
                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+
+               // This is to bump the block number to push it into the valid prediction window for the match
+               givenARandomTransaction(this.futballCards);
+
                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
            });
 
