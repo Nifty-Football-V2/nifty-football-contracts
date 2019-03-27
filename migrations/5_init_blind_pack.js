@@ -1,6 +1,7 @@
-const FutballCardsBlindPack = artifacts.require('FutballCardsBlindPack.sol');
-const FutballCards = artifacts.require('FutballCards.sol');
+const {getAccountOne} = require('../constants');
 
+const FutballCards = artifacts.require('FutballCards.sol');
+const FutballCardsBlindPack = artifacts.require('FutballCardsBlindPack.sol');
 const FutballCardsGenerator = artifacts.require('FutballCardsGenerator.sol');
 
 module.exports = async function (deployer, network, accounts) {
@@ -20,5 +21,5 @@ module.exports = async function (deployer, network, accounts) {
     const _futballCardsBlindPack = await FutballCardsBlindPack.deployed();
 
     // white blind pack creator
-    await _futballCards.addWhitelisted(_futballCardsBlindPack.address, {from: accounts[0]});
+    await _futballCards.addWhitelisted(_futballCardsBlindPack.address, {from: getAccountOne(accounts, network)});
 };

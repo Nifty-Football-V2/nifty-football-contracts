@@ -1,4 +1,6 @@
-let FutballCards = artifacts.require('./FutballCards.sol');
+const {getAccountOne} = require('../constants');
+
+const FutballCards = artifacts.require('./FutballCards.sol');
 
 module.exports = async function (deployer, network, accounts) {
     let tokenBaseURI = "http://localhost:5000/futball-cards/us-central1/api/network/5777";
@@ -12,5 +14,5 @@ module.exports = async function (deployer, network, accounts) {
         tokenBaseURI = "http://localhost:5000/futball-cards/us-central1/api/network/4";
     }
 
-    await deployer.deploy(FutballCards, tokenBaseURI, {from: accounts[0]});
+    await deployer.deploy(FutballCards, tokenBaseURI, {from: getAccountOne(accounts, network)});
 };
