@@ -53,8 +53,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     struct Match {
         uint256 id;
-        uint256 predictFrom;
-        uint256 predictTo;
+        uint256 predictBefore;
+        uint256 resultAfter;
         MatchState state;
         Outcome result;
     }
@@ -76,10 +76,10 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     uint256 public totalGamesCreated = 0;
 
-    mapping(uint256 => uint256) public tokenIdToGameIdMapping;
+    mapping(uint256 => uint256) public tokenIdToGameIdMapping;//todo: check these modifiers are suitable and that all the mappings are needed
     mapping(uint256 => Game) public gameIdToGameMapping;
     mapping(uint256 => Outcome) public matchIdToResultMapping;
-    mapping(uint256 => uint256[]) public matchIdToOpenGameIdListMapping;
+    mapping(uint256 => uint256[]) public matchIdToOpenGameIdListMapping;//todo: remove open game when resulted or game closed
     mapping(uint256 => Match) public matchIdToMatchMapping;
 
     uint256[] public matchIds;
@@ -98,8 +98,10 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
-    modifier onlyWhenTimesValid(uint256 _predictFrom, uint256 _predictTo) {
-        require(_predictTo > _predictFrom, "match.prediction.validation.error.predict.to.before.from");
+    modifier onlyWhenTimesValid(uint256 _predictBefore, uint256 _resultAfter) {
+        require(_predictBefore <  _resultAfter, "match.prediction.validation.error.predict.before.is.after.result.after");
+        require(now < _predictBefore, "match.prediction.validation.error.past.prediction.deadline");
+        require(_resultAfter > now, "match.prediction.validation.error.result.after.not.in.future");
         _;
     }
 
@@ -124,12 +126,12 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     }
 
     modifier onlyWhenWithinMatchPredictionWindow(uint256 _matchId) {
-        _isWithinMatchPredictionWindow(_matchId);
+        _isBeforePredictionDeadline(_matchId);
         _;
     }
 
     modifier onlyWhenWithinGameMatchPredictionWindow(uint256 _gameId) {
-        _isWithinMatchPredictionWindow(gameIdToGameMapping[_gameId].matchId);
+        _isBeforePredictionDeadline(gameIdToGameMapping[_gameId].matchId);
         _;
     }
 
@@ -181,24 +183,26 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     }
 
     function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
-        return (_matchId > 0 && matchIdToMatchMapping[_matchId].predictTo > matchIdToMatchMapping[_matchId].predictFrom);
+        Match storage aMatch = matchIdToMatchMapping[_matchId];
+        return (_matchId > 0 && aMatch.predictBefore < aMatch.resultAfter);
     }
 
     function _isMatchUpcoming(uint256 _matchId) internal view {
         require(matchIdToMatchMapping[_matchId].state == MatchState.UPCOMING, "match.prediction.validation.error.match.not.upcoming");
     }
 
-    function _isWithinMatchPredictionWindow(uint256 _matchId) internal view {
-        Match storage gameMatch = matchIdToMatchMapping[_matchId];
-        require(block.number >= gameMatch.predictFrom && block.number <= gameMatch.predictTo, "match.prediction.validation.error.not.within.match.prediction.window");
+    //todo: update this to factor in new time approach
+    function _isBeforePredictionDeadline(uint256 _matchId) private view {
+        Match storage aMatch = matchIdToMatchMapping[_matchId];
+        require(now <= aMatch.predictBefore, "match.prediction.validation.error.past.prediction.deadline");
     }
 
-    function _escrowPlayerCards(Game storage game) internal {
+    function _escrowPlayerCards(Game storage game) private {
         nft.safeTransferFrom(game.p1Address, address(this), game.p1TokenId);
         nft.safeTransferFrom(game.p2Address, address(this), game.p2TokenId);
     }
 
-    function _sendWinnerCards(address winner, uint256 tokenId1, uint256 tokenId2) internal {
+    function _sendWinnerCards(address winner, uint256 tokenId1, uint256 tokenId2) private {
         nft.safeTransferFrom(address(this), winner, tokenId1);
         nft.safeTransferFrom(address(this), winner, tokenId2);
     }
@@ -221,15 +225,15 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     // Functions //
     ///////////////
 
-    function addMatch(uint256 _matchId, uint256 _predictFrom, uint256 _predictTo)
+    function addMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchDoesNotExist(_matchId)
-    onlyWhenTimesValid(_predictFrom, _predictTo) public {//todo: further unit testing around time
+    onlyWhenTimesValid(_predictBefore, _resultAfter) external {//todo: further unit testing around time
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
-            predictFrom: block.number + _predictFrom,
-            predictTo: block.number + _predictTo,
+            predictBefore: _predictBefore,
+            resultAfter: _resultAfter,
             state: MatchState.UPCOMING,
             result: Outcome.UNINITIALISED
         });
@@ -243,7 +247,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
-    onlyWhenMatchUpcoming(_matchId) public {
+    onlyWhenMatchUpcoming(_matchId) external {
         matchIdToMatchMapping[_matchId].state = MatchState.POSTPONED;
 
         emit MatchPostponed(_matchId);
@@ -253,7 +257,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
-    onlyWhenMatchUpcoming(_matchId) public {
+    onlyWhenMatchUpcoming(_matchId) external {
         matchIdToMatchMapping[_matchId].state = MatchState.CANCELLED;
 
         emit MatchCancelled(_matchId);
@@ -265,7 +269,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId)
     //todo: add a modifier that ensures that this function can only be called after the predictTo time
-    onlyWhenResultStateValid(_resultState) public {
+    onlyWhenResultStateValid(_resultState) external {
         matchIdToMatchMapping[_matchId].result = _resultState;
 
         emit MatchOutcome(_matchId, _resultState);
@@ -280,7 +284,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
     onlyWhenPredictionValid(_prediction)
-    public returns (uint256 _gameId) {
+    external returns (uint256) {
         uint256 newGameId = totalGamesCreated.add(1);
         uint256 openGamesForSpecifiedMatchCount = matchIdToOpenGameIdListMapping[_matchId].length;
 
@@ -303,7 +307,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
         emit GameCreated(newGameId, msg.sender, _tokenId);
 
-        _gameId = newGameId;
+        return newGameId;
     }
 
     function makeSecondPrediction(uint256 _gameId, uint256 _tokenId, Outcome _prediction)
@@ -316,7 +320,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
     onlyWhenPlayer1NotRevokedTransferApproval(_gameId)
-    onlyWhenPredictionValid(_prediction) public {
+    onlyWhenPredictionValid(_prediction) external {
         Game storage game = gameIdToGameMapping[_gameId];
         game.p2TokenId = _tokenId;
         game.p2Address = msg.sender;
@@ -337,7 +341,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenRealGame(_gameId)
     onlyWhenAllPredictionsReceived(_gameId)
-    onlyWhenGameMatchResultReceived(_gameId) public {
+    onlyWhenGameMatchResultReceived(_gameId) external {
         Game storage game = gameIdToGameMapping[_gameId];
         Match storage gameMatch = matchIdToMatchMapping[game.matchId];
 
@@ -345,7 +349,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
             game.state = GameState.PLAYER_1_WIN;
         } else if(game.p2Prediction == gameMatch.result) {
             game.state = GameState.PLAYER_2_WIN;
-        }
+        }//todo: deal with neither correct state
 
         uint256 tokenId1 = game.p1TokenId;
         uint256 tokenId2 = game.p2TokenId;
@@ -364,14 +368,14 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenRealGame(_gameId)
     //todo: add modifier to ensure that msg.sender is player 1 - wouldn't want a random address who knows the game ID to close the game
-    public {
+    external {
         gameIdToGameMapping[_gameId].state = GameState.CLOSED;
     }
 
     function updateOracle(address _newOracle)
     whenNotPaused
     onlyOwner
-    onlyWhenNotAddressZero(_newOracle) public {
+    onlyWhenNotAddressZero(_newOracle) external {
         address previous = oracle;
         oracle = _newOracle;
 
