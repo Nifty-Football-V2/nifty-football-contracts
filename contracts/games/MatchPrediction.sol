@@ -125,12 +125,12 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
-    modifier onlyWhenWithinMatchPredictionWindow(uint256 _matchId) {
+    modifier onlyWhenBeforePredictionDeadline(uint256 _matchId) {
         _isBeforePredictionDeadline(_matchId);
         _;
     }
 
-    modifier onlyWhenWithinGameMatchPredictionWindow(uint256 _gameId) {
+    modifier onlyWhenBeforeGamePredictionDeadline(uint256 _gameId) {
         _isBeforePredictionDeadline(gameIdToGameMapping[_gameId].matchId);
         _;
     }
@@ -280,7 +280,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId)
-    onlyWhenWithinMatchPredictionWindow(_matchId)
+    onlyWhenBeforePredictionDeadline(_matchId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
     onlyWhenPredictionValid(_prediction)
@@ -315,7 +315,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
     onlyWhenRealGame(_gameId)
     onlyWhenGameMatchUpcoming(_gameId)
-    onlyWhenWithinGameMatchPredictionWindow(_gameId)
+    onlyWhenBeforeGamePredictionDeadline(_gameId)
     onlyWhenGameNotComplete(_gameId)
     onlyWhenContractIsApproved(_tokenId)
     onlyWhenTokenOwner(_tokenId)
