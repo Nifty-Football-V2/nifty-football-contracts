@@ -66,13 +66,16 @@ contract.only('Match Prediction Contract Tests',
     const _game1Id = new BN(1);
 
     function seconds_since_epoch(){ return Math.floor( Date.now() / 1000 ) }
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
     const match1 = {
         id: new BN(34564543)
     };
 
     function whenANewMatchIsAdded(contract, sender) {
-        return contract.addMatch(match1.id, seconds_since_epoch() + 6, seconds_since_epoch() + 9, {from: sender});
+        return contract.addMatch(match1.id, seconds_since_epoch() + 2, seconds_since_epoch() + 3, {from: sender});
     }
 
     function whenASpecificMatchIsAdded(contract, match, sender) {
@@ -370,6 +373,9 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should be successful with valid parameters', async () => {
+                await sleep(4500);
+
+                //await whenASpecificMatchIsAdded(this.matchPrediction, );
                 const {logs} = await givenAMatchResultWasSupplied(this.matchPrediction, oracle);
 
                 thenExpectTheFollowingEvent.inLogs(logs,
@@ -539,7 +545,7 @@ contract.only('Match Prediction Contract Tests',
 
                 whenASpecificMatchIsAdded(contract, randomMatch, oracle);
 
-                await new Promise(resolve => setTimeout(resolve, 4500));
+                await sleep(4500);
 
                 await shouldFail.reverting.withMessage(
                     makeAFirstPredictionFor(contract, randomMatch.id, _tokenId1, Outcomes.HOME_WIN, tokenOwner1),
@@ -688,6 +694,7 @@ contract.only('Match Prediction Contract Tests',
 
            it('should be successful with valid parameters', async () => {
                await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
+               await sleep(4250);
                await givenAMatchResultWasSupplied(this.matchPrediction, oracle);
                const {logs} = await givenAWithdrawalTookPlace(this.matchPrediction, tokenOwner1);
 

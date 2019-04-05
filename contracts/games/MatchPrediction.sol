@@ -162,6 +162,11 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
+    modifier onlyWhenResultWindowOpen(uint256 _matchId) {
+        require(now >= matchIdToMatchMapping[_matchId].resultAfter, "match.prediction.validation.error.result.window.not.open");
+        _;
+    }
+
     ////////////////////////////////////////
     // Interface and Internal Functions  //
     ///////////////////////////////////////
@@ -229,7 +234,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchDoesNotExist(_matchId)
-    onlyWhenTimesValid(_predictBefore, _resultAfter) external {/
+    onlyWhenTimesValid(_predictBefore, _resultAfter) external {
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
             predictBefore: _predictBefore,
@@ -268,8 +273,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId)
-    //todo: add a modifier that ensures that this function can only be called after the predictTo time
-    onlyWhenResultStateValid(_resultState) external {
+    onlyWhenResultStateValid(_resultState)
+    onlyWhenResultWindowOpen(_matchId) external {
         matchIdToMatchMapping[_matchId].result = _resultState;
 
         emit MatchOutcome(_matchId, _resultState);
