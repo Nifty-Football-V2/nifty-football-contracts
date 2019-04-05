@@ -236,7 +236,7 @@ contract.only('Match Prediction Contract Tests',
                 );
             });
 
-            it('should not allow predict to time to be before allowed from time', async () => {
+            it('should not allow result after time to be before prediction deadline', async () => {
                const matchWithInvalidResultAfter = {
                    id: new BN(1),
                    predictBefore: new BN(seconds_since_epoch() + 9),
@@ -529,12 +529,23 @@ contract.only('Match Prediction Contract Tests',
                 );
             });
 
-            /*it('should not allow a prediction after the match prediction window', async () => {
+            it('should not allow a prediction past prediction deadline', async () => {
+                const contract = this.matchPrediction;
+                const randomMatch = {
+                    id: new BN(24),
+                    predictBefore: new BN(seconds_since_epoch() + 3),
+                    resultAfter: new BN(seconds_since_epoch() + 5)
+                };
+
+                whenASpecificMatchIsAdded(contract, randomMatch, oracle);
+
+                await new Promise(resolve => setTimeout(resolve, 4500));
+
                 await shouldFail.reverting.withMessage(
-                    givenABasicFirstPrediction(this.matchPrediction, tokenOwner1),
+                    makeAFirstPredictionFor(contract, randomMatch.id, _tokenId1, Outcomes.HOME_WIN, tokenOwner1),
                     validationErrorContentKeys.pastPredictionDeadline
                 );
-            });*///todo:fix this and change to test making a prediction after predictBefore
+            });
         });
 
         context('when making the second prediction', async () => {

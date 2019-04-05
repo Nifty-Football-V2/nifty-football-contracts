@@ -101,7 +101,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     modifier onlyWhenTimesValid(uint256 _predictBefore, uint256 _resultAfter) {
         require(_predictBefore <  _resultAfter, "match.prediction.validation.error.predict.before.is.after.result.after");
         require(now < _predictBefore, "match.prediction.validation.error.past.prediction.deadline");
-        require(_resultAfter > now, "match.prediction.validation.error.result.after.not.in.future");
+        require(_resultAfter > now, "match.prediction.validation.error.result.after.not.in.future");//todo: probably remove this. Looks redundant
         _;
     }
 
@@ -229,7 +229,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchDoesNotExist(_matchId)
-    onlyWhenTimesValid(_predictBefore, _resultAfter) external {//todo: further unit testing around time
+    onlyWhenTimesValid(_predictBefore, _resultAfter) external {/
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
             predictBefore: _predictBefore,
