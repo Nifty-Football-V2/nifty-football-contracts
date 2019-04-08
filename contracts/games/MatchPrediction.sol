@@ -73,7 +73,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         Outcome p2Prediction;
         GameState state;
         uint256 matchId;
-        uint256 openGamesListIndex;
     }
 
     address public oracle;
@@ -82,9 +81,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     mapping(uint256 => uint256) public tokenIdToGameIdMapping;
     mapping(uint256 => Game) public gameIdToGameMapping;
-    mapping(uint256 => uint256[]) public matchIdToOpenGameIdListMapping;//todo: remove open game when resulted or game closed
     mapping(uint256 => Match) public matchIdToMatchMapping;
-    //todo: add a mapping that solves how you get from an address to a game and see if this replaces or complements matchIdToMatchMapping
+    mapping(address => uint256[]) public playerToGameIdsMapping;
 
     uint256[] public matchIds;
 
@@ -226,7 +224,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function _performPostGameCleanup(uint256 _gameId) private {
         Game storage game = gameIdToGameMapping[_gameId];
-        delete matchIdToOpenGameIdListMapping[game.matchId][game.openGamesListIndex];
         _freeUpCardsForFutureGames(game.p1TokenId, game.p2TokenId);// todo: unit test this
     }
 
@@ -248,6 +245,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     // Functions //
     ///////////////
 
+    //todo: move all match functionality to its own contract - will make both entities more maintainable
     function addMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
     whenNotPaused
     onlyWhenOracle
@@ -311,7 +309,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenPredictionValid(_prediction)
     external returns (uint256) {
         uint256 newGameId = totalGamesCreated.add(1);
-        uint256 openGamesForSpecifiedMatchCount = matchIdToOpenGameIdListMapping[_matchId].length;
 
         gameIdToGameMapping[newGameId] = Game({
             id: newGameId,
@@ -322,12 +319,11 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
             p1Prediction: _prediction,
             p2Prediction: Outcome.UNINITIALISED,
             state: GameState.OPEN,
-            matchId: _matchId,
-            openGamesListIndex: openGamesForSpecifiedMatchCount
+            matchId: _matchId
         });
 
         tokenIdToGameIdMapping[_tokenId] = newGameId;
-        matchIdToOpenGameIdListMapping[_matchId].push(newGameId);
+        playerToGameIdsMapping[msg.sender].push(newGameId);
         totalGamesCreated = newGameId;
 
         emit GameCreated(newGameId, msg.sender, _tokenId);
@@ -356,10 +352,15 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         game.state = GameState.PREDICTIONS_RECEIVED;
 
         tokenIdToGameIdMapping[_tokenId] = _gameId;
+        playerToGameIdsMapping[msg.sender].push(_gameId);
 
         _escrowPlayerCards(game);
 
         emit PredictionsReceived(_gameId, game.p1Address, msg.sender);
+    }
+
+    function getAllGameIds(address player) external view returns(uint256[] memory) {
+        return playerToGameIdsMapping[player];
     }
 
     function withdraw(uint256 _gameId)

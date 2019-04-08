@@ -136,6 +136,7 @@ contract.only('Match Prediction Contract Tests',
 
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
         (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('0');
+        (await this.matchPrediction.owner()).should.be.equal(creator);
         (await this.matchPrediction.oracle()).should.be.equal(oracle);
     });
 
@@ -476,6 +477,8 @@ contract.only('Match Prediction Contract Tests',
                 );
 
                 (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId1)).should.be.bignumber.equal(`${_game1Id}`);
+                (await this.matchPrediction.getAllGameIds(tokenOwner1)).length.should.be.equal(1);
+                (await this.matchPrediction.playerToGameIdsMapping(tokenOwner1,0)).should.be.bignumber.equal(`${_game1Id}`);
                 (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('1');
             });
 
@@ -586,6 +589,8 @@ contract.only('Match Prediction Contract Tests',
 
                (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId1)).should.be.bignumber.equal(`${_game1Id}`);
                (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId2)).should.be.bignumber.equal(`${_game1Id}`);
+               (await this.matchPrediction.playerToGameIdsMapping(tokenOwner1,0)).should.be.bignumber.equal(`${_game1Id}`);
+               (await this.matchPrediction.playerToGameIdsMapping(tokenOwner2,0)).should.be.bignumber.equal(`${_game1Id}`);
 
                // Ensures cards have been successfully escrowed
                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(this.matchPrediction.address);
