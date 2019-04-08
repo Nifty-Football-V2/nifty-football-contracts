@@ -224,7 +224,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function _performPostGameCleanup(uint256 _gameId) private {
         Game storage game = gameIdToGameMapping[_gameId];
-        _freeUpCardsForFutureGames(game.p1TokenId, game.p2TokenId);// todo: unit test this
+        _freeUpCardsForFutureGames(game.p1TokenId, game.p2TokenId);
     }
 
     /////////////////

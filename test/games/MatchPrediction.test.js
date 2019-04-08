@@ -701,6 +701,10 @@ contract.only('Match Prediction Contract Tests',
                await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
                await sleep(4250);
                await givenAMatchResultWasSupplied(this.matchPrediction, oracle);
+
+               (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId1)).should.be.bignumber.equal(`${_game1Id}`);
+               (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId2)).should.be.bignumber.equal(`${_game1Id}`);
+
                const {logs} = await givenAWithdrawalTookPlace(this.matchPrediction, tokenOwner1);
 
                thenExpectTheFollowingEvent.inLogs(logs,
@@ -713,6 +717,8 @@ contract.only('Match Prediction Contract Tests',
 
                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
                (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner1);
+               (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId1)).should.be.bignumber.equal('0');
+               (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId2)).should.be.bignumber.equal('0');
            });
 
            it('should fail when game doesnt exist', async () => {
