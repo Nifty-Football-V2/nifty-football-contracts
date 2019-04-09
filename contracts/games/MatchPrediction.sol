@@ -38,6 +38,10 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         uint256 indexed id
     );
 
+    event MatchRestored (
+        uint256 indexed id
+    );
+
     event MatchOutcome (
         uint256 indexed id,
         Outcome indexed result
@@ -118,6 +122,12 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     modifier onlyWhenMatchUpcoming(uint256 _matchId) {
         _isMatchUpcoming(_matchId);
+        _;
+    }
+
+    modifier onlyWhenMatchNotUpcoming(uint256 _matchId) {
+        Match storage aMatch = matchIdToMatchMapping[_matchId];
+        require(aMatch.state != MatchState.UNINITIALISED && aMatch.state != MatchState.UPCOMING, "match.prediction.validation.error.unexpected.match.state");
         _;
     }
 
@@ -284,7 +294,20 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         emit MatchCancelled(_matchId);
     }
 
-    //todo: add ability to resume match with updated predictBefore and resultAfter times
+    //todo: unit test this baby
+    function restoreMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
+    whenNotPaused
+    onlyWhenOracle
+    onlyWhenMatchExists(_matchId)
+    onlyWhenMatchNotUpcoming(_matchId)
+    onlyWhenTimesValid(_predictBefore, _resultAfter) external {
+        Match storage aMatch = matchIdToMatchMapping[_matchId];
+        aMatch.state = MatchState.UPCOMING;
+        aMatch.predictBefore = _predictBefore;
+        aMatch.resultAfter = _resultAfter;
+
+        emit MatchRestored(_matchId);
+    }
 
     function matchResult(uint256 _matchId, Outcome _resultState)
     whenNotPaused
@@ -398,6 +421,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         emit GameClosed(_gameId);
     }
 
+    //todo: this functionality should be inherited from an oracle interface contract
     function updateOracle(address _newOracle)
     whenNotPaused
     onlyOwner
