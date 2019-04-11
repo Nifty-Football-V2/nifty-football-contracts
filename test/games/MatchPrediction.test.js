@@ -98,6 +98,14 @@ contract.only('Match Prediction Contract Tests',
         return contract.cancelMatch(matchId, {from: sender});
     }
 
+    function whenAMatchIsRestored(contract, sender) {
+        return whenASpecificMatchIsRestored(contract, match1.id, seconds_since_epoch() + 6, seconds_since_epoch() + 8, sender);
+    }
+
+    function whenASpecificMatchIsRestored(contract, matchId, predictBefore, resultAfter, sender) {
+        return contract.restoreMatch(matchId, predictBefore, resultAfter, {from: sender});
+    }
+
     function givenABasicFirstPrediction(contract, sender) {
         return makeAFirstPredictionFor(contract, match1.id, _tokenId1, Outcomes.HOME_WIN, sender);
     }
@@ -187,6 +195,10 @@ contract.only('Match Prediction Contract Tests',
 
             it('should fail to cancel a match', async () => {
                await shouldFail.reverting(whenAMatchIsCancelled(this.matchPrediction, oracle));
+            });
+
+            it('should fail to restore a match', async () => {
+               await shouldFail.reverting(whenAMatchIsRestored(this.matchPrediction, oracle));
             });
 
             it('should fail to supply a match result', async () => {
@@ -316,6 +328,13 @@ contract.only('Match Prediction Contract Tests',
                    whenAMatchIsPostponed(this.matchPrediction, oracle),
                    validationErrorContentKeys.matchNotUpcoming
                );
+            });
+        });
+
+        context('when restoring a match', async () => {
+            beforeEach(async () => {
+                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await whenAMatchIsPostponed()
             });
         });
 

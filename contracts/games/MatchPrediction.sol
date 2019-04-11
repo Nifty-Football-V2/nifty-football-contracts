@@ -125,9 +125,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
-    modifier onlyWhenMatchNotUpcoming(uint256 _matchId) {
-        Match storage aMatch = matchIdToMatchMapping[_matchId];
-        require(aMatch.state != MatchState.UNINITIALISED && aMatch.state != MatchState.UPCOMING, "match.prediction.validation.error.unexpected.match.state");
+    modifier onlyWhenMatchPostponed(uint256 _matchId) {
+        require(matchIdToMatchMapping[_matchId].state != MatchState.POSTPONED, "match.prediction.validation.error.match.not.postponed");
         _;
     }
 
@@ -299,12 +298,13 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
-    onlyWhenMatchNotUpcoming(_matchId)
+    onlyWhenMatchPostponed(_matchId)
     onlyWhenTimesValid(_predictBefore, _resultAfter) external {
         Match storage aMatch = matchIdToMatchMapping[_matchId];
-        aMatch.state = MatchState.UPCOMING;
         aMatch.predictBefore = _predictBefore;
         aMatch.resultAfter = _resultAfter;
+        aMatch.result = Outcome.UNINITIALISED;
+        aMatch.state = MatchState.UPCOMING;
 
         emit MatchRestored(_matchId);
     }
