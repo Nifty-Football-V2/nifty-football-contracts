@@ -4,11 +4,10 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
-import "./generators/FutballCardsGenerator.sol";
+import "./generators/IFutballCardsGenerator.sol";
 
 import "./libs/Strings.sol";
 import "./IFutballCardsCreator.sol";
-
 
 contract FutballCardsBlindPack is Ownable, Pausable {
     using SafeMath for uint256;
@@ -23,7 +22,9 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     event AttributesBaseChanged(uint256 _new);
 
-    FutballCardsGenerator public futballCardsGenerator;
+    event FutballCardsGeneratorChanged(IFutballCardsGenerator _new);
+
+    IFutballCardsGenerator public futballCardsGenerator;
     IFutballCardsCreator public futballCardsNFT;
     address payable wallet;
 
@@ -34,19 +35,19 @@ contract FutballCardsBlindPack is Ownable, Pausable {
     uint256 public attributesBase = 30;
 
     uint256[] public pricePerCard = [
-    11000000, // 1 @ = 0.011 ETH / $1.5
-    11000000, // 2 @ = 0.011 ETH / $1.5
-    7300000, //  3 @ = 0.01 ETH / $1
-    7300000, //  4 @ = 0.01 ETH / $1
-    7300000, //  5 @ = 0.01 ETH / $1
-    6200000, //  6 @ = 0.0062 ETH / $0.85
-    6200000, //  7 @ = 0.0062 ETH / $0.85
-    6200000, //  8 @ = 0.0062 ETH / $0.85
-    6200000, //  9 @ = 0.0062 ETH / $0.85
-    5500000 //  10 @ = 0.0055 ETH / $0.75
+    11000000000000000, // 1 @ = 0.011 ETH / $1.5
+    11000000000000000, // 2 @ = 0.011 ETH / $1.5
+    10000000000000000, //  3 @ = 0.01 ETH / $1
+    10000000000000000, //  4 @ = 0.01 ETH / $1
+    10000000000000000, //  5 @ = 0.01 ETH / $1
+    6200000000000000, //  6 @ = 0.0062 ETH / $0.85
+    6200000000000000, //  7 @ = 0.0062 ETH / $0.85
+    6200000000000000, //  8 @ = 0.0062 ETH / $0.85
+    6200000000000000, //  9 @ = 0.0062 ETH / $0.85
+    5500000000000000 //  10 @ = 0.0055 ETH / $0.75
     ];
 
-    constructor (address payable _wallet, FutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
+    constructor (address payable _wallet, IFutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
         futballCardsGenerator = _futballCardsGenerator;
         futballCardsNFT = _fuballCardsNFT;
         wallet = _wallet;
@@ -61,6 +62,7 @@ contract FutballCardsBlindPack is Ownable, Pausable {
             credits[msg.sender] > 0 || msg.value >= totalPrice(1),
             "Must supply at least the required minimum purchase value or have credit"
         );
+        require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
         uint256 tokenId = _generateAndAssignCard(_to);
 
@@ -78,6 +80,7 @@ contract FutballCardsBlindPack is Ownable, Pausable {
             credits[msg.sender] >= _numberOfCards || msg.value >= totalPrice(_numberOfCards),
             "Must supply at least the required minimum purchase value or have credit"
         );
+        require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
         uint256[] memory generatedTokenIds = new uint256[](_numberOfCards);
 
@@ -136,6 +139,14 @@ contract FutballCardsBlindPack is Ownable, Pausable {
         return true;
     }
 
+    function setFutballCardsGenerator(IFutballCardsGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
+        futballCardsGenerator = _futballCardsGenerator;
+
+        emit FutballCardsGeneratorChanged(_futballCardsGenerator);
+
+        return true;
+    }
+
     function updatePricePerCardAtIndex(uint256 _index, uint256 _priceInWei) public onlyOwner returns (bool) {
         pricePerCard[_index] = _priceInWei;
         return true;
@@ -168,5 +179,25 @@ contract FutballCardsBlindPack is Ownable, Pausable {
             return pricePerCard[pricePerCard.length - 1].mul(_numberOfCards);
         }
         return pricePerCard[_numberOfCards - 1].mul(_numberOfCards);
+    }
+
+    /**
+     * Returns whether the target address is a contract
+     * Based on OpenZeppelin Address library
+     * @dev This function will return false if invoked during the constructor of a contract,
+     * as the code is not actually created until after the constructor finishes.
+     * @param account address of the account to check
+     * @return whether the target address is a contract
+     */
+    function isContract(address account) internal view returns (bool) {
+        uint256 size;
+        // XXX Currently there is no better way to check if there is a contract in an address
+        // than to check the size of the code at that address.
+        // See https://ethereum.stackexchange.com/a/14016/36603
+        // for more details about how this works.
+        // contracts then.
+        // solhint-disable-next-line no-inline-assembly
+        assembly {size := extcodesize(account)}
+        return size > 0;
     }
 }

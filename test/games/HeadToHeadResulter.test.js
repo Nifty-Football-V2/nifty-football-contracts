@@ -5,7 +5,7 @@ const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-help
 
 contract('HeadToHead resulter tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
 
-    context.only('should be able to play game', async function () {
+    context('should be able to play game', async function () {
 
         it('cant create game', async function () {
             console.log(HeadToHeadResulter);

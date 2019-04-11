@@ -1,8 +1,9 @@
 pragma solidity 0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./IFutballCardsGenerator.sol";
 
-contract FutballCardsGenerator is Ownable {
+contract FutballCardsGenerator is Ownable, IFutballCardsGenerator {
 
     uint256 internal randNonce = 0;
 
@@ -11,8 +12,8 @@ contract FutballCardsGenerator is Ownable {
 
     uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 3, 3];
     uint256[] internal nationalities = [0, 1, 2, 3, 4];
-    uint256[] internal kits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    uint256[] internal colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    uint256[] internal kits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+    uint256[] internal colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
     uint256[] internal ethnicities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
     function generateCard(address _sender)
@@ -25,11 +26,12 @@ contract FutballCardsGenerator is Ownable {
         uint256 _colour
     ) {
         bytes32 hash = blockhash(block.number);
+        uint256 position = positions[generate(_sender, positions.length, hash)];
         return (
         nationalities[generate(_sender, nationalities.length, hash)],
-        positions[generate(_sender, positions.length, hash)],
+        position,
         ethnicities[generate(_sender, ethnicities.length, hash)],
-        kits[generate(_sender, kits.length, hash)],
+        (position == 0) ? kits[generate(_sender, 2, hash)] : kits[generate(_sender, kits.length, hash)],
         colours[generate(_sender, colours.length, hash)]
         );
     }
