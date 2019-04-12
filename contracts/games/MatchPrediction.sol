@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity ^0.5.0;
 
 import "./abstract/FutballCardGame.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Holder.sol";

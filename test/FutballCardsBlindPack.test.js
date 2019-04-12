@@ -6,7 +6,7 @@ const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
+contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
 
     const firstTokenId = new BN(1);
     const secondTokenId = new BN(2);
@@ -34,7 +34,7 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
         (await this.futballCards.isWhitelisted(this.blindPack.address)).should.be.true;
 
         this.basePrice = await this.blindPack.totalPrice(1);
-        this.basePrice.should.be.bignumber.equal('11000000');
+        this.basePrice.should.be.bignumber.equal('11000000000000000');
 
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
         (await this.blindPack.totalPurchasesInWei()).should.be.bignumber.equal('0');
