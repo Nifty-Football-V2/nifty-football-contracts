@@ -126,7 +126,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     }
 
     modifier onlyWhenMatchPostponed(uint256 _matchId) {
-        require(matchIdToMatchMapping[_matchId].state != MatchState.POSTPONED, "match.prediction.validation.error.match.not.postponed");
+        require(matchIdToMatchMapping[_matchId].state == MatchState.POSTPONED, "match.prediction.validation.error.match.not.postponed");
         _;
     }
 
@@ -245,6 +245,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         require(address(_nft) != msg.sender, "match.prediction.error.nft.contract.eq.owner");
         require(_oracle != address(0), "match.prediction.error.oracle.address.zero");
         require(_oracle != msg.sender, "match.prediction.error.oracle.address.eq.owner");
+        //todo:matches contract address checks
 
         nft = _nft;
         oracle = _oracle;

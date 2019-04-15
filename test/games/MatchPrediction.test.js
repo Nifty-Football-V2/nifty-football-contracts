@@ -334,7 +334,18 @@ contract.only('Match Prediction Contract Tests',
         context('when restoring a match', async () => {
             beforeEach(async () => {
                 await whenANewMatchIsAdded(this.matchPrediction, oracle);
-                await whenAMatchIsPostponed()
+                await whenAMatchIsPostponed(this.matchPrediction, oracle);
+            });
+
+            it('should be successful with valid parameters', async () => {
+                const {logs} = await whenAMatchIsRestored(this.matchPrediction, oracle);
+
+                thenExpectTheFollowingEvent.inLogs(logs,
+                    'MatchRestored',
+                    {
+                        id: match1.id
+                    }
+                );
             });
         });
 
