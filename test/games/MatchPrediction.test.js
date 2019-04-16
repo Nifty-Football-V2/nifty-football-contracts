@@ -347,6 +347,20 @@ contract.only('Match Prediction Contract Tests',
                     }
                 );
             });
+
+            it('should block any non-oracle address', async () => {
+                await shouldFail.reverting.withMessage(
+                    whenAMatchIsRestored(this.matchPrediction, random),
+                    validationErrorContentKeys.notOracle
+                );
+            });
+
+            it('should fail when a match doesnt exist', async () => {
+               await shouldFail.reverting.withMessage(
+                   whenASpecificMatchIsRestored(this.matchPrediction, new BN(4), new BN(0), new BN(0), oracle),
+                   validationErrorContentKeys.matchIdInvalid
+               );
+            });
         });
 
         context('when cancelling a match', async () => {
