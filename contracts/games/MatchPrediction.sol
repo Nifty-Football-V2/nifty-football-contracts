@@ -5,6 +5,11 @@ import "openzeppelin-solidity/contracts/token/ERC721/ERC721Holder.sol";
 
 contract MatchPrediction is FutballCardGame, ERC721Holder {
 
+    event ContractDeployed (
+        address indexed nftAddress,
+        address indexed matchServiceAddress
+    );
+
     event GameCreated (
         uint256 indexed gameId,
         address indexed player1,
@@ -294,7 +299,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         emit MatchCancelled(_matchId);
     }
 
-    //todo: unit test this baby
     function restoreMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
     whenNotPaused
     onlyWhenOracle
