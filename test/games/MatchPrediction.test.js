@@ -33,7 +33,8 @@ contract.only('Match Prediction Contract Tests',
         predictionsNotReceived: "match.prediction.validation.error.game.predictions.not.received",
         pastPredictionDeadline: "match.prediction.validation.error.past.prediction.deadline",
         predictBeforeAfterResultAfterTime: "match.prediction.validation.error.predict.before.is.after.result.after",
-        resultAfterNotInFuture: "match.prediction.validation.error.result.after.not.in.future"
+        resultAfterNotInFuture: "match.prediction.validation.error.result.after.not.in.future",
+        notPostponed: "match.prediction.validation.error.match.not.postponed"
     };
 
     const Outcomes = {
@@ -359,6 +360,35 @@ contract.only('Match Prediction Contract Tests',
                await shouldFail.reverting.withMessage(
                    whenASpecificMatchIsRestored(this.matchPrediction, new BN(4), new BN(0), new BN(0), oracle),
                    validationErrorContentKeys.matchIdInvalid
+               );
+            });
+
+            it('should fail when match not postponed', async () => {
+                const randomMatch = {
+                  id: new BN(45),
+                  predictBefore: seconds_since_epoch() + 5,
+                  resultAfter: seconds_since_epoch() + 8
+                };
+
+                await whenASpecificMatchIsAdded(this.matchPrediction, randomMatch, oracle);
+
+                await shouldFail.reverting.withMessage(
+                    whenASpecificMatchIsRestored(this.matchPrediction, randomMatch.id, seconds_since_epoch() + 3, seconds_since_epoch() + 6, oracle),
+                    validationErrorContentKeys.notPostponed
+                );
+            });
+
+            it('should fail when result after is before prediction window', async () => {
+               await shouldFail.reverting.withMessage(
+                   whenASpecificMatchIsRestored(this.matchPrediction, match1.id, seconds_since_epoch() + 8, seconds_since_epoch(), oracle),
+                   validationErrorContentKeys.predictBeforeAfterResultAfterTime
+               );
+            });
+
+            it('should fail when prediction window invalid', async () => {
+               await shouldFail.reverting.withMessage(
+                   whenASpecificMatchIsRestored(this.matchPrediction, match1.id, seconds_since_epoch() - 6, seconds_since_epoch() + 1, oracle),
+                   validationErrorContentKeys.pastPredictionDeadline
                );
             });
         });
