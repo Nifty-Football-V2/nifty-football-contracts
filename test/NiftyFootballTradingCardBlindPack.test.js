@@ -1,12 +1,12 @@
-const FutballCards = artifacts.require('FutballCards');
-const FutballCardsBlindPack = artifacts.require('FutballCardsBlindPack');
+const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard');
+const NiftyFootballTradingCardBlindPack = artifacts.require('NiftyFootballTradingCardBlindPack');
 
 const MockBlindBuyingContract = artifacts.require('MockBlindBuyingContract');
-const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
+const NiftyFootballTradingCardGenerator = artifacts.require('NiftyFootballTradingCardGenerator');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
+contract.only('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
 
     const firstTokenId = new BN(1);
     const secondTokenId = new BN(2);
@@ -17,12 +17,12 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
 
     beforeEach(async function () {
         // Create 721 contract
-        this.futballCards = await FutballCards.new(baseURI, {from: creator});
+        this.futballCards = await NiftyFootballTradingCard.new(baseURI, {from: creator});
 
-        this.generator = await FutballCardsGenerator.new({from: creator});
+        this.generator = await NiftyFootballTradingCardGenerator.new({from: creator});
 
         // Create vending machine
-        this.blindPack = await FutballCardsBlindPack.new(
+        this.blindPack = await NiftyFootballTradingCardBlindPack.new(
             wallet,
             this.generator.address,
             this.futballCards.address,
@@ -34,7 +34,7 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
         (await this.futballCards.isWhitelisted(this.blindPack.address)).should.be.true;
 
         this.basePrice = await this.blindPack.totalPrice(1);
-        this.basePrice.should.be.bignumber.equal('11000000');
+        this.basePrice.should.be.bignumber.equal('11000000000000000');
 
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
         (await this.blindPack.totalPurchasesInWei()).should.be.bignumber.equal('0');
@@ -84,12 +84,12 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
                 const cardAttrs = await this.futballCards.card(firstTokenId);
 
                 // between 0 - 3
-                cardAttrs[0].should.be.bignumber.lt('10');
-                cardAttrs[1].should.be.bignumber.lt('10');
-                cardAttrs[2].should.be.bignumber.lt('10');
-                cardAttrs[3].should.be.bignumber.lt('10');
-                cardAttrs[4].should.be.bignumber.lt('10');
-                cardAttrs[5].should.be.bignumber.lt('10');
+                cardAttrs[0].should.be.bignumber.lt('32');
+                cardAttrs[1].should.be.bignumber.lt('32');
+                cardAttrs[2].should.be.bignumber.lt('32');
+                cardAttrs[3].should.be.bignumber.lt('32');
+                cardAttrs[4].should.be.bignumber.lt('32');
+                cardAttrs[5].should.be.bignumber.lt('32');
             });
         });
 
@@ -184,7 +184,7 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
     context('wallet', function () {
         before(async function () {
             // Create vending machine
-            this.cleanBlindPack = await FutballCardsBlindPack.new(
+            this.cleanBlindPack = await NiftyFootballTradingCardBlindPack.new(
                 cleanWallet,
                 this.generator.address,
                 this.futballCards.address,
@@ -194,7 +194,7 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
             await this.futballCards.addWhitelisted(this.cleanBlindPack.address, {from: creator});
 
             this.basePrice = await this.blindPack.totalPrice(1);
-            this.basePrice.should.be.bignumber.equal('11000000');
+            this.basePrice.should.be.bignumber.equal('11000000000000000');
         });
 
         it('should be transferred the blind pack eth purchase', async function () {
@@ -214,10 +214,10 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
         it('should be transferred the blind pack eth purchase - over min amount', async function () {
             const preWalletBalance = await balance.current(cleanWallet);
 
-            await this.cleanBlindPack.blindPack({from: anyone, value: 12345678});
+            await this.cleanBlindPack.blindPack({from: anyone, value: new BN('11000000000000123')});
 
             const postWalletBalance = await balance.current(cleanWallet);
-            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('11000000000000123')));
         });
 
         it('should allow withdrawal of send eth if credit used', async function () {
@@ -226,14 +226,14 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
             contractBalance.should.be.bignumber.equal(new BN('0'));
 
             await this.cleanBlindPack.addCredit(tokenOwner, {from: creator});
-            await this.cleanBlindPack.blindPack({from: tokenOwner, value: 12345678});
+            await this.cleanBlindPack.blindPack({from: tokenOwner, value: new BN('11000000000000123')});
 
             const postContractBalance = await balance.current(this.cleanBlindPack.address);
-            postContractBalance.should.be.bignumber.equal(new BN('12345678'));
+            postContractBalance.should.be.bignumber.equal(new BN('11000000000000123'));
 
             await this.cleanBlindPack.withdraw({from: creator});
             const postWalletBalance = await balance.current(cleanWallet);
-            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('11000000000000123')));
 
         });
     });
@@ -244,43 +244,43 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
 
             it('for 1 and 2 cards', async function () {
                 const oneCard = await await this.blindPack.totalPrice(1);
-                oneCard.should.be.bignumber.eq(new BN(1).mul(new BN(11000000)));
+                oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
 
                 const twoCards = await await this.blindPack.totalPrice(2);
-                twoCards.should.be.bignumber.eq(new BN(2).mul(new BN(11000000)));
+                twoCards.should.be.bignumber.eq(new BN(2).mul(new BN('11000000000000000')));
             });
 
             it('for 3 to 5 cards', async function () {
                 const threeCards = await await this.blindPack.totalPrice(3);
-                threeCards.should.be.bignumber.eq(new BN(3).mul(new BN(7300000)));
+                threeCards.should.be.bignumber.eq(new BN(3).mul(new BN('10000000000000000')));
 
                 const fourCards = await await this.blindPack.totalPrice(4);
-                fourCards.should.be.bignumber.eq(new BN(4).mul(new BN(7300000)));
+                fourCards.should.be.bignumber.eq(new BN(4).mul(new BN('10000000000000000')));
 
                 const fiveCards = await await this.blindPack.totalPrice(5);
-                fiveCards.should.be.bignumber.eq(new BN(5).mul(new BN(7300000)));
+                fiveCards.should.be.bignumber.eq(new BN(5).mul(new BN('10000000000000000')));
             });
 
             it('for 6 to 9 cards', async function () {
                 const sixCards = await await this.blindPack.totalPrice(6);
-                sixCards.should.be.bignumber.eq(new BN(6).mul(new BN(6200000)));
+                sixCards.should.be.bignumber.eq(new BN(6).mul(new BN('6200000000000000')));
 
                 const sevenCards = await await this.blindPack.totalPrice(7);
-                sevenCards.should.be.bignumber.eq(new BN(7).mul(new BN(6200000)));
+                sevenCards.should.be.bignumber.eq(new BN(7).mul(new BN('6200000000000000')));
 
                 const eightCards = await await this.blindPack.totalPrice(8);
-                eightCards.should.be.bignumber.eq(new BN(8).mul(new BN(6200000)));
+                eightCards.should.be.bignumber.eq(new BN(8).mul(new BN('6200000000000000')));
 
                 const nineCards = await await this.blindPack.totalPrice(9);
-                nineCards.should.be.bignumber.eq(new BN(9).mul(new BN(6200000)));
+                nineCards.should.be.bignumber.eq(new BN(9).mul(new BN('6200000000000000')));
             });
 
             it('for 10 or more cards', async function () {
                 const tenCards = await await this.blindPack.totalPrice(10);
-                tenCards.should.be.bignumber.eq(new BN(10).mul(new BN(5500000)));
+                tenCards.should.be.bignumber.eq(new BN(10).mul(new BN('5500000000000000')));
 
                 const oneHundredCard = await await this.blindPack.totalPrice(100);
-                oneHundredCard.should.be.bignumber.eq(new BN(100).mul(new BN(5500000)));
+                oneHundredCard.should.be.bignumber.eq(new BN(100).mul(new BN('5500000000000000')));
             });
         });
 
@@ -316,7 +316,7 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
             });
 
             it('successful if caller sends enough ETH', async function () {
-                const value = new BN(10).mul(new BN(5500000));
+                const value = new BN(10).mul(new BN('55000000000000000'));
 
                 await this.blindPack.buyBatch(10, {from: tokenOwner, value: value});
 
@@ -339,7 +339,7 @@ contract.only('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet,
 
         it('can update if owner', async function () {
             let oneCard = await await this.blindPack.totalPrice(1);
-            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN(11000000)));
+            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
 
             await this.blindPack.updatePricePerCardAtIndex(0, 100, {from: creator});
 

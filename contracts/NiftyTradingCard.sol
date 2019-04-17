@@ -5,11 +5,11 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/access/roles/WhitelistedRole.sol";
 
 import "./libs/Strings.sol";
-import "./IFutballCardsCreator.sol";
-import "./IFutballCardsAttributes.sol";
 import "./erc721/CustomERC721Full.sol";
+import "./INiftyTradingCardCreator.sol";
+import "./INiftyTradingCardAttributes.sol";
 
-contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator, IFutballCardsAttributes {
+contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCardCreator, INiftyTradingCardAttributes {
     using SafeMath for uint256;
 
     string public tokenBaseURI = "";
@@ -121,11 +121,6 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
     mapping(uint256 => Attributes) internal attributesMapping;
     mapping(uint256 => Name) internal namesMapping;
     mapping(uint256 => Extras) internal extrasMapping;
-
-    constructor (string memory _tokenBaseURI) public CustomERC721Full("FutballCard", "FUT") {
-        super.addWhitelisted(msg.sender);
-        tokenBaseURI = _tokenBaseURI;
-    }
 
     function mintCard(
         uint256 _cardType,

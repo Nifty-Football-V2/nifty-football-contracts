@@ -4,12 +4,13 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
-import "./generators/IFutballCardsGenerator.sol";
 
 import "./libs/Strings.sol";
-import "./IFutballCardsCreator.sol";
+import "./INiftyTradingCardCreator.sol";
+import "./INiftyTradingCardCreator.sol";
+import "./generators/INiftyFootballTradingCardGenerator.sol";
 
-contract FutballCardsBlindPack is Ownable, Pausable {
+contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
     using SafeMath for uint256;
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
@@ -22,10 +23,10 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     event AttributesBaseChanged(uint256 _new);
 
-    event FutballCardsGeneratorChanged(IFutballCardsGenerator _new);
+    event FutballCardsGeneratorChanged(INiftyFootballTradingCardGenerator _new);
 
-    IFutballCardsGenerator public futballCardsGenerator;
-    IFutballCardsCreator public futballCardsNFT;
+    INiftyFootballTradingCardGenerator public futballCardsGenerator;
+    INiftyTradingCardCreator public futballCardsNFT;
     address payable wallet;
 
     mapping(address => uint256) public credits;
@@ -47,7 +48,7 @@ contract FutballCardsBlindPack is Ownable, Pausable {
     5500000000000000 //  10 @ = 0.0055 ETH / $0.75
     ];
 
-    constructor (address payable _wallet, IFutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
+    constructor (address payable _wallet, INiftyFootballTradingCardGenerator _futballCardsGenerator, INiftyTradingCardCreator _fuballCardsNFT) public {
         futballCardsGenerator = _futballCardsGenerator;
         futballCardsNFT = _fuballCardsNFT;
         wallet = _wallet;
@@ -139,7 +140,7 @@ contract FutballCardsBlindPack is Ownable, Pausable {
         return true;
     }
 
-    function setFutballCardsGenerator(IFutballCardsGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
+    function setFutballCardsGenerator(INiftyFootballTradingCardGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
         futballCardsGenerator = _futballCardsGenerator;
 
         emit FutballCardsGeneratorChanged(_futballCardsGenerator);

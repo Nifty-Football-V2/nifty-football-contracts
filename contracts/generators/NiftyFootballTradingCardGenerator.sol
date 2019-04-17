@@ -1,9 +1,9 @@
 pragma solidity 0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./IFutballCardsGenerator.sol";
+import "./INiftyFootballTradingCardGenerator.sol";
 
-contract FutballCardsGenerator is Ownable, IFutballCardsGenerator {
+contract NiftyFootballTradingCardGenerator is Ownable, INiftyFootballTradingCardGenerator {
 
     uint256 internal randNonce = 0;
 

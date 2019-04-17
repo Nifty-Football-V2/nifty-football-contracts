@@ -1,17 +1,16 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
 const {INFURA_KEY} = require('./constants');
-const mnemonic = process.env.TEST_MNEMONIC || require('./mnemonic');
 
 // Check gas prices before live deploy - https://ethgasstation.info/
 
 module.exports = {
     mocha: {
         useColors: true,
-        reporter: 'eth-gas-reporter',
-        reporterOptions: {
-            currency: 'USD',
-            gasPrice: 10
-        }
+        // reporter: 'eth-gas-reporter',
+        // reporterOptions: {
+        //     currency: 'USD',
+        //     gasPrice: 10
+        // }
     },
     compilers: {
         solc: {
@@ -47,7 +46,10 @@ module.exports = {
         },
         ropsten: {
             provider: function () {
-                return new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${INFURA_KEY}`);
+                return new HDWalletProvider(
+                    process.env.NIFTY_FOOTBALL_MNEMONIC,
+                    `https://ropsten.infura.io/v3/${INFURA_KEY}`
+                );
             },
             network_id: 3,
             gas: 7000000, // default = 4712388
