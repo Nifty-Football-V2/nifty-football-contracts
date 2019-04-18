@@ -15,13 +15,16 @@ contract OracleInterface is Ownable, Pausable {
     address public oracle;
 
     modifier onlyWhenNotAddressZero(address addr) {
-        require(addr != address(0));
+        require(addr != address(0), "oracle.interface.error.address.zero");
         _;
     }
 
     constructor (address _oracle) internal {
-        require(_oracle != address(0));
+        require(_oracle != address(0), "oracle.interface.error.oracle.address.zero");
+        require(_oracle != msg.sender, "oracle.interface.error.oracle.address.eq.owner");
         oracle = _oracle;
+
+        emit OracleUpdated(address(0), _oracle);
     }
 
     function updateOracle(address _newOracle)

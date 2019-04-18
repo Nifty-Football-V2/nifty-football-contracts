@@ -34,7 +34,8 @@ contract.only('Match Prediction Contract Tests',
         pastPredictionDeadline: "match.prediction.validation.error.past.prediction.deadline",
         predictBeforeAfterResultAfterTime: "match.prediction.validation.error.predict.before.is.after.result.after",
         resultAfterNotInFuture: "match.prediction.validation.error.result.after.not.in.future",
-        notPostponed: "match.prediction.validation.error.match.not.postponed"
+        notPostponed: "match.prediction.validation.error.match.not.postponed",
+        resultWindowNotOpen: "match.prediction.validation.error.result.window.not.open"
     };
 
     const Outcomes = {
@@ -216,10 +217,6 @@ contract.only('Match Prediction Contract Tests',
 
             it('should fail on an attempt to do a second prediction', async () => {
                 await shouldFail.reverting(givenABasicSecondPrediction(this.matchPrediction, tokenOwner2));
-            });
-
-            it('should fail to update the oracle address', async () => {
-               await shouldFail.reverting(this.matchPrediction.updateOracle(oracle));
             });
         });
 
@@ -500,29 +497,11 @@ contract.only('Match Prediction Contract Tests',
                    validationErrorContentKeys.invalidMatchResultState
                );
             });
-        });
 
-        context('when updating oracle address', async () => {
-            it('should update as owner', async () => {
-                const {logs} = await this.matchPrediction.updateOracle(oracle2, {from: creator});
-
-                thenExpectTheFollowingEvent.inLogs(logs,
-                    'OracleUpdated',
-                    {
-                        previous: oracle,
-                        current: oracle2
-                    }
-                );
-            });
-
-            it('should fail when not owner', async () => {
-                await shouldFail.reverting(this.matchPrediction.updateOracle(oracle2, {from: random}));
-            });
-
-            it('should prevent oracle being updated to address(0)', async () => {
+            it('should fail when result window not open', async () => {
                 await shouldFail.reverting.withMessage(
-                    this.matchPrediction.updateOracle(constants.ZERO_ADDRESS, {from: creator}),
-                    validationErrorContentKeys.zeroAddress
+                    givenAMatchResultWasSupplied(this.matchPrediction, oracle),
+                    validationErrorContentKeys.resultWindowNotOpen
                 );
             });
         });

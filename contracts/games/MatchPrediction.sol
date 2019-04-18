@@ -52,11 +52,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         Outcome indexed result
     );
 
-    event OracleUpdated (
-        address indexed previous,
-        address indexed current
-    );
-
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
 
     enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED}
@@ -424,17 +419,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _performPostGameCleanup(_gameId);
 
         emit GameClosed(_gameId);
-    }
-
-    //todo: this functionality should be inherited from an oracle interface contract
-    function updateOracle(address _newOracle)
-    whenNotPaused
-    onlyOwner
-    onlyWhenNotAddressZero(_newOracle) external {
-        address previous = oracle;
-        oracle = _newOracle;
-
-        emit OracleUpdated(previous, oracle);
     }
     
 }
