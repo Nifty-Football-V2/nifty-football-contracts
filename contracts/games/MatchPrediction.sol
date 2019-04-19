@@ -95,11 +95,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     // Modifiers //
     ///////////////
 
-    modifier onlyWhenNotAddressZero(address addr) {
-        require(addr != address(0), "match.prediction.validation.error.address.zero");
-        _;
-    }
-
     modifier onlyWhenTimesValid(uint256 _predictBefore, uint256 _resultAfter) {
         require(_predictBefore <  _resultAfter, "match.prediction.validation.error.predict.before.is.after.result.after");
         require(now < _predictBefore, "match.prediction.validation.error.past.prediction.deadline");

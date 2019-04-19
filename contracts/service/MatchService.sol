@@ -24,6 +24,10 @@ contract MatchService is OracleInterface {
         Outcome indexed result
     );
 
+    event NewWhitelist (
+        address indexed addr
+    );
+
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
 
     enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED}
@@ -167,5 +171,13 @@ contract MatchService is OracleInterface {
         matchIdToMatchMapping[_matchId].result = _resultState;
 
         emit MatchOutcome(_matchId, _resultState);
+    }
+
+    function whitelist(address addr)
+    whenNotPaused
+    onlyOwner external {
+        isWhitelisted[addr] = true;
+
+        emit NewWhitelist(addr);
     }
 }

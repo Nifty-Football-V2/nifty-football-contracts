@@ -2,7 +2,7 @@ const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('MatchService Contract Tests',
+contract.only('MatchService Contract Tests',
              ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
      const thenExpectTheFollowingEvent = expectEvent;
 
@@ -81,6 +81,10 @@ contract('MatchService Contract Tests',
          return contract.updateOracle(address, {from: sender});
      }
 
+     function givenAnAddressIsWhitelisted(contract, address, sender) {
+         return contract.whitelist(address, {from: sender});
+     }
+
      beforeEach(async () => {
          this.matchService = await MatchService.new(oracle, {from: creator});
 
@@ -132,7 +136,11 @@ contract('MatchService Contract Tests',
              });
 
              it('should fail to supply a match result', async () => {
-                 await shouldFail.reverting.withMessage(givenAMatchResultWasSupplied(this.matchService, oracle));
+                 await shouldFail.reverting(givenAMatchResultWasSupplied(this.matchService, oracle));
+             });
+
+             it('should fail to whitelist an address', async () => {
+                await shouldFail.reverting(givenAnAddressIsWhitelisted(this.matchService, random, creator));
              });
          });
 
@@ -445,6 +453,23 @@ contract('MatchService Contract Tests',
                      validationErrorContentKeys.resultWindowNotOpen
                  );
              });
+         });
+
+         context('when whitelisting an address', async () => {
+            it('should be successful with valid parameters', async () => {
+                const {logs} = await givenAnAddressIsWhitelisted(this.matchService, random, creator);
+
+                thenExpectTheFollowingEvent.inLogs(logs,
+                    'NewWhitelist',
+                    {
+                        addr: random
+                    }
+                );
+            });
+
+            it('should fail when owner is not whitelisting', async () => {
+                await shouldFail.reverting(givenAnAddressIsWhitelisted(this.matchService, random, random));
+            });
          });
      });
 });

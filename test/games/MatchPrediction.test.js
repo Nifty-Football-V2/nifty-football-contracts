@@ -4,7 +4,7 @@ const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('Match Prediction Contract Tests',
+contract('Match Prediction Contract Tests',
              ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 
@@ -139,9 +139,12 @@ contract.only('Match Prediction Contract Tests',
         this.matchService = await MatchService.new(oracle, {from: creator});
         this.matchPrediction = await MatchPrediction.new(this.futballCards.address, this.matchService.address, {from: creator});
 
+        await this.matchService.whitelist(this.matchPrediction.address, {from: creator});
+
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
         (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('0');
         (await this.matchPrediction.owner()).should.be.equal(creator);
+        (await this.matchService.isWhitelisted(this.matchPrediction.address)).should.be.true;
     });
 
     context('validation', async () => {
