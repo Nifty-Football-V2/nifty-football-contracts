@@ -1,9 +1,10 @@
 const FutballCards = artifacts.require('FutballCards');
 const MatchPrediction = artifacts.require('MatchPrediction');
+const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('Match Prediction Contract Tests',
+contract.only('Match Prediction Contract Tests',
              ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 
@@ -17,12 +18,12 @@ contract('Match Prediction Contract Tests',
         nftNotApproved: "futball.card.game.error.nft.not.approved",
         notNFTOwner: "futball.card.game.error.not.nft.owner",
         tokenAlreadyPlaying: "futball.card.game.error.token.playing",
-        oracleAddressZero: "match.prediction.error.oracle.address.zero",
+        matchServiceAddressZero: "match.prediction.error.match.service.address.zero",
         nftAddressZero: "match.prediction.error.nft.contract.address.zero",
         invalidGameId: "futball.card.game.error.invalid.game",
         gameComplete: "futball.card.game.error.game.complete",
         invalidPrediction: "match.prediction.validation.error.invalid.prediction",
-        oracleEqOwner: "match.prediction.error.oracle.address.eq.owner",
+        matchServiceEqOwner: "match.prediction.error.match.service.address.eq.owner",
         nftContractEqOwner: "match.prediction.error.nft.contract.eq.owner",
         p1RevokedApproval: "match.prediction.validation.error.p1.revoked.approval",
         p2PredictionInvalid: "match.prediction.validation.error.p2.prediction.invalid",
@@ -43,13 +44,6 @@ contract('Match Prediction Contract Tests',
         HOME_WIN: new BN(1),
         AWAY_WIN: new BN(2),
         DRAW: new BN(3)
-    };
-
-    const MatchState = {
-        UNINITIALISED: new BN(0),
-        UPCOMING: new BN(1),
-        POSTPONED: new BN(2),
-        CANCELLED: new BN(3)
     };
 
     const GameState = {
@@ -142,33 +136,33 @@ contract('Match Prediction Contract Tests',
 
     beforeEach(async () => {
         this.futballCards = await FutballCards.new(baseURI, {from: creator});
-        this.matchPrediction = await MatchPrediction.new(this.futballCards.address, oracle, {from: creator});
+        this.matchService = await MatchService.new(oracle, {from: creator});
+        this.matchPrediction = await MatchPrediction.new(this.futballCards.address, this.matchService.address, {from: creator});
 
         (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
         (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('0');
         (await this.matchPrediction.owner()).should.be.equal(creator);
-        (await this.matchPrediction.oracle()).should.be.equal(oracle);
     });
 
     context('validation', async () => {
         context('when creating the contract', async () => {
-            it('should fail to create contract with address(0) oracle', async () => {
+            it('should fail to create contract with address(0) Match Service', async () => {
                 await shouldFail.reverting.withMessage(
                     MatchPrediction.new(this.futballCards.address, constants.ZERO_ADDRESS, {from: creator}),
-                    validationErrorContentKeys.oracleAddressZero
+                    validationErrorContentKeys.matchServiceAddressZero
                 );
             });
 
-            it('should fail to create contract when oracle and owner are the same address', async () => {
+            it('should fail to create contract when Match Service and owner are the same address', async () => {
                 await shouldFail.reverting.withMessage(
                     MatchPrediction.new(this.futballCards.address, creator, {from: creator}),
-                    validationErrorContentKeys.oracleEqOwner
+                    validationErrorContentKeys.matchServiceEqOwner
                 );
             });
 
             it('should fail to create contract with address(0) nft contract', async () => {
                await shouldFail.reverting.withMessage(
-                   MatchPrediction.new(constants.ZERO_ADDRESS, oracle, {from: creator}),
+                   MatchPrediction.new(constants.ZERO_ADDRESS, this.matchService.address, {from: creator}),
                    validationErrorContentKeys.nftAddressZero
                );
             });
@@ -234,13 +228,6 @@ contract('Match Prediction Contract Tests',
                 (await this.matchPrediction.matchIds(0)).should.be.bignumber.equal(`${match1.id}`);
             });
 
-            it('should block any non-oracle address', async () => {
-                await shouldFail.reverting.withMessage(
-                    whenANewMatchIsAdded(this.matchPrediction, tokenOwner1),
-                    validationErrorContentKeys.notOracle
-                );
-            });
-
             it('should not allow the same match to be added twice', async () => {
                 await whenANewMatchIsAdded(this.matchPrediction, oracle);
 
@@ -293,13 +280,6 @@ contract('Match Prediction Contract Tests',
                 );
             });
 
-            it('should block any non-oracle address', async () => {
-                await shouldFail.reverting.withMessage(
-                    whenAMatchIsPostponed(this.matchPrediction, random),
-                    validationErrorContentKeys.notOracle
-                );
-            });
-
             it('should fail when match does not exist', async () => {
                 const invalidMatchId = new BN(5);
 
@@ -343,13 +323,6 @@ contract('Match Prediction Contract Tests',
                     {
                         id: match1.id
                     }
-                );
-            });
-
-            it('should block any non-oracle address', async () => {
-                await shouldFail.reverting.withMessage(
-                    whenAMatchIsRestored(this.matchPrediction, random),
-                    validationErrorContentKeys.notOracle
                 );
             });
 
@@ -406,13 +379,6 @@ contract('Match Prediction Contract Tests',
                );
             });
 
-            it('should block any non-oracle address', async () => {
-               await shouldFail.reverting.withMessage(
-                   whenAMatchIsCancelled(this.matchPrediction, random),
-                   validationErrorContentKeys.notOracle
-               );
-            });
-
             it('should fail when a match doesnt exist', async () => {
                await shouldFail.reverting.withMessage(
                    whenASpecificMatchIsCancelled(this.matchPrediction, new BN(5), oracle),
@@ -456,13 +422,6 @@ contract('Match Prediction Contract Tests',
                         id: match1.id,
                         result: Outcomes.HOME_WIN
                     }
-                );
-            });
-
-            it('should block any non-oracle address', async () => {
-                await shouldFail.reverting.withMessage(
-                  whenASpecificMatchResultSupplied(this.matchPrediction, match1.id, Outcomes.HOME_WIN, random),
-                  validationErrorContentKeys.notOracle
                 );
             });
 

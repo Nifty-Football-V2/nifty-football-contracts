@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./abstract/FutballCardGame.sol";
+import "../service/MatchService.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Holder.sol";
 
 contract MatchPrediction is FutballCardGame, ERC721Holder {
@@ -79,7 +80,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         uint256 matchId;
     }
 
-    address public oracle;
+    MatchService public matchService;
 
     uint256 public totalGamesCreated = 0;
 
@@ -96,11 +97,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     modifier onlyWhenNotAddressZero(address addr) {
         require(addr != address(0), "match.prediction.validation.error.address.zero");
-        _;
-    }
-
-    modifier onlyWhenOracle() {
-        require(oracle == msg.sender, "match.prediction.validation.error.not.oracle");
         _;
     }
 
@@ -240,15 +236,14 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     // Constructor //
     /////////////////
 
-    constructor (IERC721 _nft, address _oracle) public {
+    constructor (IERC721 _nft, MatchService _matchService) public {
         require(address(_nft) != address(0), "match.prediction.error.nft.contract.address.zero");
         require(address(_nft) != msg.sender, "match.prediction.error.nft.contract.eq.owner");
-        require(_oracle != address(0), "match.prediction.error.oracle.address.zero");
-        require(_oracle != msg.sender, "match.prediction.error.oracle.address.eq.owner");
-        //todo:matches contract address checks
+        require(address(_matchService) != address(0), "match.prediction.error.match.service.address.zero");
+        require(address(_matchService) != msg.sender, "match.prediction.error.match.service.address.eq.owner");
 
         nft = _nft;
-        oracle = _oracle;
+        matchService = _matchService;
     }
 
     ///////////////
@@ -258,7 +253,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     //todo: move all match functionality to its own contract - will make both entities more maintainable
     function addMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
     whenNotPaused
-    onlyWhenOracle
     onlyWhenMatchDoesNotExist(_matchId)
     onlyWhenTimesValid(_predictBefore, _resultAfter) external {
         matchIdToMatchMapping[_matchId] = Match({
@@ -276,7 +270,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function postponeMatch(uint256 _matchId)
     whenNotPaused
-    onlyWhenOracle
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId) external {
         matchIdToMatchMapping[_matchId].state = MatchState.POSTPONED;
@@ -286,7 +279,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function cancelMatch(uint256 _matchId)
     whenNotPaused
-    onlyWhenOracle
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId) external {
         matchIdToMatchMapping[_matchId].state = MatchState.CANCELLED;
@@ -296,7 +288,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function restoreMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
     whenNotPaused
-    onlyWhenOracle
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchPostponed(_matchId)
     onlyWhenTimesValid(_predictBefore, _resultAfter) external {
@@ -311,7 +302,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function matchResult(uint256 _matchId, Outcome _resultState)
     whenNotPaused
-    onlyWhenOracle
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId)
     onlyWhenResultStateValid(_resultState)
