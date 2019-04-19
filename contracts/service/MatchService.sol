@@ -7,6 +7,18 @@ contract MatchService is OracleInterface {
         uint256 indexed id
     );
 
+    event MatchPostponed (
+        uint256 indexed id
+    );
+
+    event MatchCancelled (
+        uint256 indexed id
+    );
+
+    event MatchRestored (
+        uint256 indexed id
+    );
+
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
 
     enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED}
@@ -22,6 +34,10 @@ contract MatchService is OracleInterface {
     mapping(uint256 => Match) public matchIdToMatchMapping;
     uint256[] public matchIds;
 
+    ///////////////
+    // Modifiers //
+    ///////////////
+
     modifier onlyWhenMatchDoesNotExist(uint256 _matchId) {
         require(!_doesMatchExist(_matchId), "match.service.error.match.exists");
         _;
@@ -33,15 +49,42 @@ contract MatchService is OracleInterface {
         _;
     }
 
-    function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
-        Match storage aMatch = matchIdToMatchMapping[_matchId];
-        return (_matchId > 0 && aMatch.predictBefore < aMatch.resultAfter);
+    modifier onlyWhenMatchExists(uint256 _matchId) {
+        require(_doesMatchExist(_matchId), "match.service.error.invalid.match.id");
+        _;
     }
 
     modifier onlyWhenOracle() {
         require(oracle == msg.sender, "match.service.error.not.oracle");
         _;
     }
+
+    modifier onlyWhenMatchUpcoming(uint256 _matchId) {
+        _isMatchUpcoming(_matchId);
+        _;
+    }
+
+    modifier onlyWhenMatchPostponed(uint256 _matchId) {
+        require(matchIdToMatchMapping[_matchId].state == MatchState.POSTPONED, "match.prediction.validation.error.match.not.postponed");
+        _;
+    }
+
+    ////////////////////////
+    // Internal Functions //
+    ////////////////////////
+
+    function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
+        Match storage aMatch = matchIdToMatchMapping[_matchId];
+        return (_matchId > 0 && aMatch.predictBefore < aMatch.resultAfter);
+    }
+
+    function _isMatchUpcoming(uint256 _matchId) internal view {
+        require(matchIdToMatchMapping[_matchId].state == MatchState.UPCOMING, "match.service.error.match.not.upcoming");
+    }
+
+    //////////////////////
+    // Public Functions //
+    //////////////////////
 
     constructor(address oracle) OracleInterface(oracle) public {}
 
@@ -61,5 +104,40 @@ contract MatchService is OracleInterface {
         matchIds.push(_matchId);
 
         emit MatchAdded(_matchId);
+    }
+
+    function postponeMatch(uint256 _matchId)
+    whenNotPaused
+    onlyWhenOracle
+    onlyWhenMatchExists(_matchId)
+    onlyWhenMatchUpcoming(_matchId) external {
+        matchIdToMatchMapping[_matchId].state = MatchState.POSTPONED;
+
+        emit MatchPostponed(_matchId);
+    }
+
+    function cancelMatch(uint256 _matchId)
+    whenNotPaused
+    onlyWhenOracle
+    onlyWhenMatchExists(_matchId)
+    onlyWhenMatchUpcoming(_matchId) external {
+        matchIdToMatchMapping[_matchId].state = MatchState.CANCELLED;
+
+        emit MatchCancelled(_matchId);
+    }
+
+    function restoreMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
+    whenNotPaused
+    onlyWhenOracle
+    onlyWhenMatchExists(_matchId)
+    onlyWhenMatchPostponed(_matchId)
+    onlyWhenTimesValid(_predictBefore, _resultAfter) external {
+        Match storage aMatch = matchIdToMatchMapping[_matchId];
+        aMatch.predictBefore = _predictBefore;
+        aMatch.resultAfter = _resultAfter;
+        aMatch.result = Outcome.UNINITIALISED;
+        aMatch.state = MatchState.UPCOMING;
+
+        emit MatchRestored(_matchId);
     }
 }

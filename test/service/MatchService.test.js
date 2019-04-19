@@ -13,7 +13,9 @@ contract.only('MatchService Contract Tests',
          matchExists: "match.service.error.match.exists",
          predictBeforeAfterResultAfterTime: "match.service.error.predict.before.is.after.result.after",
          pastPredictionDeadline: "match.service.error.past.prediction.deadline",
-         notOracle: "match.service.error.not.oracle"
+         notOracle: "match.service.error.not.oracle",
+         matchIdInvalid: "match.service.error.invalid.match.id",
+         matchNotUpcoming: "match.service.error.match.not.upcoming"
      };
 
      const match1 = {
@@ -31,6 +33,30 @@ contract.only('MatchService Contract Tests',
 
      function givenASpecificMatchIsAdded(contract, match, sender) {
          return contract.addMatch(match.id, match.predictBefore, match.resultAfter, {from: sender});
+     }
+
+     function givenAMatchIsPostponed(contract, sender) {
+         return givenASpecificMatchIsPostponed(contract, match1.id, sender);
+     }
+
+     function givenASpecificMatchIsPostponed(contract, matchId, sender) {
+         return contract.postponeMatch(matchId, {from: sender});
+     }
+
+     function givenAMatchIsCancelled(contract, sender) {
+         return givenASpecificMatchIsCancelled(contract, match1.id, sender);
+     }
+
+     function givenASpecificMatchIsCancelled(contract, matchId, sender) {
+         return contract.cancelMatch(matchId, {from: sender});
+     }
+
+     function givenAMatchIsRestored(contract, sender) {
+         return givenASpecificMatchIsRestored(contract, match1.id, seconds_since_epoch() + 6, seconds_since_epoch() + 8, sender);
+     }
+
+     function givenASpecificMatchIsRestored(contract, matchId, predictBefore, resultAfter, sender) {
+         return contract.restoreMatch(matchId, predictBefore, resultAfter, {from: sender});
      }
 
      function givenTheOracleAddressWasUpdatedTo(contract, address, sender) {
@@ -67,9 +93,25 @@ contract.only('MatchService Contract Tests',
                  (await this.matchService.paused()).should.be.true;
              });
 
-            it('should fail to update the oracles address', async () => {
-                await shouldFail.reverting(givenTheOracleAddressWasUpdatedTo(this.matchService, random, creator));
-            });
+             it('should fail to update the oracles address', async () => {
+                 await shouldFail.reverting(givenTheOracleAddressWasUpdatedTo(this.matchService, random, creator));
+             });
+
+             it('should fail to add a match', async () => {
+                 await shouldFail.reverting(givenAMatchIsAdded(this.matchService, oracle));
+             });
+
+             it('should fail to postpone a match', async () => {
+                 await shouldFail.reverting(givenAMatchIsPostponed(this.matchService, oracle));
+             });
+
+             it('should fail to cancel a match', async () => {
+                 await shouldFail.reverting(givenAMatchIsCancelled(this.matchService, oracle));
+             });
+
+             it('should fail to restore a match', async () => {
+                 await shouldFail.reverting(givenAMatchIsRestored(this.matchService, oracle));
+             });
          });
 
          context('when updating oracle address', async () => {
@@ -149,6 +191,168 @@ contract.only('MatchService Contract Tests',
 
                  await shouldFail.reverting.withMessage(
                      givenASpecificMatchIsAdded(this.matchService, matchWithPastPredictionDeadline, oracle),
+                     validationErrorContentKeys.pastPredictionDeadline
+                 );
+             });
+         });
+
+         context('when postponing a match', async () => {
+             beforeEach(async () => {
+                 await givenAMatchIsAdded(this.matchService, oracle);
+             });
+
+             it('should be successful with valid parameters', async () => {
+                 const {logs} = await givenAMatchIsPostponed(this.matchService, oracle);
+
+                 thenExpectTheFollowingEvent.inLogs(logs,
+                     'MatchPostponed',
+                     {
+                         id: match1.id
+                     }
+                 );
+             });
+
+             it('should block any non-oracle address', async () => {
+                 await shouldFail.reverting.withMessage(
+                     givenAMatchIsPostponed(this.matchService, random),
+                     validationErrorContentKeys.notOracle
+                 );
+             });
+
+             it('should fail when match does not exist', async () => {
+                 const invalidMatchId = new BN(5);
+
+                 await shouldFail.reverting.withMessage(
+                     givenASpecificMatchIsPostponed(this.matchService, invalidMatchId, oracle),
+                     validationErrorContentKeys.matchIdInvalid
+                 );
+             });
+
+
+             it('should fail when match already postponed', async () => {
+                 await givenAMatchIsPostponed(this.matchService, oracle);
+
+                 await shouldFail.reverting.withMessage(
+                     givenAMatchIsPostponed(this.matchService, oracle),
+                     validationErrorContentKeys.matchNotUpcoming
+                 );
+             });
+
+             it('should fail when a match has already been cancelled', async () => {
+                 await givenAMatchIsCancelled(this.matchService, oracle);
+
+                 await shouldFail.reverting.withMessage(
+                     givenAMatchIsPostponed(this.matchService, oracle),
+                     validationErrorContentKeys.matchNotUpcoming
+                 );
+             });
+         });
+
+         context('when cancelling a match', async () => {
+             beforeEach(async () => {
+                 await givenAMatchIsAdded(this.matchService, oracle);
+             });
+
+             it('should be successful with valid parameters', async () => {
+                 const {logs} = await givenAMatchIsCancelled(this.matchService, oracle);
+
+                 thenExpectTheFollowingEvent.inLogs(logs,
+                     'MatchCancelled',
+                     {
+                         id: match1.id
+                     }
+                 );
+             });
+
+             it('should block any non-oracle address', async () => {
+                 await shouldFail.reverting.withMessage(
+                     givenAMatchIsCancelled(this.matchService, random),
+                     validationErrorContentKeys.notOracle
+                 );
+             });
+
+             it('should fail when a match doesnt exist', async () => {
+                 await shouldFail.reverting.withMessage(
+                     givenASpecificMatchIsCancelled(this.matchService, new BN(5), oracle),
+                     validationErrorContentKeys.matchIdInvalid
+                 );
+             });
+
+             it('should fail when match already cancelled', async () => {
+                 await givenAMatchIsCancelled(this.matchService, oracle);
+
+                 await shouldFail.reverting.withMessage(
+                     givenAMatchIsCancelled(this.matchService, oracle),
+                     validationErrorContentKeys.matchNotUpcoming
+                 );
+             });
+
+             it('should fail when a match has previously been postponed', async () => {
+                 await givenAMatchIsPostponed(this.matchService, oracle);
+
+                 await shouldFail.reverting.withMessage(
+                     givenAMatchIsCancelled(this.matchService, oracle),
+                     validationErrorContentKeys.matchNotUpcoming
+                 );
+             });
+         });
+
+         context('when restoring a match', async () => {
+             beforeEach(async () => {
+                 await givenAMatchIsAdded(this.matchService, oracle);
+                 await givenAMatchIsPostponed(this.matchService, oracle);
+             });
+
+             it('should be successful with valid parameters', async () => {
+                 const {logs} = await givenAMatchIsRestored(this.matchService, oracle);
+
+                 thenExpectTheFollowingEvent.inLogs(logs,
+                     'MatchRestored',
+                     {
+                         id: match1.id
+                     }
+                 );
+             });
+
+             it('should block any non-oracle address', async () => {
+                 await shouldFail.reverting.withMessage(
+                     givenAMatchIsRestored(this.matchService, random),
+                     validationErrorContentKeys.notOracle
+                 );
+             });
+
+             it('should fail when a match doesnt exist', async () => {
+                 await shouldFail.reverting.withMessage(
+                     givenASpecificMatchIsRestored(this.matchService, new BN(4), new BN(0), new BN(0), oracle),
+                     validationErrorContentKeys.matchIdInvalid
+                 );
+             });
+
+             it('should fail when match not postponed', async () => {
+                 const randomMatch = {
+                     id: new BN(45),
+                     predictBefore: seconds_since_epoch() + 5,
+                     resultAfter: seconds_since_epoch() + 8
+                 };
+
+                 await givenASpecificMatchIsAdded(this.matchService, randomMatch, oracle);
+
+                 await shouldFail.reverting.withMessage(
+                     givenASpecificMatchIsRestored(this.matchService, randomMatch.id, seconds_since_epoch() + 3, seconds_since_epoch() + 6, oracle),
+                     validationErrorContentKeys.notPostponed
+                 );
+             });
+
+             it('should fail when result after is before prediction window', async () => {
+                 await shouldFail.reverting.withMessage(
+                     givenASpecificMatchIsRestored(this.matchService, match1.id, seconds_since_epoch() + 8, seconds_since_epoch(), oracle),
+                     validationErrorContentKeys.predictBeforeAfterResultAfterTime
+                 );
+             });
+
+             it('should fail when prediction window invalid', async () => {
+                 await shouldFail.reverting.withMessage(
+                     givenASpecificMatchIsRestored(this.matchService, match1.id, seconds_since_epoch() - 6, seconds_since_epoch() + 1, oracle),
                      validationErrorContentKeys.pastPredictionDeadline
                  );
              });
