@@ -89,6 +89,11 @@ contract MatchService is OracleInterface {
         _;
     }
 
+    modifier onlyWhenAddressWhitelisted() {
+        require(isWhitelisted[msg.sender], "match.service.error.sender.not.whitelisted");
+        _;
+    }
+
     ////////////////////////
     // Internal Functions //
     ////////////////////////
@@ -171,6 +176,18 @@ contract MatchService is OracleInterface {
         matchIdToMatchMapping[_matchId].result = _resultState;
 
         emit MatchOutcome(_matchId, _resultState);
+    }
+
+    function matchState(uint256 _matchId)
+    whenNotPaused
+    onlyWhenAddressWhitelisted external view returns (MatchState) {
+        return matchIdToMatchMapping[_matchId].state;
+    }
+
+    function isBeforePredictionDeadline(uint256 _matchId)
+    whenNotPaused
+    onlyWhenAddressWhitelisted external returns (bool) {
+        return false;
     }
 
     function whitelist(address addr)

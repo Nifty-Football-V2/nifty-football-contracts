@@ -195,7 +195,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
         Match storage aMatch = matchIdToMatchMapping[_matchId];
-        return (_matchId > 0 && aMatch.predictBefore < aMatch.resultAfter);
+        return (_matchId > 0 && aMatch.predictBefore < aMatch.resultAfter && matchService.matchState(_matchId) == MatchService.MatchState.UNINITIALISED);
     }
 
     function _isMatchUpcoming(uint256 _matchId) internal view {
