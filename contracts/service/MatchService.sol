@@ -36,8 +36,9 @@ contract MatchService is OracleInterface {
         Outcome result;
     }
 
-    mapping(uint256 => Match) public matchIdToMatchMapping;
     uint256[] public matchIds;
+    mapping(uint256 => Match) public matchIdToMatchMapping;
+    mapping(address => bool) public isWhitelisted;
 
     ///////////////
     // Modifiers //
