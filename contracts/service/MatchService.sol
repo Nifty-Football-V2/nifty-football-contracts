@@ -19,6 +19,11 @@ contract MatchService is OracleInterface {
         uint256 indexed id
     );
 
+    event MatchOutcome (
+        uint256 indexed id,
+        Outcome indexed result
+    );
+
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
 
     enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED}
@@ -65,7 +70,17 @@ contract MatchService is OracleInterface {
     }
 
     modifier onlyWhenMatchPostponed(uint256 _matchId) {
-        require(matchIdToMatchMapping[_matchId].state == MatchState.POSTPONED, "match.prediction.validation.error.match.not.postponed");
+        require(matchIdToMatchMapping[_matchId].state == MatchState.POSTPONED, "match.service.error.match.not.postponed");
+        _;
+    }
+
+    modifier onlyWhenResultStateValid(Outcome _resultState) {
+        require(_resultState != Outcome.UNINITIALISED, "match.service.error.invalid.match.result.state");
+        _;
+    }
+
+    modifier onlyWhenResultWindowOpen(uint256 _matchId) {
+        require(now >= matchIdToMatchMapping[_matchId].resultAfter, "match.service.error.result.window.not.open");
         _;
     }
 
@@ -139,5 +154,17 @@ contract MatchService is OracleInterface {
         aMatch.state = MatchState.UPCOMING;
 
         emit MatchRestored(_matchId);
+    }
+
+    function matchResult(uint256 _matchId, Outcome _resultState)
+    whenNotPaused
+    onlyWhenOracle
+    onlyWhenMatchExists(_matchId)
+    onlyWhenMatchUpcoming(_matchId)
+    onlyWhenResultStateValid(_resultState)
+    onlyWhenResultWindowOpen(_matchId) external {
+        matchIdToMatchMapping[_matchId].result = _resultState;
+
+        emit MatchOutcome(_matchId, _resultState);
     }
 }
