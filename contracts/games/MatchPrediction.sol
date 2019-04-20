@@ -32,41 +32,12 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         address indexed player2
     );
 
-    event MatchAdded (
-        uint256 indexed id
-    );
-
-    event MatchPostponed (
-        uint256 indexed id
-    );
-
-    event MatchCancelled (
-        uint256 indexed id
-    );
-
-    event MatchRestored (
-        uint256 indexed id
-    );
-
-    event MatchOutcome (
-        uint256 indexed id,
-        Outcome indexed result
-    );
-
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
 
     enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED}
 
     // A game's state can only be cancelled if a match's state is cancelled
     enum GameState {UNINITIALISED, OPEN, PREDICTIONS_RECEIVED, PLAYER_1_WIN, PLAYER_2_WIN, NEITHER_PLAYER_WINS, CLOSED}
-
-    struct Match {
-        uint256 id;
-        uint256 predictBefore;
-        uint256 resultAfter;
-        MatchState state;
-        Outcome result;
-    }
 
     struct Game {
         uint256 id;
@@ -86,38 +57,14 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     mapping(uint256 => uint256) public tokenIdToGameIdMapping;
     mapping(uint256 => Game) public gameIdToGameMapping;
-    mapping(uint256 => Match) public matchIdToMatchMapping;
     mapping(address => uint256[]) public playerToGameIdsMapping;
-
-    uint256[] public matchIds;
 
     ///////////////
     // Modifiers //
     ///////////////
 
-    modifier onlyWhenTimesValid(uint256 _predictBefore, uint256 _resultAfter) {
-        require(_predictBefore <  _resultAfter, "match.prediction.validation.error.predict.before.is.after.result.after");
-        require(now < _predictBefore, "match.prediction.validation.error.past.prediction.deadline");
-        _;
-    }
-
-    modifier onlyWhenMatchDoesNotExist(uint256 _matchId) {
-        require(!_doesMatchExist(_matchId), "match.prediction.validation.error.match.exists");
-        _;
-    }
-
-    modifier onlyWhenMatchExists(uint256 _matchId) {
-        require(_doesMatchExist(_matchId), "match.prediction.validation.error.invalid.match.id");
-        _;
-    }
-
     modifier onlyWhenMatchUpcoming(uint256 _matchId) {
         _isMatchUpcoming(_matchId);
-        _;
-    }
-
-    modifier onlyWhenMatchPostponed(uint256 _matchId) {
-        require(matchIdToMatchMapping[_matchId].state == MatchState.POSTPONED, "match.prediction.validation.error.match.not.postponed");
         _;
     }
 
@@ -152,18 +99,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         _;
     }
 
-    modifier onlyWhenResultStateValid(Outcome _resultState) {
-        require(_resultState != Outcome.UNINITIALISED, "match.prediction.validation.error.invalid.match.result.state");
-        _;
-    }
-
     modifier onlyWhenAllPredictionsReceived(uint256 _gameId) {
         require(gameIdToGameMapping[_gameId].state == GameState.PREDICTIONS_RECEIVED, "match.prediction.validation.error.game.predictions.not.received");
-        _;
-    }
-
-    modifier onlyWhenResultWindowOpen(uint256 _matchId) {
-        require(now >= matchIdToMatchMapping[_matchId].resultAfter, "match.prediction.validation.error.result.window.not.open");
         _;
     }
 
@@ -190,11 +127,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
     function _isTokenNotAlreadyPlaying(uint256 _tokenId) internal view returns (bool) {
         return tokenIdToGameIdMapping[_tokenId] == 0;
-    }
-
-    function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
-        Match storage aMatch = matchIdToMatchMapping[_matchId];
-        return (_matchId > 0 && aMatch.predictBefore < aMatch.resultAfter && matchService.matchState(_matchId) == MatchService.MatchState.UNINITIALISED);
     }
 
     function _isMatchUpcoming(uint256 _matchId) internal view {
