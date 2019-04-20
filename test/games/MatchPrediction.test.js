@@ -4,7 +4,7 @@ const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('Match Prediction Contract Tests',
+contract.only('Match Prediction Contract Tests',
              ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 
@@ -52,7 +52,8 @@ contract('Match Prediction Contract Tests',
         PREDICTIONS_RECEIVED: new BN(2),
         PLAYER_1_WIN: new BN(3),
         PLAYER_2_WIN: new BN(4),
-        CLOSED: new BN(5)
+        NEITHER_PLAYER_WINS: new BN(5),
+        CLOSED: new BN(6)
     };
 
     const _tokenId1 = new BN(1);
@@ -70,19 +71,19 @@ contract('Match Prediction Contract Tests',
         id: new BN(34564543)
     };
 
-    function whenANewMatchIsAdded(contract, sender) {
+    function givenAMatchIsAdded(contract, sender) {
         return contract.addMatch(match1.id, seconds_since_epoch() + 2, seconds_since_epoch() + 3, {from: sender});
     }
 
-    function whenASpecificMatchIsAdded(contract, match, sender) {
+    function givenASpecificMatchIsAdded(contract, match, sender) {
         return contract.addMatch(match.id, match.predictBefore, match.resultAfter, {from: sender});
     }
 
-    function whenAMatchIsPostponed(contract, sender) {
-        return whenASpecificMatchIsPostponed(contract, match1.id, sender);
+    function givenAMatchIsPostponed(contract, sender) {
+        return givenASpecificMatchIsPostponed(contract, match1.id, sender);
     }
 
-    function whenASpecificMatchIsPostponed(contract, matchId, sender) {
+    function givenASpecificMatchIsPostponed(contract, matchId, sender) {
         return contract.postponeMatch(matchId, {from: sender});
     }
 
@@ -206,7 +207,7 @@ contract('Match Prediction Contract Tests',
 
                 (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
 
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenAMatchIsAdded(this.matchService, oracle);
             });
 
             it('should be successful with valid parameters', async () => {
@@ -230,12 +231,12 @@ contract('Match Prediction Contract Tests',
                 const invalidMatchId = new BN(2);
                 await shouldFail.reverting.withMessage(
                     makeAFirstPredictionFor(this.matchPrediction, invalidMatchId, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
-                    validationErrorContentKeys.matchIdInvalid
+                    validationErrorContentKeys.matchNotUpcoming
                 );
             });
 
             it('should fail when match has been postponed', async () => {
-               await whenAMatchIsPostponed(this.matchPrediction, oracle);
+               await givenAMatchIsPostponed(this.matchService, oracle);
 
                await shouldFail.reverting.withMessage(
                    makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
@@ -244,7 +245,7 @@ contract('Match Prediction Contract Tests',
             });
 
             it('should fail when match has been cancelled', async () => {
-                await whenAMatchIsCancelled(this.matchPrediction, oracle);
+                await whenAMatchIsCancelled(this.matchService, oracle);
 
                 await shouldFail.reverting.withMessage(
                     makeAFirstPredictionFor(this.matchPrediction, match1.id, _tokenId1, Outcomes.UNINITIALISED, tokenOwner1),
@@ -283,19 +284,18 @@ contract('Match Prediction Contract Tests',
             });
 
             it('should not allow a prediction past prediction deadline', async () => {
-                const contract = this.matchPrediction;
                 const randomMatch = {
                     id: new BN(24),
                     predictBefore: new BN(seconds_since_epoch() + 3),
                     resultAfter: new BN(seconds_since_epoch() + 5)
                 };
 
-                whenASpecificMatchIsAdded(contract, randomMatch, oracle);
+                givenASpecificMatchIsAdded(this.matchService, randomMatch, oracle);
 
                 await sleep(4500);
 
                 await shouldFail.reverting.withMessage(
-                    makeAFirstPredictionFor(contract, randomMatch.id, _tokenId1, Outcomes.HOME_WIN, tokenOwner1),
+                    makeAFirstPredictionFor(this.matchPrediction, randomMatch.id, _tokenId1, Outcomes.HOME_WIN, tokenOwner1),
                     validationErrorContentKeys.pastPredictionDeadline
                 );
             });
@@ -313,7 +313,7 @@ contract('Match Prediction Contract Tests',
 
                 (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
 
-                await whenANewMatchIsAdded(this.matchPrediction, oracle);
+                await givenAMatchIsAdded(this.matchService, oracle);
 
                 await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
             });
@@ -349,7 +349,7 @@ contract('Match Prediction Contract Tests',
             });
 
             it('should fail when match has been postponed', async () => {
-                await whenAMatchIsPostponed(this.matchPrediction, oracle);
+                await givenAMatchIsPostponed(this.matchService, oracle);
 
                 await shouldFail.reverting.withMessage(
                     givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
@@ -358,7 +358,7 @@ contract('Match Prediction Contract Tests',
             });
 
             it('should fail when match has been cancelled', async () => {
-                await whenAMatchIsCancelled(this.matchPrediction, oracle);
+                await whenAMatchIsCancelled(this.matchService, oracle);
 
                 await shouldFail.reverting.withMessage(
                     givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
@@ -436,7 +436,7 @@ contract('Match Prediction Contract Tests',
 
                (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
 
-               await whenANewMatchIsAdded(this.matchPrediction, oracle);
+               await givenAMatchIsAdded(this.matchService, oracle);
 
                await givenABasicFirstPrediction(this.matchPrediction, tokenOwner1);
            });
@@ -444,7 +444,7 @@ contract('Match Prediction Contract Tests',
            it('should be successful with valid parameters', async () => {
                await givenABasicSecondPrediction(this.matchPrediction, tokenOwner2);
                await sleep(4250);
-               await givenAMatchResultWasSupplied(this.matchPrediction, oracle);
+               await givenAMatchResultWasSupplied(this.matchService, oracle);
 
                (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId1)).should.be.bignumber.equal(`${_game1Id}`);
                (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId2)).should.be.bignumber.equal(`${_game1Id}`);

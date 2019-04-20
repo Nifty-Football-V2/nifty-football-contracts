@@ -184,10 +184,16 @@ contract MatchService is OracleInterface {
         return matchIdToMatchMapping[_matchId].state;
     }
 
+    function matchResult(uint256 _matchId)
+    whenNotPaused
+    onlyWhenAddressWhitelisted external view returns (Outcome) {
+        return matchIdToMatchMapping[_matchId].result;
+    }
+
     function isBeforePredictionDeadline(uint256 _matchId)
     whenNotPaused
-    onlyWhenAddressWhitelisted external returns (bool) {
-        return false;
+    onlyWhenAddressWhitelisted external view returns (bool) {
+        return (now <= matchIdToMatchMapping[_matchId].predictBefore);
     }
 
     function whitelist(address addr)

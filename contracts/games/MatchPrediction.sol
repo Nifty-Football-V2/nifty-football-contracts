@@ -137,8 +137,7 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     }
 
     modifier onlyWhenGameMatchResultReceived(uint256 _gameId) {
-        Match storage gameMatch = matchIdToMatchMapping[gameIdToGameMapping[_gameId].matchId];
-        require(gameMatch.result != Outcome.UNINITIALISED, "match.prediction.validation.error.game.match.result.not.received");
+        require(matchService.matchResult(gameIdToGameMapping[_gameId].matchId) != MatchService.Outcome.UNINITIALISED, "match.prediction.validation.error.game.match.result.not.received");
         _;
     }
 
@@ -199,32 +198,55 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     }
 
     function _isMatchUpcoming(uint256 _matchId) internal view {
-        require(matchIdToMatchMapping[_matchId].state == MatchState.UPCOMING, "match.prediction.validation.error.match.not.upcoming");
+        require(matchService.matchState(_matchId) == MatchService.MatchState.UPCOMING, "match.prediction.validation.error.match.not.upcoming");
     }
 
     function _isBeforePredictionDeadline(uint256 _matchId) private view {
-        Match storage aMatch = matchIdToMatchMapping[_matchId];
-        require(now <= aMatch.predictBefore, "match.prediction.validation.error.past.prediction.deadline");
+        require(matchService.isBeforePredictionDeadline(_matchId), "match.prediction.validation.error.past.prediction.deadline");
     }
 
-    function _escrowPlayerCards(Game storage game) private {
-        nft.safeTransferFrom(game.p1Address, address(this), game.p1TokenId);
-        nft.safeTransferFrom(game.p2Address, address(this), game.p2TokenId);
+    function _escrowPlayerCards(Game storage _game) private {
+        nft.safeTransferFrom(_game.p1Address, address(this), _game.p1TokenId);
+        nft.safeTransferFrom(_game.p2Address, address(this), _game.p2TokenId);
     }
 
-    function _sendWinnerCards(address winner, uint256 tokenId1, uint256 tokenId2) private {
-        nft.safeTransferFrom(address(this), winner, tokenId1);
-        nft.safeTransferFrom(address(this), winner, tokenId2);
+    function _sendWinnerCards(address _winner, uint256 _tokenId1, uint256 _tokenId2) private {
+        nft.safeTransferFrom(address(this), _winner, _tokenId1);
+        nft.safeTransferFrom(address(this), _winner, _tokenId2);
     }
 
-    function _freeUpCardsForFutureGames(uint256 tokenId1, uint256 tokenId2) private {
-        delete tokenIdToGameIdMapping[tokenId1];
-        delete tokenIdToGameIdMapping[tokenId2];
+    function _performWithdrawal(Game storage _game, Outcome _result) private {
+        if(_game.p1Prediction == _result) {
+            _game.state = GameState.PLAYER_1_WIN;
+            _sendWinnerCards(_game.p1Address, _game.p1TokenId, _game.p2TokenId);
+        } else if(_game.p2Prediction == _result) {
+            _game.state = GameState.PLAYER_2_WIN;
+            _sendWinnerCards(_game.p2Address, _game.p1TokenId, _game.p2TokenId);
+        } else {
+            _game.state = GameState.NEITHER_PLAYER_WINS;
+        }
+    }
+
+    function _freeUpCardsForFutureGames(uint256 _tokenId1, uint256 _tokenId2) private {
+        delete tokenIdToGameIdMapping[_tokenId1];
+        delete tokenIdToGameIdMapping[_tokenId2];
     }
 
     function _performPostGameCleanup(uint256 _gameId) private {
         Game storage game = gameIdToGameMapping[_gameId];
         _freeUpCardsForFutureGames(game.p1TokenId, game.p2TokenId);
+    }
+
+    function _convertMatchServiceResult(MatchService.Outcome _result) private pure returns (Outcome) {
+        if(_result == MatchService.Outcome.HOME_WIN) {
+            return Outcome.HOME_WIN;
+        } else if (_result == MatchService.Outcome.AWAY_WIN) {
+            return Outcome.AWAY_WIN;
+        } else if (_result == MatchService.Outcome.DRAW) {
+            return Outcome.DRAW;
+        } else {
+            return Outcome.UNINITIALISED;
+        }
     }
 
     /////////////////
@@ -245,71 +267,9 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     // Functions //
     ///////////////
 
-    //todo: move all match functionality to its own contract - will make both entities more maintainable
-    function addMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
-    whenNotPaused
-    onlyWhenMatchDoesNotExist(_matchId)
-    onlyWhenTimesValid(_predictBefore, _resultAfter) external {
-        matchIdToMatchMapping[_matchId] = Match({
-            id: _matchId,
-            predictBefore: _predictBefore,
-            resultAfter: _resultAfter,
-            state: MatchState.UPCOMING,
-            result: Outcome.UNINITIALISED
-        });
-
-        matchIds.push(_matchId);
-
-        emit MatchAdded(_matchId);
-    }
-
-    function postponeMatch(uint256 _matchId)
-    whenNotPaused
-    onlyWhenMatchExists(_matchId)
-    onlyWhenMatchUpcoming(_matchId) external {
-        matchIdToMatchMapping[_matchId].state = MatchState.POSTPONED;
-
-        emit MatchPostponed(_matchId);
-    }
-
-    function cancelMatch(uint256 _matchId)
-    whenNotPaused
-    onlyWhenMatchExists(_matchId)
-    onlyWhenMatchUpcoming(_matchId) external {
-        matchIdToMatchMapping[_matchId].state = MatchState.CANCELLED;
-
-        emit MatchCancelled(_matchId);
-    }
-
-    function restoreMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
-    whenNotPaused
-    onlyWhenMatchExists(_matchId)
-    onlyWhenMatchPostponed(_matchId)
-    onlyWhenTimesValid(_predictBefore, _resultAfter) external {
-        Match storage aMatch = matchIdToMatchMapping[_matchId];
-        aMatch.predictBefore = _predictBefore;
-        aMatch.resultAfter = _resultAfter;
-        aMatch.result = Outcome.UNINITIALISED;
-        aMatch.state = MatchState.UPCOMING;
-
-        emit MatchRestored(_matchId);
-    }
-
-    function matchResult(uint256 _matchId, Outcome _resultState)
-    whenNotPaused
-    onlyWhenMatchExists(_matchId)
-    onlyWhenMatchUpcoming(_matchId)
-    onlyWhenResultStateValid(_resultState)
-    onlyWhenResultWindowOpen(_matchId) external {
-        matchIdToMatchMapping[_matchId].result = _resultState;
-
-        emit MatchOutcome(_matchId, _resultState);
-    }
-
     function makeFirstPrediction(uint256 _matchId, uint256 _tokenId, Outcome _prediction)
     whenNotPaused
     onlyWhenTokenNotAlreadyPlaying(_tokenId)
-    onlyWhenMatchExists(_matchId)
     onlyWhenMatchUpcoming(_matchId)
     onlyWhenBeforePredictionDeadline(_matchId)
     onlyWhenContractIsApproved(_tokenId)
@@ -367,7 +327,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
         emit PredictionsReceived(_gameId, game.p1Address, msg.sender);
     }
 
-    function getAllGameIds(address player) external view returns(uint256[] memory) {
+    function getAllGameIds(address player)
+    whenNotPaused external view returns(uint256[] memory) {
         return playerToGameIdsMapping[player];
     }
 
@@ -377,18 +338,9 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     onlyWhenAllPredictionsReceived(_gameId)
     onlyWhenGameMatchResultReceived(_gameId) external {
         Game storage game = gameIdToGameMapping[_gameId];
-        Match storage gameMatch = matchIdToMatchMapping[game.matchId];
+        MatchService.Outcome matchResult = matchService.matchResult(game.matchId);
 
-        if(game.p1Prediction == gameMatch.result) {
-            game.state = GameState.PLAYER_1_WIN;
-            _sendWinnerCards(game.p1Address, game.p1TokenId, game.p2TokenId);
-        } else if(game.p2Prediction == gameMatch.result) {
-            game.state = GameState.PLAYER_2_WIN;
-            _sendWinnerCards(game.p2Address, game.p1TokenId, game.p2TokenId);
-        } else {
-            game.state = GameState.NEITHER_PLAYER_WINS;
-        }
-
+        _performWithdrawal(game, _convertMatchServiceResult(matchResult));
         _performPostGameCleanup(_gameId);
 
         emit GameFinished(_gameId, game.state);
