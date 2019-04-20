@@ -33,10 +33,6 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
     );
 
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
-
-    enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED}
-
-    // A game's state can only be cancelled if a match's state is cancelled
     enum GameState {UNINITIALISED, OPEN, PREDICTIONS_RECEIVED, PLAYER_1_WIN, PLAYER_2_WIN, NEITHER_PLAYER_WINS, CLOSED}
 
     struct Game {
@@ -193,6 +189,8 @@ contract MatchPrediction is FutballCardGame, ERC721Holder {
 
         nft = _nft;
         matchService = _matchService;
+
+        emit ContractDeployed(address(nft), address(matchService));
     }
 
     ///////////////
