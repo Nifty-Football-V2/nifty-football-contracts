@@ -6,7 +6,7 @@ const NiftyFootballTradingCardGenerator = artifacts.require('NiftyFootballTradin
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract.only('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
+contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
 
     const firstTokenId = new BN(1);
     const secondTokenId = new BN(2);

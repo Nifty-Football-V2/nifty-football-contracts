@@ -25,8 +25,8 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
 
     event FutballCardsGeneratorChanged(INiftyFootballTradingCardGenerator _new);
 
-    INiftyFootballTradingCardGenerator public futballCardsGenerator;
-    INiftyTradingCardCreator public futballCardsNFT;
+    INiftyFootballTradingCardGenerator public generator;
+    INiftyTradingCardCreator public creator;
     address payable wallet;
 
     mapping(address => uint256) public credits;
@@ -48,9 +48,9 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
     5500000000000000 //  10 @ = 0.0055 ETH / $0.75
     ];
 
-    constructor (address payable _wallet, INiftyFootballTradingCardGenerator _futballCardsGenerator, INiftyTradingCardCreator _fuballCardsNFT) public {
-        futballCardsGenerator = _futballCardsGenerator;
-        futballCardsNFT = _fuballCardsNFT;
+    constructor (address payable _wallet, INiftyFootballTradingCardGenerator _generator, INiftyTradingCardCreator _creator) public {
+        generator = _generator;
+        creator = _creator;
         wallet = _wallet;
     }
 
@@ -96,17 +96,17 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
 
     function _generateAndAssignCard(address _to) internal returns (uint256 _tokenId) {
         // Generate card
-        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generateCard(msg.sender);
+        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = generator.generateCard(msg.sender);
 
         // cardType is 0 for genesis (initially)
-        uint256 tokenId = futballCardsNFT.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
+        uint256 tokenId = creator.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // Generate attributes
-        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender, attributesBase);
-        futballCardsNFT.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
+        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = generator.generateAttributes(msg.sender, attributesBase);
+        creator.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
 
-        (uint256 _firstName, uint256 _lastName) = futballCardsGenerator.generateName(msg.sender);
-        futballCardsNFT.setName(tokenId, _firstName, _lastName);
+        (uint256 _firstName, uint256 _lastName) = generator.generateName(msg.sender);
+        creator.setName(tokenId, _firstName, _lastName);
 
         emit BlindPackPulled(tokenId, _to);
 
@@ -141,7 +141,7 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
     }
 
     function setFutballCardsGenerator(INiftyFootballTradingCardGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
-        futballCardsGenerator = _futballCardsGenerator;
+        generator = _futballCardsGenerator;
 
         emit FutballCardsGeneratorChanged(_futballCardsGenerator);
 

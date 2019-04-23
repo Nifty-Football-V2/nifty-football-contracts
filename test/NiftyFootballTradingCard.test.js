@@ -1,8 +1,8 @@
-const FutballCards = artifacts.require('FutballCards');
+const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
+contract('NiftyFootballTradingCard', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
     const firstTokenId = new BN(1);
     const secondTokenId = new BN(2);
@@ -13,7 +13,7 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
 
     beforeEach(async function () {
         // Create 721 contract
-        this.futballCards = await FutballCards.new(baseURI, {from: creator});
+        this.futballCards = await NiftyFootballTradingCard.new(baseURI, {from: creator});
         (await this.futballCards.isWhitelisted(creator)).should.be.true;
     });
 
@@ -27,8 +27,8 @@ contract('FutballCards', ([_, creator, tokenOwner, anyone, ...accounts]) => {
             );
 
             (await this.futballCards.totalCards()).should.be.bignumber.equal('1');
-            (await this.futballCards.name()).should.be.equal('FutballCard');
-            (await this.futballCards.symbol()).should.be.equal('FUT');
+            (await this.futballCards.name()).should.be.equal('Nifty Football Trading Card');
+            (await this.futballCards.symbol()).should.be.equal('NFTFC');
         });
     });
 

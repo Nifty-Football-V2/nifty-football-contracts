@@ -5,14 +5,14 @@ const NiftyFootballTradingCardBlindPack = artifacts.require('NiftyFootballTradin
 const FutballCardsGenerator = artifacts.require('FutballCardsGenerator.sol');
 
 module.exports = async function (deployer, network, accounts) {
-    const _futballCardsGenerator = await FutballCardsGenerator.deployed();
+    const _generator = await FutballCardsGenerator.deployed();
     const _niftyFootballTradingCard = await NiftyFootballTradingCard.deployed();
 
     // Deploy
     await deployer.deploy(
         NiftyFootballTradingCardBlindPack,
         accounts[0],
-        _futballCardsGenerator.address,
+        _generator.address,
         _niftyFootballTradingCard.address,
         {
             from: accounts[0]

@@ -1,14 +1,14 @@
 const _ = require('lodash');
 
-const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
+const NiftyFootballTradingCardGenerator = artifacts.require('NiftyFootballTradingCardGenerator');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('FutballCardsGenerator tests', (accounts) => {
+contract('NiftyFootballTradingCardGenerator tests', (accounts) => {
 
     before(async function () {
         // console.log(accounts);
-        this.generator = await FutballCardsGenerator.new({from: accounts[0]});
+        this.generator = await NiftyFootballTradingCardGenerator.new({from: accounts[0]});
     });
 
     context('Nationalities - ensure can manipulate seed arrays', function () {
@@ -102,21 +102,21 @@ contract('FutballCardsGenerator tests', (accounts) => {
     context('Kits - ensure can manipulate seed arrays', function () {
         it('adds to', async function () {
             let kits = await this.generator.allKits();
-            kits.length.should.be.equal(10);
+            kits.length.should.be.equal(33);
 
             await this.generator.addKit(new BN('5'), {from: accounts[0]});
             kits = await this.generator.allKits();
-            kits.length.should.be.equal(11);
+            kits.length.should.be.equal(34);
         });
 
         it('replace at index', async function () {
             await this.generator.clearKitAtIndex(1, {from: accounts[0]});
             let kits = await this.generator.allKits();
-            kits.length.should.be.equal(10);
+            kits.length.should.be.equal(33);
 
             await this.generator.clearKitAtIndex(1, {from: accounts[0]});
             kits = await this.generator.allKits();
-            kits.length.should.be.equal(9);
+            kits.length.should.be.equal(32);
         });
 
         it('replace', async function () {
@@ -146,21 +146,21 @@ contract('FutballCardsGenerator tests', (accounts) => {
     context('Colours - ensure can manipulate seed arrays', function () {
         it('adds to', async function () {
             let colours = await this.generator.allColours();
-            colours.length.should.be.equal(10);
+            colours.length.should.be.equal(17);
 
             await this.generator.addColour(new BN('5'), {from: accounts[0]});
             colours = await this.generator.allColours();
-            colours.length.should.be.equal(11);
+            colours.length.should.be.equal(18);
         });
 
         it('replace at index', async function () {
             await this.generator.clearColourAtIndex(1, {from: accounts[0]});
             let colours = await this.generator.allColours();
-            colours.length.should.be.equal(10);
+            colours.length.should.be.equal(17);
 
             await this.generator.clearColourAtIndex(1, {from: accounts[0]});
             colours = await this.generator.allColours();
-            colours.length.should.be.equal(9);
+            colours.length.should.be.equal(16);
         });
 
         it('replace', async function () {

@@ -4,7 +4,7 @@ const MockHeadToHeadResulter = artifacts.require('MockHeadToHeadResulter');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
+contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
     const baseURI = 'http://futball-cards';
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
