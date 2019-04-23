@@ -15,6 +15,7 @@ contract NiftyFootballTradingCardGenerator is Ownable, INiftyFootballTradingCard
     uint256[] internal kits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
     uint256[] internal colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
     uint256[] internal ethnicities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    uint256[] internal gkColours = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4];
 
     function generateCard(address _sender)
     external
@@ -31,8 +32,8 @@ contract NiftyFootballTradingCardGenerator is Ownable, INiftyFootballTradingCard
         nationalities[generate(_sender, nationalities.length, hash)],
         position,
         ethnicities[generate(_sender, ethnicities.length, hash)],
-        (position == 0) ? kits[generate(_sender, 2, hash)] : kits[generate(_sender, kits.length, hash)],
-        colours[generate(_sender, colours.length, hash)]
+        (position == 0) ? 0 : kits[generate(_sender, kits.length, hash)],
+        (position == 0) ? gkColours[generate(_sender, gkColours.length, hash)] : colours[generate(_sender, colours.length, hash)]
         );
     }
 

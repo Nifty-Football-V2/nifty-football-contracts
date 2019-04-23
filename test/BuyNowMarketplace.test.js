@@ -1,4 +1,4 @@
-const FutballCards = artifacts.require('FutballCards');
+const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard');
 const BuyNowMarketplace = artifacts.require('BuyNowMarketplace');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
@@ -17,16 +17,16 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
 
     beforeEach(async function () {
         // Create 721 contract
-        this.futballCards = await FutballCards.new(baseURI, {from: creator});
-        await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
-        await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
-        await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
-        await this.futballCards.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+        this.niftyFootballTradingCard = await NiftyFootballTradingCard.new(baseURI, {from: creator});
+        await this.niftyFootballTradingCard.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+        await this.niftyFootballTradingCard.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+        await this.niftyFootballTradingCard.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
+        await this.niftyFootballTradingCard.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
 
-        this.marketplace = await BuyNowMarketplace.new(wallet, this.futballCards.address, commission, {from: creator});
+        this.marketplace = await BuyNowMarketplace.new(wallet, this.niftyFootballTradingCard.address, commission, {from: creator});
 
         // approve markeplace to sell card on behalf of token owner
-        await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+        await this.niftyFootballTradingCard.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
 
         const {logs} = await this.marketplace.listToken(firstTokenId, listPrice, {from: tokenOwner});
         expectEvent.inLogs(
@@ -39,7 +39,7 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
     context('ensure public access correct', function () {
 
         it('returns nft', async function () {
-            (await this.marketplace.nft()).should.be.equal(this.futballCards.address);
+            (await this.marketplace.nft()).should.be.equal(this.niftyFootballTradingCard.address);
         });
 
         it('returns commission', async function () {
@@ -124,7 +124,7 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
 
         it('should revert if paused', async function () {
             // give approval
-            await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+            await this.niftyFootballTradingCard.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
 
             await this.marketplace.pause({from: creator});
             await shouldFail.reverting(this.marketplace.delistToken(firstTokenId, {from: tokenOwner}));
@@ -133,10 +133,10 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
 
     context('buy now', function () {
         it('successfully buys token', async function () {
-            (await this.futballCards.ownerOf(firstTokenId)).should.be.equal(tokenOwner);
+            (await this.niftyFootballTradingCard.ownerOf(firstTokenId)).should.be.equal(tokenOwner);
 
             // give approval
-            await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+            await this.niftyFootballTradingCard.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
 
             const preWalletBalance = await balance.current(wallet);
             const preTokenOwnerBalance = await balance.current(tokenOwner);
@@ -149,7 +149,7 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
             );
 
             // transferred to new home!
-            (await this.futballCards.ownerOf(firstTokenId)).should.be.equal(anyone);
+            (await this.niftyFootballTradingCard.ownerOf(firstTokenId)).should.be.equal(anyone);
 
             const postWalletBalance = await balance.current(wallet);
             const postTokenOwnerBalance = await balance.current(tokenOwner);
@@ -167,14 +167,14 @@ contract('BuyNowMarketplace', ([_, creator, tokenOwner, anyone, wallet, ...accou
 
         it('should revert if no price', async function () {
             // give approval
-            await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+            await this.niftyFootballTradingCard.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
 
             await shouldFail.reverting(this.marketplace.buyNow(firstTokenId, {from: anyone, value: 0}));
         });
 
         it('should revert if paused', async function () {
             // give approval
-            await this.futballCards.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
+            await this.niftyFootballTradingCard.approve(this.marketplace.address, firstTokenId, {from: tokenOwner});
 
             await this.marketplace.pause({from: creator});
             await shouldFail.reverting(this.marketplace.buyNow(firstTokenId, {from: anyone, value: listPrice}));

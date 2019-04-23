@@ -2,10 +2,10 @@ const {getAccountOne} = require('../constants');
 
 const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard.sol');
 const NiftyFootballTradingCardBlindPack = artifacts.require('NiftyFootballTradingCardBlindPack.sol');
-const FutballCardsGenerator = artifacts.require('FutballCardsGenerator.sol');
+const NiftyFootballTradingCardGenerator = artifacts.require('NiftyFootballTradingCardGenerator.sol');
 
 module.exports = async function (deployer, network, accounts) {
-    const _generator = await FutballCardsGenerator.deployed();
+    const _generator = await NiftyFootballTradingCardGenerator.deployed();
     const _niftyFootballTradingCard = await NiftyFootballTradingCard.deployed();
 
     // Deploy

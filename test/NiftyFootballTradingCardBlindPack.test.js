@@ -17,7 +17,7 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
 
     beforeEach(async function () {
         // Create 721 contract
-        this.futballCards = await NiftyFootballTradingCard.new(baseURI, {from: creator});
+        this.niftyFootballTradingCard = await NiftyFootballTradingCard.new(baseURI, {from: creator});
 
         this.generator = await NiftyFootballTradingCardGenerator.new({from: creator});
 
@@ -25,18 +25,18 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
         this.blindPack = await NiftyFootballTradingCardBlindPack.new(
             wallet,
             this.generator.address,
-            this.futballCards.address,
+            this.niftyFootballTradingCard.address,
             {from: creator}
         );
 
         // Add to whitelist
-        await this.futballCards.addWhitelisted(this.blindPack.address, {from: creator});
-        (await this.futballCards.isWhitelisted(this.blindPack.address)).should.be.true;
+        await this.niftyFootballTradingCard.addWhitelisted(this.blindPack.address, {from: creator});
+        (await this.niftyFootballTradingCard.isWhitelisted(this.blindPack.address)).should.be.true;
 
         this.basePrice = await this.blindPack.totalPrice(1);
         this.basePrice.should.be.bignumber.equal('11000000000000000');
 
-        (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
+        (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('0');
         (await this.blindPack.totalPurchasesInWei()).should.be.bignumber.equal('0');
     });
 
@@ -53,7 +53,7 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
         });
 
         it('returns total card', async function () {
-            (await this.futballCards.totalCards()).should.be.bignumber.equal('1');
+            (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('1');
         });
 
         it('returns total purchases', async function () {
@@ -61,12 +61,12 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
         });
 
         it('has an owner', async function () {
-            (await this.futballCards.tokensOfOwner(tokenOwner))[0].should.be.bignumber.equal(firstTokenId);
+            (await this.niftyFootballTradingCard.tokensOfOwner(tokenOwner))[0].should.be.bignumber.equal(firstTokenId);
         });
 
         context('ensure card has attributes', function () {
             it('returns attributes', async function () {
-                const attrs = await this.futballCards.attributesAndName(firstTokenId);
+                const attrs = await this.niftyFootballTradingCard.attributesAndName(firstTokenId);
 
                 // between 0 - 99
                 attrs[0].should.be.bignumber.lt('100');
@@ -81,7 +81,7 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
 
         context('ensure card has card values', function () {
             it('returns attributes', async function () {
-                const cardAttrs = await this.futballCards.card(firstTokenId);
+                const cardAttrs = await this.niftyFootballTradingCard.card(firstTokenId);
 
                 // between 0 - 3
                 cardAttrs[0].should.be.bignumber.lt('32');
@@ -145,12 +145,12 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
 
     context('ensure only card owner can burn', function () {
         it('should revert if not card owner', async function () {
-            await shouldFail.reverting(this.futballCards.burn(firstTokenId, {from: anyone}));
+            await shouldFail.reverting(this.niftyFootballTradingCard.burn(firstTokenId, {from: anyone}));
         });
 
         it('should burn if owner', async function () {
             await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
-            const {logs} = await this.futballCards.burn(firstTokenId, {from: tokenOwner});
+            const {logs} = await this.niftyFootballTradingCard.burn(firstTokenId, {from: tokenOwner});
             expectEvent.inLogs(
                 logs,
                 `Transfer`,
@@ -187,11 +187,11 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
             this.cleanBlindPack = await NiftyFootballTradingCardBlindPack.new(
                 cleanWallet,
                 this.generator.address,
-                this.futballCards.address,
+                this.niftyFootballTradingCard.address,
                 {from: creator}
             );
 
-            await this.futballCards.addWhitelisted(this.cleanBlindPack.address, {from: creator});
+            await this.niftyFootballTradingCard.addWhitelisted(this.cleanBlindPack.address, {from: creator});
 
             this.basePrice = await this.blindPack.totalPrice(1);
             this.basePrice.should.be.bignumber.equal('11000000000000000');
@@ -306,7 +306,7 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
 
                 await this.blindPack.buyBatch(10, {from: tokenOwner});
 
-                const tokensOfOwner = await this.futballCards.tokensOfOwner(tokenOwner);
+                const tokensOfOwner = await this.niftyFootballTradingCard.tokensOfOwner(tokenOwner);
                 tokensOfOwner.map(e => e.toNumber()).should.be.deep.equal([
                     1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                 ]);
@@ -320,7 +320,7 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
 
                 await this.blindPack.buyBatch(10, {from: tokenOwner, value: value});
 
-                const tokensOfOwner = await this.futballCards.tokensOfOwner(tokenOwner);
+                const tokensOfOwner = await this.niftyFootballTradingCard.tokensOfOwner(tokenOwner);
                 tokensOfOwner.map(e => e.toNumber()).should.be.deep.equal([
                     1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                 ]);

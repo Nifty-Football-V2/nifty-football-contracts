@@ -1,7 +1,7 @@
 {
-  "name": "football-united",
+  "name": "nifty-football-contracts",
   "version": "0.0.1",
-  "description": "football-united",
+  "description": "nifty-football-contracts",
   "directories": {
     "test": "test"
   },
