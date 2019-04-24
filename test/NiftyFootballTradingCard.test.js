@@ -84,6 +84,7 @@ contract('NiftyFootballTradingCard', ([_, creator, tokenOwner, anyone, ...accoun
             cardAttrs[3].should.be.bignumber.equal('0');
             cardAttrs[4].should.be.bignumber.equal('0');
             cardAttrs[5].should.be.bignumber.equal('0');
+            cardAttrs[6].should.not.be.null;
         });
 
         it('set attributes', async function () {

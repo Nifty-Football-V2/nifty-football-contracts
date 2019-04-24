@@ -20,10 +20,22 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         address indexed _to
     );
 
-    event TokenBaseURIChanged(string _new);
-    event TokenBaseIPFSURIChanged(string _new);
-    event StaticIpfsTokenURISet(uint256 indexed _tokenId, string _ipfsHash);
-    event StaticIpfsTokenURICleared(uint256 indexed _tokenId);
+    event TokenBaseURIChanged(
+        string _new
+    );
+
+    event TokenBaseIPFSURIChanged(
+        string _new
+    );
+
+    event StaticIpfsTokenURISet(
+        uint256 indexed _tokenId,
+        string _ipfsHash
+    );
+
+    event StaticIpfsTokenURICleared(
+        uint256 indexed _tokenId
+    );
 
     event CardAttributesSet(
         uint256 indexed _tokenId,
@@ -74,9 +86,6 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         uint256 _value
     );
 
-    uint256 public totalCards = 0;
-    uint256 public tokenIdPointer = 1;
-
     struct Card {
         uint256 cardType;
 
@@ -87,6 +96,8 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
 
         uint256 kit;
         uint256 colour;
+
+        uint256 birth;
     }
 
     struct Attributes {
@@ -116,6 +127,9 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         _;
     }
 
+    uint256 public totalCards = 0;
+    uint256 public tokenIdPointer = 1;
+
     mapping(uint256 => string) public staticIpfsImageLink;
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
@@ -139,8 +153,9 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
             position : _position,
             ethnicity : _ethnicity,
             kit : _kit,
-            colour : _colour
-            });
+            colour : _colour,
+            birth: now
+        });
 
         // the magic bit!
         _mint(_to, tokenIdPointer);
@@ -212,7 +227,8 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         uint256 _position,
         uint256 _ethnicity,
         uint256 _kit,
-        uint256 _colour
+        uint256 _colour,
+        uint256 _birth
     ) {
         require(_exists(_tokenId), "Token does not exist");
         Card storage tokenCard = cardMapping[_tokenId];
@@ -222,7 +238,8 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         tokenCard.position,
         tokenCard.ethnicity,
         tokenCard.kit,
-        tokenCard.colour
+        tokenCard.colour,
+        tokenCard.birth
         );
     }
 

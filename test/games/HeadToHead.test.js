@@ -4,7 +4,7 @@ const MockHeadToHeadResulter = artifacts.require('MockHeadToHeadResulter');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
+contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
     const baseURI = 'http://futball-cards';
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -68,7 +68,7 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
                 });
             });
 
-            context.skip('when contract NOT approved', async function () {
+            context('when contract NOT approved', async function () {
 
                 beforeEach(async function () {
                     await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, false, {from: tokenOwner1});
@@ -78,14 +78,14 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
                 it('cant create game when not approved', async function () {
                     await shouldFail.reverting.withMessage(
                         this.headToHead.createGame(_tokenId2, {from: tokenOwner2}),
-                        "NFT not approved to play"
+                        "Card not approved to sell"
                     );
                 });
 
                 it('cant result a game when not approved', async function () {
                     await shouldFail.reverting.withMessage(
                         this.headToHead.resultGame(1, _tokenId1, {from: tokenOwner1}),
-                        "NFT not approved to play"
+                        "Card not approved to sell"
                     );
                 });
             });
@@ -188,7 +188,8 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
                 state.should.be.bignumber.equal(State.OPEN);
 
                 // mock result
-                await this.resulter.setResult(0);
+                const result = new BN(0);
+                await this.resulter.setResult(result);
 
                 const {logs: resultLogs} = await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
                 expectEvent.inLogs(resultLogs,
@@ -199,7 +200,7 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
                         gameId: _gameId,
                         homeValue: new BN(10),
                         awayValue: new BN(5),
-                        result: new BN(0)
+                        result: result
                     }
                 );
 
@@ -238,7 +239,8 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
                 state.should.be.bignumber.equal(State.OPEN);
 
                 // mock result
-                await this.resulter.setResult(3);
+                const result = new BN(2);
+                await this.resulter.setResult(result);
 
                 const {logs: resultLogs} = await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
                 expectEvent.inLogs(resultLogs,
@@ -249,7 +251,7 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
                         gameId: _gameId,
                         homeValue: new BN(10),
                         awayValue: new BN(20),
-                        result: new BN(2)
+                        result: result
                     }
                 );
 
@@ -290,8 +292,8 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
                 awayOwner.should.be.equal(ZERO_ADDRESS);
                 state.should.be.bignumber.equal(State.OPEN);
 
-                // mock result to 3 so we draw
-                await this.resulter.setResult(2);
+                const result = new BN(1);
+                await this.resulter.setResult(result);
 
                 const {logs} = await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
                 expectEvent.inLogs(logs,
@@ -302,7 +304,7 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
                         gameId: _gameId,
                         homeValue: new BN(10),
                         awayValue: new BN(10),
-                        result: new BN(1) // zero indexed
+                        result: result
                     }
                 );
 
@@ -341,16 +343,14 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
 
                 await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
 
-                // mock result to 3 so we draw
-                await this.resulter.setResult(2);
+                await this.resulter.setResult(1);
 
                 // Result game
                 await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
                 const {state} = await this.headToHead.getGame(_gameId);
                 state.should.be.bignumber.equal(State.DRAW);
 
-                // mock to result
-                await this.resulter.setResult(3);
+                await this.resulter.setResult(2);
 
                 await this.headToHead.reMatch(_gameId, {from: tokenOwner2});
 
@@ -390,8 +390,7 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
 
                 await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
 
-                // mock result to 3 so we draw
-                await this.resulter.setResult(2);
+                await this.resulter.setResult(1);
 
                 // Result game
                 await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
@@ -420,7 +419,6 @@ contract.skip('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, a
 
                 await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
 
-                // mock result
                 await this.resulter.setResult(3);
 
                 await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});

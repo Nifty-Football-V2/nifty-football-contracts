@@ -90,6 +90,7 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
                 cardAttrs[3].should.be.bignumber.lt('32');
                 cardAttrs[4].should.be.bignumber.lt('32');
                 cardAttrs[5].should.be.bignumber.lt('32');
+                cardAttrs[6].should.not.be.null;
             });
         });
 
