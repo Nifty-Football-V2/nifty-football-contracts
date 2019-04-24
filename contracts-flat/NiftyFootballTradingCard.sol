@@ -1126,80 +1126,9 @@ library Strings {
     }
 }
 
-// File: contracts/IFutballCardsCreator.sol
-
-pragma solidity 0.5.0;
-
-interface IFutballCardsCreator {
-    function mintCard(
-        uint256 _cardType,
-        uint256 _nationality,
-        uint256 _position,
-        uint256 _ethnicity,
-        uint256 _kit,
-        uint256 _colour,
-        address _to
-    ) external returns (uint256 _tokenId);
-
-    function setAttributes(
-        uint256 _tokenId,
-        uint256 _strength,
-        uint256 _speed,
-        uint256 _intelligence,
-        uint256 _skill
-    ) external returns (bool);
-
-    function setName(
-        uint256 _tokenId,
-        uint256 _firstName,
-        uint256 _lastName
-    ) external returns (bool);
-}
-
-// File: contracts/IFutballCardsAttributes.sol
-
-pragma solidity 0.5.0;
-
-
-contract IFutballCardsAttributes is IERC721 {
-
-    function attributesFlat(uint256 _tokenId) public view returns (
-        uint256[5] memory attributes
-    );
-
-    function attributesAndName(uint256 _tokenId) public view returns (
-        uint256 _strength,
-        uint256 _speed,
-        uint256 _intelligence,
-        uint256 _skill,
-        uint256 _special,
-        uint256 _firstName,
-        uint256 _lastName
-    );
-
-    function extras(uint256 _tokenId) public view returns (
-        uint256 _badge,
-        uint256 _sponsor,
-        uint256 _number,
-        uint256 _boots,
-        uint256 _stars,
-        uint256 _xp
-    );
-
-    function card(uint256 _tokenId) public view returns (
-        uint256 _cardType,
-        uint256 _nationality,
-        uint256 _position,
-        uint256 _ethnicity,
-        uint256 _kit,
-        uint256 _colour
-    );
-
-}
-
 // File: contracts/erc721/ERC721MetadataWithoutTokenUri.sol
 
-pragma solidity ^0.5.0;
+pragma solidity 0.5.0;
 
 
 
@@ -1260,7 +1189,7 @@ contract ERC721MetadataWithoutTokenUri is ERC165, ERC721, IERC721Metadata {
 
 // File: contracts/erc721/CustomERC721Full.sol
 
-pragma solidity ^0.5.0;
+pragma solidity 0.5.0;
 
 
 
@@ -1278,7 +1207,79 @@ contract CustomERC721Full is ERC721, ERC721Enumerable, ERC721MetadataWithoutToke
     }
 }
 
-// File: contracts/FutballCards.sol
+// File: contracts/INiftyTradingCardCreator.sol
+
+pragma solidity 0.5.0;
+
+interface INiftyTradingCardCreator {
+    function mintCard(
+        uint256 _cardType,
+        uint256 _nationality,
+        uint256 _position,
+        uint256 _ethnicity,
+        uint256 _kit,
+        uint256 _colour,
+        address _to
+    ) external returns (uint256 _tokenId);
+
+    function setAttributes(
+        uint256 _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill
+    ) external returns (bool);
+
+    function setName(
+        uint256 _tokenId,
+        uint256 _firstName,
+        uint256 _lastName
+    ) external returns (bool);
+}
+
+// File: contracts/INiftyTradingCardAttributes.sol
+
+pragma solidity 0.5.0;
+
+
+contract INiftyTradingCardAttributes is IERC721 {
+
+    function attributesFlat(uint256 _tokenId) public view returns (
+        uint256[5] memory attributes
+    );
+
+    function attributesAndName(uint256 _tokenId) public view returns (
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill,
+        uint256 _special,
+        uint256 _firstName,
+        uint256 _lastName
+    );
+
+    function extras(uint256 _tokenId) public view returns (
+        uint256 _badge,
+        uint256 _sponsor,
+        uint256 _number,
+        uint256 _boots,
+        uint256 _stars,
+        uint256 _xp
+    );
+
+    function card(uint256 _tokenId) public view returns (
+        uint256 _cardType,
+        uint256 _nationality,
+        uint256 _position,
+        uint256 _ethnicity,
+        uint256 _kit,
+        uint256 _colour,
+        uint256 _birth
+    );
+
+}
+
+// File: contracts/NiftyTradingCard.sol
 
 pragma solidity 0.5.0;
 
@@ -1289,7 +1290,7 @@ pragma solidity 0.5.0;
 
 
 
-contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator, IFutballCardsAttributes {
+contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCardCreator, INiftyTradingCardAttributes {
     using SafeMath for uint256;
 
     string public tokenBaseURI = "";
@@ -1300,10 +1301,22 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         address indexed _to
     );
 
-    event TokenBaseURIChanged(string _new);
-    event TokenBaseIPFSURIChanged(string _new);
-    event StaticIpfsTokenURISet(uint256 indexed _tokenId, string _ipfsHash);
-    event StaticIpfsTokenURICleared(uint256 indexed _tokenId);
+    event TokenBaseURIChanged(
+        string _new
+    );
+
+    event TokenBaseIPFSURIChanged(
+        string _new
+    );
+
+    event StaticIpfsTokenURISet(
+        uint256 indexed _tokenId,
+        string _ipfsHash
+    );
+
+    event StaticIpfsTokenURICleared(
+        uint256 indexed _tokenId
+    );
 
     event CardAttributesSet(
         uint256 indexed _tokenId,
@@ -1354,9 +1367,6 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _value
     );
 
-    uint256 public totalCards = 0;
-    uint256 public tokenIdPointer = 1;
-
     struct Card {
         uint256 cardType;
 
@@ -1367,6 +1377,8 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
 
         uint256 kit;
         uint256 colour;
+
+        uint256 birth;
     }
 
     struct Attributes {
@@ -1396,16 +1408,14 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         _;
     }
 
+    uint256 public totalCards = 0;
+    uint256 public tokenIdPointer = 1;
+
     mapping(uint256 => string) public staticIpfsImageLink;
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
     mapping(uint256 => Name) internal namesMapping;
     mapping(uint256 => Extras) internal extrasMapping;
-
-    constructor (string memory _tokenBaseURI) public CustomERC721Full("FutballCard", "FUT") {
-        super.addWhitelisted(msg.sender);
-        tokenBaseURI = _tokenBaseURI;
-    }
 
     function mintCard(
         uint256 _cardType,
@@ -1424,8 +1434,9 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
             position : _position,
             ethnicity : _ethnicity,
             kit : _kit,
-            colour : _colour
-            });
+            colour : _colour,
+            birth: now
+        });
 
         // the magic bit!
         _mint(_to, tokenIdPointer);
@@ -1497,7 +1508,8 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _position,
         uint256 _ethnicity,
         uint256 _kit,
-        uint256 _colour
+        uint256 _colour,
+        uint256 _birth
     ) {
         require(_exists(_tokenId), "Token does not exist");
         Card storage tokenCard = cardMapping[_tokenId];
@@ -1507,7 +1519,8 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         tokenCard.position,
         tokenCard.ethnicity,
         tokenCard.kit,
-        tokenCard.colour
+        tokenCard.colour,
+        tokenCard.birth
         );
     }
 
@@ -1711,5 +1724,18 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         emit StaticIpfsTokenURICleared(_tokenId);
 
         return true;
+    }
+}
+
+// File: contracts/NiftyFootballTradingCard.sol
+
+pragma solidity 0.5.0;
+
+
+contract NiftyFootballTradingCard is NiftyTradingCard {
+
+    constructor (string memory _tokenBaseURI) public CustomERC721Full("Nifty Football Trading Card", "NFTFC") {
+        super.addWhitelisted(msg.sender);
+        tokenBaseURI = _tokenBaseURI;
     }
 }

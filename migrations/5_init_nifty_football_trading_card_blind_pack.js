@@ -8,6 +8,8 @@ module.exports = async function (deployer, network, accounts) {
     const _generator = await NiftyFootballTradingCardGenerator.deployed();
     const _niftyFootballTradingCard = await NiftyFootballTradingCard.deployed();
 
+    const accountOne = getAccountOne(accounts, network);
+
     // Deploy
     await deployer.deploy(
         NiftyFootballTradingCardBlindPack,
@@ -15,11 +17,11 @@ module.exports = async function (deployer, network, accounts) {
         _generator.address,
         _niftyFootballTradingCard.address,
         {
-            from: accounts[0]
+            from: accountOne
         });
 
     const _niftyFootballTradingCardBlindPack = await NiftyFootballTradingCardBlindPack.deployed();
 
     // white blind pack creator
-    await _niftyFootballTradingCard.addWhitelisted(_niftyFootballTradingCardBlindPack.address, {from: getAccountOne(accounts, network)});
+    await _niftyFootballTradingCard.addWhitelisted(_niftyFootballTradingCardBlindPack.address, {from: accountOne});
 };

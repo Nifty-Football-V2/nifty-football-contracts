@@ -10,6 +10,7 @@ module.exports = {
         if (network === 'ropsten' || network === 'rinkeby') {
             _owner = new HDWalletProvider(mnemonic, `https://${network}.infura.io/v3/${INFURA_KEY}`, 0).getAddress();
         }
+        console.log(`Using account [${_owner}] for network [${network}]`);
         return _owner;
     }
 };
