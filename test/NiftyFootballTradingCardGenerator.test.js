@@ -58,11 +58,11 @@ contract('NiftyFootballTradingCardGenerator tests', (accounts) => {
     context('Positions - ensure can manipulate seed arrays', function () {
         it('adds to', async function () {
             let positions = await this.generator.allPositions();
-            positions.length.should.be.equal(10);
+            positions.length.should.be.equal(11);
 
             await this.generator.addPosition(new BN('5'), {from: accounts[0]});
             positions = await this.generator.allPositions();
-            positions.length.should.be.equal(11);
+            positions.length.should.be.equal(12);
         });
 
         it('replace at index', async function () {
