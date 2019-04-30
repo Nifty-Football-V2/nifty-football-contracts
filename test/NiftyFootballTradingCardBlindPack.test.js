@@ -74,8 +74,8 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
                 attrs[2].should.be.bignumber.lt('100');
                 attrs[3].should.be.bignumber.lt('100');
                 attrs[4].should.be.bignumber.lt('100');
-                attrs[5].should.be.bignumber.lt('256');
-                attrs[6].should.be.bignumber.lt('256');
+                attrs[5].should.be.bignumber.lt('100');
+                attrs[6].should.be.bignumber.lt('100');
             });
         });
 
@@ -85,11 +85,10 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
 
                 // between 0 - 3
                 cardAttrs[0].should.be.bignumber.lt('32');
-                cardAttrs[1].should.be.bignumber.lt('32');
+                cardAttrs[1].should.not.be.null;
                 cardAttrs[2].should.be.bignumber.lt('32');
                 cardAttrs[3].should.be.bignumber.lt('32');
                 cardAttrs[4].should.be.bignumber.lt('32');
-                cardAttrs[5].should.be.bignumber.lt('32');
                 cardAttrs[6].should.not.be.null;
             });
         });
