@@ -1,20 +1,37 @@
 pragma solidity 0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./IFutballCardsGenerator.sol";
+import "./INiftyFootballTradingCardGenerator.sol";
 
-contract FutballCardsGenerator is Ownable, IFutballCardsGenerator {
+contract NiftyFootballTradingCardEliteGenerator is Ownable, INiftyFootballTradingCardGenerator {
 
     uint256 internal randNonce = 0;
 
-    uint256 public constant nameLength = 256;
-    uint256 public constant maxAttributeScore = 100;
+    uint256 public constant nameLength = 100;
+    uint256 public constant maxAttributeScore = 99;
 
-    uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 3, 3];
-    uint256[] internal nationalities = [0, 1, 2, 3, 4];
-    uint256[] internal kits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
-    uint256[] internal colours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-    uint256[] internal ethnicities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    // 10% GK, 40% DF, 40% MD, 10% ST
+    uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3];
+
+    // Telephone codes
+    // 44 ENGLAND 20%
+    // 1 USA 20%
+    // 39 ITALY 10% - lower in elite
+    // 54 ARGENTINA 10% - lower in elite
+    // 55 BRAZIL 20% - elite only
+    // 7 RUSSIA 20% - elite only
+    uint256[] internal nationalities = [44, 44, 1, 1, 39, 54, 55, 55, 7, 7];
+
+    // FIXME decide exact percentages
+    uint256[] internal kits =           [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+    uint256[] internal colours =        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+    uint256[] internal ethnicities =    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+
+    // GREEN #1 40%
+    // GREEN #2 40%
+    // YELLOW 10%
+    // ORANGE 10%
+    uint256[] internal gkColours = [0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 3];
 
     function generateCard(address _sender)
     external
@@ -31,8 +48,8 @@ contract FutballCardsGenerator is Ownable, IFutballCardsGenerator {
         nationalities[generate(_sender, nationalities.length, hash)],
         position,
         ethnicities[generate(_sender, ethnicities.length, hash)],
-        (position == 0) ? kits[generate(_sender, 2, hash)] : kits[generate(_sender, kits.length, hash)],
-        colours[generate(_sender, colours.length, hash)]
+        (position == 0) ? 0 : kits[generate(_sender, kits.length, hash)],
+        (position == 0) ? gkColours[generate(_sender, gkColours.length, hash)] : colours[generate(_sender, colours.length, hash)]
         );
     }
 

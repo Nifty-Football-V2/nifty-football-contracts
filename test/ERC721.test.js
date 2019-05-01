@@ -2,13 +2,13 @@ const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-help
 const {ZERO_ADDRESS} = constants;
 
 const {shouldBehaveLikeERC721} = require('./ERC721.behavior');
-const FutballCards = artifacts.require('FutballCards');
+const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard');
 
 contract('ERC721', function ([_, creator, tokenOwner, anyone, ...accounts]) {
     const baseURI = 'http://futball-cards';
 
     beforeEach(async function () {
-        this.token = await FutballCards.new(baseURI, {from: creator});
+        this.token = await NiftyFootballTradingCard.new(baseURI, {from: creator});
     });
 
     shouldBehaveLikeERC721(creator, creator, accounts);
@@ -49,7 +49,7 @@ contract('ERC721', function ([_, creator, tokenOwner, anyone, ...accounts]) {
 
             context('with burnt token', function () {
                 beforeEach(async function () {
-                    ({logs: this.logs} = await this.token.methods['burn(uint256)'](tokenId, {from: anyone}));
+                    ({logs: this.logs} = await this.token.methods['burn(uint256)'](tokenId, {from: creator}));
                 });
 
                 it('emits a Transfer event', function () {

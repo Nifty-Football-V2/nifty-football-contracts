@@ -5,25 +5,32 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/access/roles/WhitelistedRole.sol";
 
 import "./libs/Strings.sol";
-import "./IFutballCardsCreator.sol";
-import "./IFutballCardsAttributes.sol";
 import "./erc721/CustomERC721Full.sol";
+import "./INiftyTradingCardCreator.sol";
+import "./INiftyTradingCardAttributes.sol";
 
-contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator, IFutballCardsAttributes {
+contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCardCreator, INiftyTradingCardAttributes {
     using SafeMath for uint256;
 
     string public tokenBaseURI = "";
     string public tokenBaseIpfsURI = "https://ipfs.infura.io/ipfs/";
 
-    event CardMinted(
-        uint256 indexed _tokenId,
-        address indexed _to
+    event TokenBaseURIChanged(
+        string _new
     );
 
-    event TokenBaseURIChanged(string _new);
-    event TokenBaseIPFSURIChanged(string _new);
-    event StaticIpfsTokenURISet(uint256 indexed _tokenId, string _ipfsHash);
-    event StaticIpfsTokenURICleared(uint256 indexed _tokenId);
+    event TokenBaseIPFSURIChanged(
+        string _new
+    );
+
+    event StaticIpfsTokenURISet(
+        uint256 indexed _tokenId,
+        string _ipfsHash
+    );
+
+    event StaticIpfsTokenURICleared(
+        uint256 indexed _tokenId
+    );
 
     event CardAttributesSet(
         uint256 indexed _tokenId,
@@ -74,9 +81,6 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _value
     );
 
-    uint256 public totalCards = 0;
-    uint256 public tokenIdPointer = 1;
-
     struct Card {
         uint256 cardType;
 
@@ -87,6 +91,8 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
 
         uint256 kit;
         uint256 colour;
+
+        uint256 birth;
     }
 
     struct Attributes {
@@ -116,16 +122,14 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         _;
     }
 
+    uint256 public totalCards = 0;
+    uint256 public tokenIdPointer = 1;
+
     mapping(uint256 => string) public staticIpfsImageLink;
     mapping(uint256 => Card) internal cardMapping;
     mapping(uint256 => Attributes) internal attributesMapping;
     mapping(uint256 => Name) internal namesMapping;
     mapping(uint256 => Extras) internal extrasMapping;
-
-    constructor (string memory _tokenBaseURI) public CustomERC721Full("FutballCard", "FUT") {
-        super.addWhitelisted(msg.sender);
-        tokenBaseURI = _tokenBaseURI;
-    }
 
     function mintCard(
         uint256 _cardType,
@@ -144,16 +148,15 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
             position : _position,
             ethnicity : _ethnicity,
             kit : _kit,
-            colour : _colour
-            });
+            colour : _colour,
+            birth: now
+        });
 
         // the magic bit!
         _mint(_to, tokenIdPointer);
 
         // woo! more cards exist!
         totalCards = totalCards.add(1);
-
-        emit CardMinted(tokenIdPointer, _to);
 
         // increment pointer
         tokenIdPointer = tokenIdPointer.add(1);
@@ -217,7 +220,8 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         uint256 _position,
         uint256 _ethnicity,
         uint256 _kit,
-        uint256 _colour
+        uint256 _colour,
+        uint256 _birth
     ) {
         require(_exists(_tokenId), "Token does not exist");
         Card storage tokenCard = cardMapping[_tokenId];
@@ -227,7 +231,8 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         tokenCard.position,
         tokenCard.ethnicity,
         tokenCard.kit,
-        tokenCard.colour
+        tokenCard.colour,
+        tokenCard.birth
         );
     }
 
@@ -291,15 +296,16 @@ contract FutballCards is CustomERC721Full, WhitelistedRole, IFutballCardsCreator
         return _tokensOfOwner(owner);
     }
 
-    function burn(uint256 _tokenId) public returns (bool) {
+    function burn(uint256 _tokenId) onlyWhitelisted public returns (bool) {
         require(_exists(_tokenId), "Token does not exist");
 
+        delete staticIpfsImageLink[_tokenId];
         delete cardMapping[_tokenId];
         delete attributesMapping[_tokenId];
         delete namesMapping[_tokenId];
         delete extrasMapping[_tokenId];
 
-        _burn(msg.sender, _tokenId);
+        _burn(ownerOf(_tokenId), _tokenId);
 
         return true;
     }
