@@ -34,7 +34,7 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
         (await this.niftyFootballTradingCard.isWhitelisted(this.blindPack.address)).should.be.true;
 
         this.basePrice = await this.blindPack.totalPrice(1);
-        this.basePrice.should.be.bignumber.equal('11000000000000000');
+        this.basePrice.should.be.bignumber.equal('16000000000000000');
 
         (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('0');
         (await this.blindPack.totalPurchasesInWei()).should.be.bignumber.equal('0');
@@ -164,7 +164,7 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
             await this.niftyFootballTradingCard.addWhitelisted(this.cleanBlindPack.address, {from: creator});
 
             this.basePrice = await this.blindPack.totalPrice(1);
-            this.basePrice.should.be.bignumber.equal('11000000000000000');
+            this.basePrice.should.be.bignumber.equal('16000000000000000');
         });
 
         it('should be transferred the blind pack eth purchase', async function () {
@@ -184,10 +184,10 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
         it('should be transferred the blind pack eth purchase - over min amount', async function () {
             const preWalletBalance = await balance.current(cleanWallet);
 
-            await this.cleanBlindPack.blindPack({from: anyone, value: new BN('11000000000000123')});
+            await this.cleanBlindPack.blindPack({from: anyone, value: new BN('16000000000000123')});
 
             const postWalletBalance = await balance.current(cleanWallet);
-            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('11000000000000123')));
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('16000000000000123')));
         });
 
     });
@@ -198,43 +198,43 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
 
             it('for 1 and 2 cards', async function () {
                 const oneCard = await await this.blindPack.totalPrice(1);
-                oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
+                oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('16000000000000000')));
 
                 const twoCards = await await this.blindPack.totalPrice(2);
-                twoCards.should.be.bignumber.eq(new BN(2).mul(new BN('11000000000000000')));
+                twoCards.should.be.bignumber.eq(new BN(2).mul(new BN('16000000000000000')));
             });
 
             it('for 3 to 5 cards', async function () {
                 const threeCards = await await this.blindPack.totalPrice(3);
-                threeCards.should.be.bignumber.eq(new BN(3).mul(new BN('10000000000000000')));
+                threeCards.should.be.bignumber.eq(new BN(3).mul(new BN('14500000000000000')));
 
                 const fourCards = await await this.blindPack.totalPrice(4);
-                fourCards.should.be.bignumber.eq(new BN(4).mul(new BN('10000000000000000')));
+                fourCards.should.be.bignumber.eq(new BN(4).mul(new BN('14500000000000000')));
 
                 const fiveCards = await await this.blindPack.totalPrice(5);
-                fiveCards.should.be.bignumber.eq(new BN(5).mul(new BN('10000000000000000')));
+                fiveCards.should.be.bignumber.eq(new BN(5).mul(new BN('14500000000000000')));
             });
 
             it('for 6 to 8 cards', async function () {
                 const sixCards = await await this.blindPack.totalPrice(6);
-                sixCards.should.be.bignumber.eq(new BN(6).mul(new BN('9100000000000000')));
+                sixCards.should.be.bignumber.eq(new BN(6).mul(new BN('13500000000000000')));
 
                 const sevenCards = await await this.blindPack.totalPrice(7);
-                sevenCards.should.be.bignumber.eq(new BN(7).mul(new BN('9100000000000000')));
+                sevenCards.should.be.bignumber.eq(new BN(7).mul(new BN('13500000000000000')));
 
                 const eightCards = await await this.blindPack.totalPrice(8);
-                eightCards.should.be.bignumber.eq(new BN(8).mul(new BN('9100000000000000')));
+                eightCards.should.be.bignumber.eq(new BN(8).mul(new BN('13500000000000000')));
             });
 
             it('for 9 or more cards', async function () {
                 const nineCards = await await this.blindPack.totalPrice(9);
-                nineCards.should.be.bignumber.eq(new BN(9).mul(new BN('8500000000000000')));
+                nineCards.should.be.bignumber.eq(new BN(9).mul(new BN('12500000000000000')));
 
                 const tenCards = await await this.blindPack.totalPrice(10);
-                tenCards.should.be.bignumber.eq(new BN(10).mul(new BN('8500000000000000')));
+                tenCards.should.be.bignumber.eq(new BN(10).mul(new BN('12500000000000000')));
 
                 const oneHundredCard = await await this.blindPack.totalPrice(100);
-                oneHundredCard.should.be.bignumber.eq(new BN(100).mul(new BN('8500000000000000')));
+                oneHundredCard.should.be.bignumber.eq(new BN(100).mul(new BN('12500000000000000')));
             });
         });
 
@@ -271,7 +271,7 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
 
         it('can update if owner', async function () {
             let oneCard = await await this.blindPack.totalPrice(1);
-            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
+            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('16000000000000000')));
 
             await this.blindPack.updatePricePerCardAtIndex(0, 100, {from: creator});
 
@@ -282,7 +282,7 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
 
         it('can batch update if owner', async function () {
             let oneCard = await await this.blindPack.totalPrice(1);
-            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
+            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('16000000000000000')));
 
             await this.blindPack.updatePricePerCard([100], {from: creator});
 

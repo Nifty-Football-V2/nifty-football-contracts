@@ -33,22 +33,22 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
 
     uint256[] public pricePerCard = [
     // single cards
-    11000000000000000, // 1 @ = 0.011 ETH / $1.75
-    11000000000000000, // 2 @ = 0.011 ETH / $1.75
+    16000000000000000, // 1 @ = 0.016 ETH / $2.50
+    16000000000000000, // 2 @ = 0.016 ETH / $2.50
 
     // 1 packs
-    10000000000000000, //  3 @ = 0.01 ETH / $1.59
-    10000000000000000, //  4 @ = 0.01 ETH / $1.59
-    10000000000000000, //  5 @ = 0.01 ETH / $1.59
+    14500000000000000, //  3 @ = 0.0145 ETH / $2.30
+    14500000000000000, //  4 @ = 0.0145 ETH / $2.30
+    14500000000000000, //  5 @ = 0.0145 ETH / $2.30
 
     // 2 packs
-    9100000000000000, //  6 @ = 0.0091 ETH / $1.45
-    9100000000000000, //  7 @ = 0.0091 ETH / $1.45
-    9100000000000000, //  8 @ = 0.0091 ETH / $1.45
+    13500000000000000, //  6 @ = 0.0135 ETH / $2.15
+    13500000000000000, //  7 @ = 0.0135 ETH / $2.15
+    13500000000000000, //  8 @ = 0.0135 ETH / $2.15
 
     // 3 packs or more
-    8500000000000000, //  9 @ = 0.0085 ETH / $1.35
-    8500000000000000 //  10 @ = 0.0085 ETH / $1.35
+    12500000000000000, //  9 @ = 0.0125 ETH / $2
+    12500000000000000 //  10 @ = 0.0125 ETH / $2
     ];
 
     constructor (address payable _wallet, INiftyFootballTradingCardGenerator _generator, INiftyTradingCardCreator _creator) public {
@@ -64,7 +64,7 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
     function blindPackTo(address _to) whenNotPaused public payable returns (uint256 _tokenId) {
         require(
             msg.value >= totalPrice(1),
-            "Must supply at least the required minimum purchase value or have credit"
+            "Must supply at least the required minimum purchase value"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
@@ -82,7 +82,7 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
     function buyBatchTo(address _to, uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
         require(
             msg.value >= totalPrice(_numberOfCards),
-            "Must supply at least the required minimum purchase value or have credit"
+            "Must supply at least the required minimum purchase value"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
