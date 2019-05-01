@@ -1,6 +1,5 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
-const {INFURA_KEY} = require('./constants');
-const mnemonic = process.env.TEST_MNEMONIC || require('./mnemonic');
+const {INFURA_KEY, mnemonic} = require('./constants');
 
 // Check gas prices before live deploy - https://ethgasstation.info/
 
