@@ -143,14 +143,14 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
         });
     });
 
-    context('ensure only card owner can burn', function () {
-        it('should revert if not card owner', async function () {
+    context('ensure only contract owner can burn', function () {
+        it('should revert if not contract owner', async function () {
             await shouldFail.reverting(this.niftyFootballTradingCard.burn(firstTokenId, {from: anyone}));
         });
 
         it('should burn if owner', async function () {
             await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
-            const {logs} = await this.niftyFootballTradingCard.burn(firstTokenId, {from: tokenOwner});
+            const {logs} = await this.niftyFootballTradingCard.burn(firstTokenId, {from: creator});
             expectEvent.inLogs(
                 logs,
                 `Transfer`,
@@ -261,26 +261,26 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
                 fiveCards.should.be.bignumber.eq(new BN(5).mul(new BN('10000000000000000')));
             });
 
-            it('for 6 to 9 cards', async function () {
+            it('for 6 to 8 cards', async function () {
                 const sixCards = await await this.blindPack.totalPrice(6);
-                sixCards.should.be.bignumber.eq(new BN(6).mul(new BN('6200000000000000')));
+                sixCards.should.be.bignumber.eq(new BN(6).mul(new BN('9100000000000000')));
 
                 const sevenCards = await await this.blindPack.totalPrice(7);
-                sevenCards.should.be.bignumber.eq(new BN(7).mul(new BN('6200000000000000')));
+                sevenCards.should.be.bignumber.eq(new BN(7).mul(new BN('9100000000000000')));
 
                 const eightCards = await await this.blindPack.totalPrice(8);
-                eightCards.should.be.bignumber.eq(new BN(8).mul(new BN('6200000000000000')));
-
-                const nineCards = await await this.blindPack.totalPrice(9);
-                nineCards.should.be.bignumber.eq(new BN(9).mul(new BN('6200000000000000')));
+                eightCards.should.be.bignumber.eq(new BN(8).mul(new BN('9100000000000000')));
             });
 
-            it('for 10 or more cards', async function () {
+            it('for 9 or more cards', async function () {
+                const nineCards = await await this.blindPack.totalPrice(9);
+                nineCards.should.be.bignumber.eq(new BN(9).mul(new BN('8500000000000000')));
+
                 const tenCards = await await this.blindPack.totalPrice(10);
-                tenCards.should.be.bignumber.eq(new BN(10).mul(new BN('5500000000000000')));
+                tenCards.should.be.bignumber.eq(new BN(10).mul(new BN('8500000000000000')));
 
                 const oneHundredCard = await await this.blindPack.totalPrice(100);
-                oneHundredCard.should.be.bignumber.eq(new BN(100).mul(new BN('5500000000000000')));
+                oneHundredCard.should.be.bignumber.eq(new BN(100).mul(new BN('8500000000000000')));
             });
         });
 
@@ -342,6 +342,17 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
             oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
 
             await this.blindPack.updatePricePerCardAtIndex(0, 100, {from: creator});
+
+            oneCard = await await this.blindPack.totalPrice(1);
+            oneCard.should.be.bignumber.eq('100');
+        });
+
+
+        it('can batch update if owner', async function () {
+            let oneCard = await await this.blindPack.totalPrice(1);
+            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
+
+            await this.blindPack.updatePricePerCard([100], {from: creator});
 
             oneCard = await await this.blindPack.totalPrice(1);
             oneCard.should.be.bignumber.eq('100');

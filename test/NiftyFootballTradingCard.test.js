@@ -11,6 +11,8 @@ contract('NiftyFootballTradingCard', ([_, creator, tokenOwner, anyone, ...accoun
     const firstURI = 'http://futball-cards/';
     const baseURI = 'http://futball-cards/';
 
+    const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
     beforeEach(async function () {
         // Create 721 contract
         this.niftyFootballTradingCard = await NiftyFootballTradingCard.new(baseURI, {from: creator});
@@ -22,8 +24,8 @@ contract('NiftyFootballTradingCard', ([_, creator, tokenOwner, anyone, ...accoun
             const {logs} = await this.niftyFootballTradingCard.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
             expectEvent.inLogs(
                 logs,
-                `CardMinted`,
-                {_tokenId: firstTokenId, _to: tokenOwner}
+                `Transfer`,
+                {from: ZERO_ADDRESS, to: tokenOwner, tokenId: firstTokenId}
             );
 
             (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('1');

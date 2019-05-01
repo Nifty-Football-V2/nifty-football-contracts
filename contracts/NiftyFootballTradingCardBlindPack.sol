@@ -36,16 +36,23 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
     uint256 public attributesBase = 30;
 
     uint256[] public pricePerCard = [
-    11000000000000000, // 1 @ = 0.011 ETH / $1.5
-    11000000000000000, // 2 @ = 0.011 ETH / $1.5
-    10000000000000000, //  3 @ = 0.01 ETH / $1
-    10000000000000000, //  4 @ = 0.01 ETH / $1
-    10000000000000000, //  5 @ = 0.01 ETH / $1
-    6200000000000000, //  6 @ = 0.0062 ETH / $0.85
-    6200000000000000, //  7 @ = 0.0062 ETH / $0.85
-    6200000000000000, //  8 @ = 0.0062 ETH / $0.85
-    6200000000000000, //  9 @ = 0.0062 ETH / $0.85
-    5500000000000000 //  10 @ = 0.0055 ETH / $0.75
+    // single cards
+    11000000000000000, // 1 @ = 0.011 ETH / $1.75
+    11000000000000000, // 2 @ = 0.011 ETH / $1.75
+
+    // 1 packs
+    10000000000000000, //  3 @ = 0.01 ETH / $1.59
+    10000000000000000, //  4 @ = 0.01 ETH / $1.59
+    10000000000000000, //  5 @ = 0.01 ETH / $1.59
+
+    // 2 packs
+    9100000000000000, //  6 @ = 0.0091 ETH / $1.45
+    9100000000000000, //  7 @ = 0.0091 ETH / $1.45
+    9100000000000000, //  8 @ = 0.0091 ETH / $1.45
+
+    // 3 packs or more
+    8500000000000000, //  9 @ = 0.0085 ETH / $1.35
+    8500000000000000 //  10 @ = 0.0085 ETH / $1.35
     ];
 
     constructor (address payable _wallet, INiftyFootballTradingCardGenerator _generator, INiftyTradingCardCreator _creator) public {
@@ -150,6 +157,11 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
 
     function updatePricePerCardAtIndex(uint256 _index, uint256 _priceInWei) public onlyOwner returns (bool) {
         pricePerCard[_index] = _priceInWei;
+        return true;
+    }
+
+    function updatePricePerCard(uint256[] memory _pricePerCard) public onlyOwner returns (bool) {
+        pricePerCard = _pricePerCard;
         return true;
     }
 
