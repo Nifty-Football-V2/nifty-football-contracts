@@ -3,7 +3,7 @@ pragma solidity 0.5.0;
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./INiftyFootballTradingCardGenerator.sol";
 
-contract NiftyFootballTradingCardGenerator is Ownable, INiftyFootballTradingCardGenerator {
+contract NiftyFootballTradingCardEliteGenerator is Ownable, INiftyFootballTradingCardGenerator {
 
     uint256 internal randNonce = 0;
 
@@ -14,11 +14,13 @@ contract NiftyFootballTradingCardGenerator is Ownable, INiftyFootballTradingCard
     uint256[] internal positions = [0, 1, 1, 1, 1, 2, 2, 2, 2, 3];
 
     // Telephone codes
-    // 44 ENGLAND 30%
-    // 1 USA 30%
-    // 39 ITALY 20%
-    // 54 ARGENTINA 20%
-    uint256[] internal nationalities = [44, 44, 44, 1, 1, 1, 39, 39, 54, 54];
+    // 44 ENGLAND 20%
+    // 1 USA 20%
+    // 39 ITALY 10% - lower in elite
+    // 54 ARGENTINA 10% - lower in elite
+    // 55 BRAZIL 20% - elite only
+    // 7 RUSSIA 20% - elite only
+    uint256[] internal nationalities = [44, 44, 1, 1, 39, 54, 55, 55, 7, 7];
 
     // FIXME decide exact percentages
     uint256[] internal kits =           [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];

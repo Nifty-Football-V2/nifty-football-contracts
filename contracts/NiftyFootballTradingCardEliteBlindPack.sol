@@ -10,14 +10,12 @@ import "./INiftyTradingCardCreator.sol";
 import "./INiftyTradingCardCreator.sol";
 import "./generators/INiftyFootballTradingCardGenerator.sol";
 
-contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
+contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
     using SafeMath for uint256;
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
 
     event BlindPackPulled(uint256 indexed _tokenId, address indexed _to);
-
-    event CreditAdded(address indexed _to);
 
     event DefaultCardTypeChanged(uint256 _new);
 
@@ -29,11 +27,9 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
     INiftyTradingCardCreator public creator;
     address payable wallet;
 
-    mapping(address => uint256) public credits;
-
     uint256 public totalPurchasesInWei = 0;
     uint256 public cardTypeDefault = 0;
-    uint256 public attributesBase = 40; // Standard 40-100
+    uint256 public attributesBase = 60; // Standard 60-100
 
     uint256[] public pricePerCard = [
     // single cards
@@ -67,14 +63,14 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
 
     function blindPackTo(address _to) whenNotPaused public payable returns (uint256 _tokenId) {
         require(
-            credits[msg.sender] > 0 || msg.value >= totalPrice(1),
+            msg.value >= totalPrice(1),
             "Must supply at least the required minimum purchase value or have credit"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
         uint256 tokenId = _generateAndAssignCard(_to);
 
-        _takePayment(1);
+        _takePayment();
 
         return tokenId;
     }
@@ -85,7 +81,7 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
 
     function buyBatchTo(address _to, uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
         require(
-            credits[msg.sender] >= _numberOfCards || msg.value >= totalPrice(_numberOfCards),
+            msg.value >= totalPrice(_numberOfCards),
             "Must supply at least the required minimum purchase value or have credit"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
@@ -96,7 +92,7 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
             generatedTokenIds[i] = _generateAndAssignCard(_to);
         }
 
-        _takePayment(_numberOfCards);
+        _takePayment();
 
         return generatedTokenIds;
     }
@@ -120,15 +116,10 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
         return tokenId;
     }
 
-    function _takePayment(uint256 _numberOfCards) internal {
-        // use credits first
-        if (credits[msg.sender] >= _numberOfCards) {
-            credits[msg.sender] = credits[msg.sender].sub(_numberOfCards);
-        } else {
-            // any trapped ether can be withdrawn with withdraw()
-            totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
-            wallet.transfer(msg.value);
-        }
+    function _takePayment() internal {
+        // any trapped ether can be withdrawn with withdraw()
+        totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
+        wallet.transfer(msg.value);
     }
 
     function setCardTypeDefault(uint256 _newDefaultCardType) public onlyOwner returns (bool) {
@@ -162,22 +153,6 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
 
     function updatePricePerCard(uint256[] memory _pricePerCard) public onlyOwner returns (bool) {
         pricePerCard = _pricePerCard;
-        return true;
-    }
-
-    function addCredit(address _to) public onlyOwner returns (bool) {
-        credits[_to] = credits[_to].add(1);
-
-        emit CreditAdded(_to);
-
-        return true;
-    }
-
-    function addCredits(address _to, uint256 _creditsToAdd) public onlyOwner returns (bool) {
-        credits[_to] = credits[_to].add(_creditsToAdd);
-
-        emit CreditAdded(_to);
-
         return true;
     }
 
