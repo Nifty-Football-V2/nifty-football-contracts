@@ -2,7 +2,7 @@ pragma solidity 0.5.0;
 
 import "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 
-contract IFutballCardsAttributes is IERC721 {
+contract INiftyTradingCardAttributes is IERC721 {
 
     function attributesFlat(uint256 _tokenId) public view returns (
         uint256[5] memory attributes
@@ -33,7 +33,8 @@ contract IFutballCardsAttributes is IERC721 {
         uint256 _position,
         uint256 _ethnicity,
         uint256 _kit,
-        uint256 _colour
+        uint256 _colour,
+        uint256 _birth
     );
 
 }

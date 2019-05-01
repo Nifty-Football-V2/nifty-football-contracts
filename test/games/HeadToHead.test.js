@@ -1,4 +1,4 @@
-const FutballCards = artifacts.require('FutballCards');
+const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard');
 const HeadToHead = artifacts.require('HeadToHead');
 const MockHeadToHeadResulter = artifacts.require('MockHeadToHeadResulter');
 
@@ -23,27 +23,27 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
 
     beforeEach(async function () {
         // Create 721 contract
-        this.futballCards = await FutballCards.new(baseURI, {from: creator});
+        this.niftyFootballTradingCard = await NiftyFootballTradingCard.new(baseURI, {from: creator});
         this.resulter = await MockHeadToHeadResulter.new({from: creator});
 
-        this.headToHead = await HeadToHead.new(this.resulter.address, this.futballCards.address, {from: creator});
+        this.headToHead = await HeadToHead.new(this.resulter.address, this.niftyFootballTradingCard.address, {from: creator});
 
-        (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
+        (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('0');
     });
 
     context('should be able to play game', async function () {
 
         beforeEach(async function () {
-            await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
-            await this.futballCards.setAttributes(_tokenId1, 10, 10, 10, 10, {from: creator});
+            await this.niftyFootballTradingCard.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+            await this.niftyFootballTradingCard.setAttributes(_tokenId1, 10, 10, 10, 10, {from: creator});
 
-            await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
-            await this.futballCards.setAttributes(_tokenId2, 5, 10, 20, 20, {from: creator});
+            await this.niftyFootballTradingCard.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
+            await this.niftyFootballTradingCard.setAttributes(_tokenId2, 5, 10, 20, 20, {from: creator});
 
-            await this.futballCards.mintCard(3, 3, 3, 3, 3, 3, anyone, {from: creator});
-            await this.futballCards.setAttributes(_tokenId3, 30, 30, 30, 30, {from: creator});
+            await this.niftyFootballTradingCard.mintCard(3, 3, 3, 3, 3, 3, anyone, {from: creator});
+            await this.niftyFootballTradingCard.setAttributes(_tokenId3, 30, 30, 30, 30, {from: creator});
 
-            (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
+            (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('3');
         });
 
         context('validation', async function () {
@@ -68,24 +68,24 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
                 });
             });
 
-            context.skip('when contract NOT approved', async function () {
+            context('when contract NOT approved', async function () {
 
                 beforeEach(async function () {
-                    await this.futballCards.setApprovalForAll(this.headToHead.address, false, {from: tokenOwner1});
-                    await this.futballCards.setApprovalForAll(this.headToHead.address, false, {from: tokenOwner2});
+                    await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, false, {from: tokenOwner1});
+                    await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, false, {from: tokenOwner2});
                 });
 
                 it('cant create game when not approved', async function () {
                     await shouldFail.reverting.withMessage(
                         this.headToHead.createGame(_tokenId2, {from: tokenOwner2}),
-                        "NFT not approved to play"
+                        "Card not approved to sell"
                     );
                 });
 
                 it('cant result a game when not approved', async function () {
                     await shouldFail.reverting.withMessage(
                         this.headToHead.resultGame(1, _tokenId1, {from: tokenOwner1}),
-                        "NFT not approved to play"
+                        "Card not approved to sell"
                     );
                 });
             });
@@ -93,8 +93,8 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
             context('when contract approved', async function () {
 
                 beforeEach(async function () {
-                    await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
-                    await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
+                    await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
+                    await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
                 });
 
                 it('cant create game when not the owner', async function () {
@@ -130,9 +130,9 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
             context('joining multiple game', async function () {
 
                 beforeEach(async function () {
-                    await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
-                    await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
-                    await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: anyone});
+                    await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
+                    await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
+                    await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: anyone});
                 });
 
                 it('cant create a new game if you are already playing', async function () {
@@ -160,15 +160,15 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
         context('playing a game', async function () {
 
             beforeEach(async function () {
-                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
-                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
+                await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
+                await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
             });
 
             it('between token 0 (home) and 1 (away) and home wins', async function () {
                 const _gameId = new BN(1);
 
-                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
-                (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
 
                 const {logs} = await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
                 expectEvent.inLogs(logs,
@@ -188,7 +188,8 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
                 state.should.be.bignumber.equal(State.OPEN);
 
                 // mock result
-                await this.resulter.setResult(0);
+                const result = new BN(0);
+                await this.resulter.setResult(result);
 
                 const {logs: resultLogs} = await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
                 expectEvent.inLogs(resultLogs,
@@ -199,13 +200,13 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
                         gameId: _gameId,
                         homeValue: new BN(10),
                         awayValue: new BN(5),
-                        result: new BN(0)
+                        result: result
                     }
                 );
 
                 // token owner 1 now owns both
-                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
-                (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner1);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId2)).should.be.equal(tokenOwner1);
 
                 // Check values on game set correctly
                 const {awayTokenId: resultedAwayTokenId, awayOwner: resultedAwayOwner, state: resultedState} = await this.headToHead.getGame(_gameId);
@@ -217,8 +218,8 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
             it('between token 0 (home) and 1 (away) and away wins', async function () {
                 const _gameId = new BN(1);
 
-                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
-                (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
 
                 const {logs} = await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
                 expectEvent.inLogs(logs,
@@ -238,7 +239,8 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
                 state.should.be.bignumber.equal(State.OPEN);
 
                 // mock result
-                await this.resulter.setResult(3);
+                const result = new BN(2);
+                await this.resulter.setResult(result);
 
                 const {logs: resultLogs} = await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
                 expectEvent.inLogs(resultLogs,
@@ -249,13 +251,13 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
                         gameId: _gameId,
                         homeValue: new BN(10),
                         awayValue: new BN(20),
-                        result: new BN(2)
+                        result: result
                     }
                 );
 
                 // token owner 1 now owns both
-                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner2);
-                (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId1)).should.be.equal(tokenOwner2);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
 
                 // Check values on game set correctly
                 const {
@@ -278,8 +280,8 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
             it('between token 0 (home) and 1 (away) and the game is drawn', async function () {
                 const _gameId = new BN(1);
 
-                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
-                (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
 
                 await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
 
@@ -290,8 +292,8 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
                 awayOwner.should.be.equal(ZERO_ADDRESS);
                 state.should.be.bignumber.equal(State.OPEN);
 
-                // mock result to 3 so we draw
-                await this.resulter.setResult(2);
+                const result = new BN(1);
+                await this.resulter.setResult(result);
 
                 const {logs} = await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
                 expectEvent.inLogs(logs,
@@ -302,13 +304,13 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
                         gameId: _gameId,
                         homeValue: new BN(10),
                         awayValue: new BN(10),
-                        result: new BN(1) // zero indexed
+                        result: result
                     }
                 );
 
                 // token owner 1 now owns both
-                (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
-                (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
+                (await this.niftyFootballTradingCard.ownerOf(_tokenId2)).should.be.equal(tokenOwner2);
 
                 // Check values on game set correctly
                 const {
@@ -332,8 +334,8 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
         context('reMatch a game', async function () {
 
             beforeEach(async function () {
-                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
-                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
+                await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
+                await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
             });
 
             it('can rematch when drawn', async function () {
@@ -341,16 +343,14 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
 
                 await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
 
-                // mock result to 3 so we draw
-                await this.resulter.setResult(2);
+                await this.resulter.setResult(1);
 
                 // Result game
                 await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
                 const {state} = await this.headToHead.getGame(_gameId);
                 state.should.be.bignumber.equal(State.DRAW);
 
-                // mock to result
-                await this.resulter.setResult(3);
+                await this.resulter.setResult(2);
 
                 await this.headToHead.reMatch(_gameId, {from: tokenOwner2});
 
@@ -363,8 +363,8 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
         context('withdrawing from a game', async function () {
 
             beforeEach(async function () {
-                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
-                await this.futballCards.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
+                await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner1});
+                await this.niftyFootballTradingCard.setApprovalForAll(this.headToHead.address, true, {from: tokenOwner2});
             });
 
             it('can withdraw once entered', async function () {
@@ -390,8 +390,7 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
 
                 await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
 
-                // mock result to 3 so we draw
-                await this.resulter.setResult(2);
+                await this.resulter.setResult(1);
 
                 // Result game
                 await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});
@@ -420,7 +419,6 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
 
                 await this.headToHead.createGame(_tokenId1, {from: tokenOwner1});
 
-                // mock result
                 await this.resulter.setResult(3);
 
                 await this.headToHead.resultGame(_gameId, _tokenId2, {from: tokenOwner2});

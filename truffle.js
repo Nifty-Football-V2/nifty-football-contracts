@@ -1,19 +1,20 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
-const {INFURA_KEY, mnemonic} = require('./constants');
+const INFURA_KEY = process.env.NIFTY_FOOTBALL_INFURA_KEY;
 
 // Check gas prices before live deploy - https://ethgasstation.info/
 
 module.exports = {
     mocha: {
         useColors: true,
-        reporter: 'eth-gas-reporter',
-        reporterOptions: {
-            currency: 'USD',
-            gasPrice: 10
-        }
+        // reporter: 'eth-gas-reporter',
+        // reporterOptions: {
+        //     currency: 'USD',
+        //     gasPrice: 10
+        // }
     },
     compilers: {
         solc: {
+            version: '0.5.0',
             settings: {
                 optimizer: {
                     enabled: true, // Default: false
@@ -46,10 +47,25 @@ module.exports = {
         },
         ropsten: {
             provider: function () {
-                return new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${INFURA_KEY}`);
+                return new HDWalletProvider(
+                    process.env.NIFTY_FOOTBALL_MNEMONIC,
+                    `https://ropsten.infura.io/v3/${INFURA_KEY}`
+                );
             },
             network_id: 3,
             gas: 7000000, // default = 4712388
+            gasPrice: 4000000000, // default = 100 gwei = 100000000000
+            skipDryRun: true
+        },
+        rinkeby: {
+            provider: function () {
+                return new HDWalletProvider(
+                    process.env.NIFTY_FOOTBALL_MNEMONIC,
+                    `https://rinkeby.infura.io/v3/${INFURA_KEY}`
+                );
+            },
+            network_id: 4,
+            gas: 6500000, // default = 4712388
             gasPrice: 4000000000, // default = 100 gwei = 100000000000
             skipDryRun: true
         },

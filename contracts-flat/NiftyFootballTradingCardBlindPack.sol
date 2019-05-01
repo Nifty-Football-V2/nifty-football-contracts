@@ -289,18 +289,6 @@ contract Pausable is PauserRole {
     }
 }
 
-// File: contracts/generators/IFutballCardsGenerator.sol
-
-pragma solidity 0.5.0;
-
-contract IFutballCardsGenerator {
-    function generateCard(address _sender) external returns (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour);
-
-    function generateAttributes(address _sender, uint256 _base) external returns (uint256 strength, uint256 speed, uint256 intelligence, uint256 skill);
-
-    function generateName(address _sender) external returns (uint256 firstName, uint256 lastName);
-}
-
 // File: contracts/libs/Strings.sol
 
 pragma solidity 0.5.0;
@@ -364,11 +352,11 @@ library Strings {
     }
 }
 
-// File: contracts/IFutballCardsCreator.sol
+// File: contracts/INiftyTradingCardCreator.sol
 
 pragma solidity 0.5.0;
 
-interface IFutballCardsCreator {
+interface INiftyTradingCardCreator {
     function mintCard(
         uint256 _cardType,
         uint256 _nationality,
@@ -394,7 +382,19 @@ interface IFutballCardsCreator {
     ) external returns (bool);
 }
 
-// File: contracts/FutballCardsBlindPack.sol
+// File: contracts/generators/INiftyFootballTradingCardGenerator.sol
+
+pragma solidity 0.5.0;
+
+contract INiftyFootballTradingCardGenerator {
+    function generateCard(address _sender) external returns (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour);
+
+    function generateAttributes(address _sender, uint256 _base) external returns (uint256 strength, uint256 speed, uint256 intelligence, uint256 skill);
+
+    function generateName(address _sender) external returns (uint256 firstName, uint256 lastName);
+}
+
+// File: contracts/NiftyFootballTradingCardBlindPack.sol
 
 pragma solidity 0.5.0;
 
@@ -404,7 +404,8 @@ pragma solidity 0.5.0;
 
 
 
-contract FutballCardsBlindPack is Ownable, Pausable {
+
+contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
     using SafeMath for uint256;
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
@@ -417,10 +418,10 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     event AttributesBaseChanged(uint256 _new);
 
-    event FutballCardsGeneratorChanged(IFutballCardsGenerator _new);
+    event FutballCardsGeneratorChanged(INiftyFootballTradingCardGenerator _new);
 
-    IFutballCardsGenerator public futballCardsGenerator;
-    IFutballCardsCreator public futballCardsNFT;
+    INiftyFootballTradingCardGenerator public generator;
+    INiftyTradingCardCreator public creator;
     address payable wallet;
 
     mapping(address => uint256) public credits;
@@ -442,9 +443,9 @@ contract FutballCardsBlindPack is Ownable, Pausable {
     5500000000000000 //  10 @ = 0.0055 ETH / $0.75
     ];
 
-    constructor (address payable _wallet, IFutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
-        futballCardsGenerator = _futballCardsGenerator;
-        futballCardsNFT = _fuballCardsNFT;
+    constructor (address payable _wallet, INiftyFootballTradingCardGenerator _generator, INiftyTradingCardCreator _creator) public {
+        generator = _generator;
+        creator = _creator;
         wallet = _wallet;
     }
 
@@ -490,17 +491,17 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     function _generateAndAssignCard(address _to) internal returns (uint256 _tokenId) {
         // Generate card
-        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generateCard(msg.sender);
+        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = generator.generateCard(msg.sender);
 
         // cardType is 0 for genesis (initially)
-        uint256 tokenId = futballCardsNFT.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
+        uint256 tokenId = creator.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // Generate attributes
-        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender, attributesBase);
-        futballCardsNFT.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
+        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = generator.generateAttributes(msg.sender, attributesBase);
+        creator.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
 
-        (uint256 _firstName, uint256 _lastName) = futballCardsGenerator.generateName(msg.sender);
-        futballCardsNFT.setName(tokenId, _firstName, _lastName);
+        (uint256 _firstName, uint256 _lastName) = generator.generateName(msg.sender);
+        creator.setName(tokenId, _firstName, _lastName);
 
         emit BlindPackPulled(tokenId, _to);
 
@@ -534,8 +535,8 @@ contract FutballCardsBlindPack is Ownable, Pausable {
         return true;
     }
 
-    function setFutballCardsGenerator(IFutballCardsGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
-        futballCardsGenerator = _futballCardsGenerator;
+    function setFutballCardsGenerator(INiftyFootballTradingCardGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
+        generator = _futballCardsGenerator;
 
         emit FutballCardsGeneratorChanged(_futballCardsGenerator);
 

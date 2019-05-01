@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/IERC721.sol";
 
+// FIXME
 contract FutballCardGame is Ownable, Pausable {
     using SafeMath for uint256;
 

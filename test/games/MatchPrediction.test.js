@@ -1,4 +1,4 @@
-const FutballCards = artifacts.require('FutballCards');
+const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard');
 const MatchPrediction = artifacts.require('MatchPrediction');
 const MatchService = artifacts.require('MatchService');
 
@@ -136,13 +136,13 @@ contract.only('Match Prediction Contract Tests',
     }
 
     beforeEach(async () => {
-        this.futballCards = await FutballCards.new(baseURI, {from: creator});
+        this.niftyFootballCards = await NiftyFootballTradingCard.new(baseURI, {from: creator});
         this.matchService = await MatchService.new(oracle, {from: creator});
-        this.matchPrediction = await MatchPrediction.new(this.futballCards.address, this.matchService.address, {from: creator});
+        this.matchPrediction = await MatchPrediction.new(this.niftyFootballCards.address, this.matchService.address, {from: creator});
 
         await this.matchService.whitelist(this.matchPrediction.address, {from: creator});
 
-        (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
+        (await this.niftyFootballCards.totalCards()).should.be.bignumber.equal('0');
         (await this.matchPrediction.totalGamesCreated()).should.be.bignumber.equal('0');
         (await this.matchPrediction.owner()).should.be.equal(creator);
         (await this.matchService.isWhitelisted(this.matchPrediction.address)).should.be.true;
@@ -152,14 +152,14 @@ contract.only('Match Prediction Contract Tests',
         context('when creating the contract', async () => {
             it('should fail to create contract with address(0) Match Service', async () => {
                 await shouldFail.reverting.withMessage(
-                    MatchPrediction.new(this.futballCards.address, constants.ZERO_ADDRESS, {from: creator}),
+                    MatchPrediction.new(this.niftyFootballCards.address, constants.ZERO_ADDRESS, {from: creator}),
                     validationErrorContentKeys.matchServiceAddressZero
                 );
             });
 
             it('should fail to create contract when Match Service and owner are the same address', async () => {
                 await shouldFail.reverting.withMessage(
-                    MatchPrediction.new(this.futballCards.address, creator, {from: creator}),
+                    MatchPrediction.new(this.niftyFootballCards.address, creator, {from: creator}),
                     validationErrorContentKeys.matchServiceEqOwner
                 );
             });
@@ -200,12 +200,12 @@ contract.only('Match Prediction Contract Tests',
 
         context('when making the first prediction', async () => {
             beforeEach(async () => {
-                await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
-                await this.futballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
+                await this.niftyFootballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+                await this.niftyFootballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
 
-                await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
+                await this.niftyFootballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
 
-                (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
+                (await this.niftyFootballCards.totalCards()).should.be.bignumber.equal('2');
 
                 await givenAMatchIsAdded(this.matchService, oracle);
             });
@@ -303,15 +303,15 @@ contract.only('Match Prediction Contract Tests',
 
         context('when making the second prediction', async () => {
             beforeEach(async () => {
-                await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
-                await this.futballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
+                await this.niftyFootballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+                await this.niftyFootballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
 
-                await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
-                await this.futballCards.approve(this.matchPrediction.address, _tokenId2, {from: tokenOwner2});
+                await this.niftyFootballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
+                await this.niftyFootballCards.approve(this.matchPrediction.address, _tokenId2, {from: tokenOwner2});
 
-                await this.futballCards.mintCard(3, 3, 3, 3, 3, 3, random, {from: creator});
+                await this.niftyFootballCards.mintCard(3, 3, 3, 3, 3, 3, random, {from: creator});
 
-                (await this.futballCards.totalCards()).should.be.bignumber.equal('3');
+                (await this.niftyFootballCards.totalCards()).should.be.bignumber.equal('3');
 
                 await givenAMatchIsAdded(this.matchService, oracle);
 
@@ -337,8 +337,8 @@ contract.only('Match Prediction Contract Tests',
                (await this.matchPrediction.playerToGameIdsMapping(tokenOwner2,0)).should.be.bignumber.equal(`${_game1Id}`);
 
                // Ensures cards have been successfully escrowed
-               (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(this.matchPrediction.address);
-               (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(this.matchPrediction.address);
+               (await this.niftyFootballCards.ownerOf(_tokenId1)).should.be.equal(this.matchPrediction.address);
+               (await this.niftyFootballCards.ownerOf(_tokenId2)).should.be.equal(this.matchPrediction.address);
             });
 
             it('should fail on referencing an invalid game', async () => {
@@ -399,11 +399,11 @@ contract.only('Match Prediction Contract Tests',
             });
 
             it('should fail when player 1 has revoked transfer approval', async () => {
-                function revokePlayer1TransferApproval(futballCards) {
-                    return futballCards.approve(constants.ZERO_ADDRESS, _tokenId1, {from: tokenOwner1});
+                function revokePlayer1TransferApproval(niftyFootballCards) {
+                    return niftyFootballCards.approve(constants.ZERO_ADDRESS, _tokenId1, {from: tokenOwner1});
                 }
 
-                await revokePlayer1TransferApproval(this.futballCards);
+                await revokePlayer1TransferApproval(this.niftyFootballCards);
 
                 await shouldFail.reverting.withMessage(
                     givenABasicSecondPrediction(this.matchPrediction, tokenOwner2),
@@ -428,13 +428,13 @@ contract.only('Match Prediction Contract Tests',
 
         context('when a winner withdraws their cards', async () => {
            beforeEach(async () => {
-               await this.futballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
-               await this.futballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
+               await this.niftyFootballCards.mintCard(1, 1, 1, 1, 1, 1, tokenOwner1, {from: creator});
+               await this.niftyFootballCards.approve(this.matchPrediction.address, _tokenId1, {from: tokenOwner1});
 
-               await this.futballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
-               await this.futballCards.approve(this.matchPrediction.address, _tokenId2, {from: tokenOwner2});
+               await this.niftyFootballCards.mintCard(2, 2, 2, 2, 2, 2, tokenOwner2, {from: creator});
+               await this.niftyFootballCards.approve(this.matchPrediction.address, _tokenId2, {from: tokenOwner2});
 
-               (await this.futballCards.totalCards()).should.be.bignumber.equal('2');
+               (await this.niftyFootballCards.totalCards()).should.be.bignumber.equal('2');
 
                await givenAMatchIsAdded(this.matchService, oracle);
 
@@ -459,8 +459,8 @@ contract.only('Match Prediction Contract Tests',
                    }
                );
 
-               (await this.futballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
-               (await this.futballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner1);
+               (await this.niftyFootballCards.ownerOf(_tokenId1)).should.be.equal(tokenOwner1);
+               (await this.niftyFootballCards.ownerOf(_tokenId2)).should.be.equal(tokenOwner1);
                (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId1)).should.be.bignumber.equal('0');
                (await this.matchPrediction.tokenIdToGameIdMapping(_tokenId2)).should.be.bignumber.equal('0');
            });

@@ -1,12 +1,12 @@
-const FutballCards = artifacts.require('FutballCards');
-const FutballCardsBlindPack = artifacts.require('FutballCardsBlindPack');
+const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard');
+const NiftyFootballTradingCardBlindPack = artifacts.require('NiftyFootballTradingCardBlindPack');
 
 const MockBlindBuyingContract = artifacts.require('MockBlindBuyingContract');
-const FutballCardsGenerator = artifacts.require('FutballCardsGenerator');
+const NiftyFootballTradingCardGenerator = artifacts.require('NiftyFootballTradingCardGenerator');
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
+contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
 
     const firstTokenId = new BN(1);
     const secondTokenId = new BN(2);
@@ -17,26 +17,26 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
 
     beforeEach(async function () {
         // Create 721 contract
-        this.futballCards = await FutballCards.new(baseURI, {from: creator});
+        this.niftyFootballTradingCard = await NiftyFootballTradingCard.new(baseURI, {from: creator});
 
-        this.generator = await FutballCardsGenerator.new({from: creator});
+        this.generator = await NiftyFootballTradingCardGenerator.new({from: creator});
 
         // Create vending machine
-        this.blindPack = await FutballCardsBlindPack.new(
+        this.blindPack = await NiftyFootballTradingCardBlindPack.new(
             wallet,
             this.generator.address,
-            this.futballCards.address,
+            this.niftyFootballTradingCard.address,
             {from: creator}
         );
 
         // Add to whitelist
-        await this.futballCards.addWhitelisted(this.blindPack.address, {from: creator});
-        (await this.futballCards.isWhitelisted(this.blindPack.address)).should.be.true;
+        await this.niftyFootballTradingCard.addWhitelisted(this.blindPack.address, {from: creator});
+        (await this.niftyFootballTradingCard.isWhitelisted(this.blindPack.address)).should.be.true;
 
         this.basePrice = await this.blindPack.totalPrice(1);
         this.basePrice.should.be.bignumber.equal('11000000000000000');
 
-        (await this.futballCards.totalCards()).should.be.bignumber.equal('0');
+        (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('0');
         (await this.blindPack.totalPurchasesInWei()).should.be.bignumber.equal('0');
     });
 
@@ -53,7 +53,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
         });
 
         it('returns total card', async function () {
-            (await this.futballCards.totalCards()).should.be.bignumber.equal('1');
+            (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('1');
         });
 
         it('returns total purchases', async function () {
@@ -61,12 +61,12 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
         });
 
         it('has an owner', async function () {
-            (await this.futballCards.tokensOfOwner(tokenOwner))[0].should.be.bignumber.equal(firstTokenId);
+            (await this.niftyFootballTradingCard.tokensOfOwner(tokenOwner))[0].should.be.bignumber.equal(firstTokenId);
         });
 
         context('ensure card has attributes', function () {
             it('returns attributes', async function () {
-                const attrs = await this.futballCards.attributesAndName(firstTokenId);
+                const attrs = await this.niftyFootballTradingCard.attributesAndName(firstTokenId);
 
                 // between 0 - 99
                 attrs[0].should.be.bignumber.lt('100');
@@ -74,22 +74,22 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
                 attrs[2].should.be.bignumber.lt('100');
                 attrs[3].should.be.bignumber.lt('100');
                 attrs[4].should.be.bignumber.lt('100');
-                attrs[5].should.be.bignumber.lt('256');
-                attrs[6].should.be.bignumber.lt('256');
+                attrs[5].should.be.bignumber.lt('100');
+                attrs[6].should.be.bignumber.lt('100');
             });
         });
 
         context('ensure card has card values', function () {
             it('returns attributes', async function () {
-                const cardAttrs = await this.futballCards.card(firstTokenId);
+                const cardAttrs = await this.niftyFootballTradingCard.card(firstTokenId);
 
                 // between 0 - 3
-                cardAttrs[0].should.be.bignumber.lt('10');
-                cardAttrs[1].should.be.bignumber.lt('10');
-                cardAttrs[2].should.be.bignumber.lt('10');
-                cardAttrs[3].should.be.bignumber.lt('10');
-                cardAttrs[4].should.be.bignumber.lt('10');
-                cardAttrs[5].should.be.bignumber.lt('10');
+                cardAttrs[0].should.be.bignumber.lt('32');
+                cardAttrs[1].should.not.be.null;
+                cardAttrs[2].should.be.bignumber.lt('32');
+                cardAttrs[3].should.be.bignumber.lt('32');
+                cardAttrs[4].should.be.bignumber.lt('32');
+                cardAttrs[6].should.not.be.null;
             });
         });
 
@@ -143,14 +143,14 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
         });
     });
 
-    context('ensure only card owner can burn', function () {
-        it('should revert if not card owner', async function () {
-            await shouldFail.reverting(this.futballCards.burn(firstTokenId, {from: anyone}));
+    context('ensure only contract owner can burn', function () {
+        it('should revert if not contract owner', async function () {
+            await shouldFail.reverting(this.niftyFootballTradingCard.burn(firstTokenId, {from: anyone}));
         });
 
         it('should burn if owner', async function () {
             await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
-            const {logs} = await this.futballCards.burn(firstTokenId, {from: tokenOwner});
+            const {logs} = await this.niftyFootballTradingCard.burn(firstTokenId, {from: creator});
             expectEvent.inLogs(
                 logs,
                 `Transfer`,
@@ -184,17 +184,17 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
     context('wallet', function () {
         before(async function () {
             // Create vending machine
-            this.cleanBlindPack = await FutballCardsBlindPack.new(
+            this.cleanBlindPack = await NiftyFootballTradingCardBlindPack.new(
                 cleanWallet,
                 this.generator.address,
-                this.futballCards.address,
+                this.niftyFootballTradingCard.address,
                 {from: creator}
             );
 
-            await this.futballCards.addWhitelisted(this.cleanBlindPack.address, {from: creator});
+            await this.niftyFootballTradingCard.addWhitelisted(this.cleanBlindPack.address, {from: creator});
 
             this.basePrice = await this.blindPack.totalPrice(1);
-            this.basePrice.should.be.bignumber.equal('11000000');
+            this.basePrice.should.be.bignumber.equal('11000000000000000');
         });
 
         it('should be transferred the blind pack eth purchase', async function () {
@@ -214,10 +214,10 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
         it('should be transferred the blind pack eth purchase - over min amount', async function () {
             const preWalletBalance = await balance.current(cleanWallet);
 
-            await this.cleanBlindPack.blindPack({from: anyone, value: 12345678});
+            await this.cleanBlindPack.blindPack({from: anyone, value: new BN('11000000000000123')});
 
             const postWalletBalance = await balance.current(cleanWallet);
-            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('11000000000000123')));
         });
 
         it('should allow withdrawal of send eth if credit used', async function () {
@@ -226,14 +226,14 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
             contractBalance.should.be.bignumber.equal(new BN('0'));
 
             await this.cleanBlindPack.addCredit(tokenOwner, {from: creator});
-            await this.cleanBlindPack.blindPack({from: tokenOwner, value: 12345678});
+            await this.cleanBlindPack.blindPack({from: tokenOwner, value: new BN('11000000000000123')});
 
             const postContractBalance = await balance.current(this.cleanBlindPack.address);
-            postContractBalance.should.be.bignumber.equal(new BN('12345678'));
+            postContractBalance.should.be.bignumber.equal(new BN('11000000000000123'));
 
             await this.cleanBlindPack.withdraw({from: creator});
             const postWalletBalance = await balance.current(cleanWallet);
-            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('12345678')));
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('11000000000000123')));
 
         });
     });
@@ -244,43 +244,43 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
 
             it('for 1 and 2 cards', async function () {
                 const oneCard = await await this.blindPack.totalPrice(1);
-                oneCard.should.be.bignumber.eq(new BN(1).mul(new BN(11000000)));
+                oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
 
                 const twoCards = await await this.blindPack.totalPrice(2);
-                twoCards.should.be.bignumber.eq(new BN(2).mul(new BN(11000000)));
+                twoCards.should.be.bignumber.eq(new BN(2).mul(new BN('11000000000000000')));
             });
 
             it('for 3 to 5 cards', async function () {
                 const threeCards = await await this.blindPack.totalPrice(3);
-                threeCards.should.be.bignumber.eq(new BN(3).mul(new BN(7300000)));
+                threeCards.should.be.bignumber.eq(new BN(3).mul(new BN('10000000000000000')));
 
                 const fourCards = await await this.blindPack.totalPrice(4);
-                fourCards.should.be.bignumber.eq(new BN(4).mul(new BN(7300000)));
+                fourCards.should.be.bignumber.eq(new BN(4).mul(new BN('10000000000000000')));
 
                 const fiveCards = await await this.blindPack.totalPrice(5);
-                fiveCards.should.be.bignumber.eq(new BN(5).mul(new BN(7300000)));
+                fiveCards.should.be.bignumber.eq(new BN(5).mul(new BN('10000000000000000')));
             });
 
-            it('for 6 to 9 cards', async function () {
+            it('for 6 to 8 cards', async function () {
                 const sixCards = await await this.blindPack.totalPrice(6);
-                sixCards.should.be.bignumber.eq(new BN(6).mul(new BN(6200000)));
+                sixCards.should.be.bignumber.eq(new BN(6).mul(new BN('9100000000000000')));
 
                 const sevenCards = await await this.blindPack.totalPrice(7);
-                sevenCards.should.be.bignumber.eq(new BN(7).mul(new BN(6200000)));
+                sevenCards.should.be.bignumber.eq(new BN(7).mul(new BN('9100000000000000')));
 
                 const eightCards = await await this.blindPack.totalPrice(8);
-                eightCards.should.be.bignumber.eq(new BN(8).mul(new BN(6200000)));
-
-                const nineCards = await await this.blindPack.totalPrice(9);
-                nineCards.should.be.bignumber.eq(new BN(9).mul(new BN(6200000)));
+                eightCards.should.be.bignumber.eq(new BN(8).mul(new BN('9100000000000000')));
             });
 
-            it('for 10 or more cards', async function () {
+            it('for 9 or more cards', async function () {
+                const nineCards = await await this.blindPack.totalPrice(9);
+                nineCards.should.be.bignumber.eq(new BN(9).mul(new BN('8500000000000000')));
+
                 const tenCards = await await this.blindPack.totalPrice(10);
-                tenCards.should.be.bignumber.eq(new BN(10).mul(new BN(5500000)));
+                tenCards.should.be.bignumber.eq(new BN(10).mul(new BN('8500000000000000')));
 
                 const oneHundredCard = await await this.blindPack.totalPrice(100);
-                oneHundredCard.should.be.bignumber.eq(new BN(100).mul(new BN(5500000)));
+                oneHundredCard.should.be.bignumber.eq(new BN(100).mul(new BN('8500000000000000')));
             });
         });
 
@@ -306,7 +306,7 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
 
                 await this.blindPack.buyBatch(10, {from: tokenOwner});
 
-                const tokensOfOwner = await this.futballCards.tokensOfOwner(tokenOwner);
+                const tokensOfOwner = await this.niftyFootballTradingCard.tokensOfOwner(tokenOwner);
                 tokensOfOwner.map(e => e.toNumber()).should.be.deep.equal([
                     1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                 ]);
@@ -316,11 +316,11 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
             });
 
             it('successful if caller sends enough ETH', async function () {
-                const value = new BN(10).mul(new BN(5500000));
+                const value = new BN(10).mul(new BN('55000000000000000'));
 
                 await this.blindPack.buyBatch(10, {from: tokenOwner, value: value});
 
-                const tokensOfOwner = await this.futballCards.tokensOfOwner(tokenOwner);
+                const tokensOfOwner = await this.niftyFootballTradingCard.tokensOfOwner(tokenOwner);
                 tokensOfOwner.map(e => e.toNumber()).should.be.deep.equal([
                     1, 2, 3, 4, 5, 6, 7, 8, 9, 10
                 ]);
@@ -339,9 +339,20 @@ contract('FutballCardsBlindPack', ([_, creator, tokenOwner, anyone, wallet, clea
 
         it('can update if owner', async function () {
             let oneCard = await await this.blindPack.totalPrice(1);
-            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN(11000000)));
+            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
 
             await this.blindPack.updatePricePerCardAtIndex(0, 100, {from: creator});
+
+            oneCard = await await this.blindPack.totalPrice(1);
+            oneCard.should.be.bignumber.eq('100');
+        });
+
+
+        it('can batch update if owner', async function () {
+            let oneCard = await await this.blindPack.totalPrice(1);
+            oneCard.should.be.bignumber.eq(new BN(1).mul(new BN('11000000000000000')));
+
+            await this.blindPack.updatePricePerCard([100], {from: creator});
 
             oneCard = await await this.blindPack.totalPrice(1);
             oneCard.should.be.bignumber.eq('100');

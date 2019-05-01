@@ -1,6 +1,6 @@
 pragma solidity 0.5.0;
 
-interface IFutballCardsCreator {
+interface INiftyTradingCardCreator {
     function mintCard(
         uint256 _cardType,
         uint256 _nationality,

@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../generators/HeadToHeadResulter.sol";
-import "../IFutballCardsAttributes.sol";
+import "../INiftyTradingCardAttributes.sol";
 
 contract HeadToHead is Ownable, Pausable {
     using SafeMath for uint256;
@@ -64,14 +64,14 @@ contract HeadToHead is Ownable, Pausable {
     // A mapping for the list of GameID => Position in open games array
     mapping(uint256 => uint256) public gamesIndex;
 
-    IFutballCardsAttributes public nft;
+    INiftyTradingCardAttributes public nft;
     HeadToHeadResulter public resulter;
 
     /////////////////
     // Constructor //
     /////////////////
 
-    constructor (HeadToHeadResulter _resulter, IFutballCardsAttributes _nft) public {
+    constructor (HeadToHeadResulter _resulter, INiftyTradingCardAttributes _nft) public {
         resulter = _resulter;
         nft = _nft;
     }

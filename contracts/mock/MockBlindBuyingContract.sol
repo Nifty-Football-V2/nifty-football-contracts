@@ -1,12 +1,12 @@
 pragma solidity 0.5.0;
 
-import "../FutballCardsBlindPack.sol";
+import "../NiftyFootballTradingCardBlindPack.sol";
 
 contract MockBlindBuyingContract {
 
-    FutballCardsBlindPack public blindPack;
+    NiftyFootballTradingCardBlindPack public blindPack;
 
-    constructor (FutballCardsBlindPack _blindPack) public {
+    constructor (NiftyFootballTradingCardBlindPack _blindPack) public {
         blindPack = _blindPack;
     }
 

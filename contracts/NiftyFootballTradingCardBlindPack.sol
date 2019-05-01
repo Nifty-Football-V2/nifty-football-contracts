@@ -4,12 +4,13 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
-import "./generators/IFutballCardsGenerator.sol";
 
 import "./libs/Strings.sol";
-import "./IFutballCardsCreator.sol";
+import "./INiftyTradingCardCreator.sol";
+import "./INiftyTradingCardCreator.sol";
+import "./generators/INiftyFootballTradingCardGenerator.sol";
 
-contract FutballCardsBlindPack is Ownable, Pausable {
+contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
     using SafeMath for uint256;
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
@@ -22,34 +23,41 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     event AttributesBaseChanged(uint256 _new);
 
-    event FutballCardsGeneratorChanged(IFutballCardsGenerator _new);
+    event FutballCardsGeneratorChanged(INiftyFootballTradingCardGenerator _new);
 
-    IFutballCardsGenerator public futballCardsGenerator;
-    IFutballCardsCreator public futballCardsNFT;
+    INiftyFootballTradingCardGenerator public generator;
+    INiftyTradingCardCreator public creator;
     address payable wallet;
 
     mapping(address => uint256) public credits;
 
     uint256 public totalPurchasesInWei = 0;
     uint256 public cardTypeDefault = 0;
-    uint256 public attributesBase = 30;
+    uint256 public attributesBase = 40; // Standard 40-100
 
     uint256[] public pricePerCard = [
-    11000000000000000, // 1 @ = 0.011 ETH / $1.5
-    11000000000000000, // 2 @ = 0.011 ETH / $1.5
-    10000000000000000, //  3 @ = 0.01 ETH / $1
-    10000000000000000, //  4 @ = 0.01 ETH / $1
-    10000000000000000, //  5 @ = 0.01 ETH / $1
-    6200000000000000, //  6 @ = 0.0062 ETH / $0.85
-    6200000000000000, //  7 @ = 0.0062 ETH / $0.85
-    6200000000000000, //  8 @ = 0.0062 ETH / $0.85
-    6200000000000000, //  9 @ = 0.0062 ETH / $0.85
-    5500000000000000 //  10 @ = 0.0055 ETH / $0.75
+    // single cards
+    11000000000000000, // 1 @ = 0.011 ETH / $1.75
+    11000000000000000, // 2 @ = 0.011 ETH / $1.75
+
+    // 1 packs
+    10000000000000000, //  3 @ = 0.01 ETH / $1.59
+    10000000000000000, //  4 @ = 0.01 ETH / $1.59
+    10000000000000000, //  5 @ = 0.01 ETH / $1.59
+
+    // 2 packs
+    9100000000000000, //  6 @ = 0.0091 ETH / $1.45
+    9100000000000000, //  7 @ = 0.0091 ETH / $1.45
+    9100000000000000, //  8 @ = 0.0091 ETH / $1.45
+
+    // 3 packs or more
+    8500000000000000, //  9 @ = 0.0085 ETH / $1.35
+    8500000000000000 //  10 @ = 0.0085 ETH / $1.35
     ];
 
-    constructor (address payable _wallet, IFutballCardsGenerator _futballCardsGenerator, IFutballCardsCreator _fuballCardsNFT) public {
-        futballCardsGenerator = _futballCardsGenerator;
-        futballCardsNFT = _fuballCardsNFT;
+    constructor (address payable _wallet, INiftyFootballTradingCardGenerator _generator, INiftyTradingCardCreator _creator) public {
+        generator = _generator;
+        creator = _creator;
         wallet = _wallet;
     }
 
@@ -95,17 +103,17 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     function _generateAndAssignCard(address _to) internal returns (uint256 _tokenId) {
         // Generate card
-        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = futballCardsGenerator.generateCard(msg.sender);
+        (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = generator.generateCard(msg.sender);
 
         // cardType is 0 for genesis (initially)
-        uint256 tokenId = futballCardsNFT.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
+        uint256 tokenId = creator.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
 
         // Generate attributes
-        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = futballCardsGenerator.generateAttributes(msg.sender, attributesBase);
-        futballCardsNFT.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
+        (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = generator.generateAttributes(msg.sender, attributesBase);
+        creator.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
 
-        (uint256 _firstName, uint256 _lastName) = futballCardsGenerator.generateName(msg.sender);
-        futballCardsNFT.setName(tokenId, _firstName, _lastName);
+        (uint256 _firstName, uint256 _lastName) = generator.generateName(msg.sender);
+        creator.setName(tokenId, _firstName, _lastName);
 
         emit BlindPackPulled(tokenId, _to);
 
@@ -139,8 +147,8 @@ contract FutballCardsBlindPack is Ownable, Pausable {
         return true;
     }
 
-    function setFutballCardsGenerator(IFutballCardsGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
-        futballCardsGenerator = _futballCardsGenerator;
+    function setFutballCardsGenerator(INiftyFootballTradingCardGenerator _futballCardsGenerator) public onlyOwner returns (bool) {
+        generator = _futballCardsGenerator;
 
         emit FutballCardsGeneratorChanged(_futballCardsGenerator);
 
@@ -149,6 +157,11 @@ contract FutballCardsBlindPack is Ownable, Pausable {
 
     function updatePricePerCardAtIndex(uint256 _index, uint256 _priceInWei) public onlyOwner returns (bool) {
         pricePerCard[_index] = _priceInWei;
+        return true;
+    }
+
+    function updatePricePerCard(uint256[] memory _pricePerCard) public onlyOwner returns (bool) {
+        pricePerCard = _pricePerCard;
         return true;
     }
 
