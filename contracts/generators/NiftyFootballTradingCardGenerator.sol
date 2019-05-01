@@ -20,10 +20,14 @@ contract NiftyFootballTradingCardGenerator is Ownable, INiftyFootballTradingCard
     // 54 ARGENTINA 20%
     uint256[] internal nationalities = [44, 44, 44, 1, 1, 1, 39, 39, 54, 54];
 
-    // FIXME decide exact percentages
-    uint256[] internal kits =           [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
-    uint256[] internal colours =        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
-    uint256[] internal ethnicities =    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+    // 0 - 17 5% (except 4 - 5 7.5%)
+    // 16 - 21 2.5%
+    uint256[] internal kits =  [0, 1, 2, 3, 4, 4, 5, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+
+    // blue and reds more common
+    uint256[] internal colours = [0, 1, 2, 2, 3, 4, 4, 5, 5, 5, 5, 6, 6, 7, 7, 7, 8, 8, 8, 8, 9, 10, 10, 11, 11, 12, 12, 13, 14, 15, 15, 16, 17, 17, 18, 18, 19, 20, 21, 21];
+
+    uint256[] internal ethnicities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 
     // GREEN #1 40%
     // GREEN #2 40%

@@ -22,10 +22,15 @@ contract NiftyFootballTradingCardEliteGenerator is Ownable, INiftyFootballTradin
     // 7 RUSSIA 20% - elite only
     uint256[] internal nationalities = [44, 44, 1, 1, 39, 54, 55, 55, 7, 7];
 
-    // FIXME decide exact percentages
-    uint256[] internal kits =           [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
-    uint256[] internal colours =        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
-    uint256[] internal ethnicities =    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+    // 4 - 13 5%
+    // others 2.5%
+    uint256[] internal kits =  [0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+
+    // blue and reds more common
+    // 4 extra colours in elite
+    uint256[] internal colours = [0, 1, 2, 2, 3, 4, 4, 5, 5, 5, 25, 6, 6, 7, 7, 7, 8, 8, 8, 8, 9, 10, 10, 11, 11, 12, 12, 13, 14, 15, 22, 16, 17, 24, 18, 23, 19, 20, 21, 21];
+
+    uint256[] internal ethnicities = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 
     // GREEN #1 40%
     // GREEN #2 40%
