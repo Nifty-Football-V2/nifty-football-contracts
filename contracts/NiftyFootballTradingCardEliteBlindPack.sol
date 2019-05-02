@@ -101,13 +101,12 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable, FundsSplit
 
         // cardType is 0 for genesis (initially)
         uint256 tokenId = creator.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
-
+        
         // Generate attributes
         (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = generator.generateAttributes(msg.sender, attributesBase);
-        creator.setAttributes(tokenId, _strength, _speed, _intelligence, _skill);
-
         (uint256 _firstName, uint256 _lastName) = generator.generateName(msg.sender);
-        creator.setName(tokenId, _firstName, _lastName);
+
+        creator.setAttributesAndName(tokenId, _strength, _speed, _intelligence, _skill, _firstName, _lastName);
     }
 
     function _takePayment(uint256 _numberOfCards, uint256 _totalPrice) internal {

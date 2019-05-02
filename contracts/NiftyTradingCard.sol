@@ -165,6 +165,33 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         return tokenIdPointer.sub(1);
     }
 
+    function setAttributesAndName(
+        uint256 _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill,
+        uint256 _firstName,
+        uint256 _lastName
+    ) public onlyWhitelisted returns (bool) {
+        require(_exists(_tokenId), "Token does not exist");
+
+        attributesMapping[_tokenId] = Attributes({
+            strength : _strength,
+            speed : _speed,
+            intelligence : _intelligence,
+            skill : _skill,
+            special : 0
+            });
+
+        namesMapping[_tokenId] = Name({
+            firstName : _firstName,
+            lastName : _lastName
+            });
+
+        return true;
+    }
+
     function setAttributes(
         uint256 _tokenId,
         uint256 _strength,
