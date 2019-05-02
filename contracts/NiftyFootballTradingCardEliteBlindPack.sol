@@ -9,8 +9,9 @@ import "./libs/Strings.sol";
 import "./INiftyTradingCardCreator.sol";
 import "./INiftyTradingCardCreator.sol";
 import "./generators/INiftyFootballTradingCardGenerator.sol";
+import "./FundsSplitter.sol";
 
-contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
+contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable, FundsSplitter {
     using SafeMath for uint256;
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
@@ -25,7 +26,6 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
 
     INiftyFootballTradingCardGenerator public generator;
     INiftyTradingCardCreator public creator;
-    address payable wallet;
 
     uint256 public totalPurchasesInWei = 0;
     uint256 public cardTypeDefault = 0;
@@ -51,10 +51,14 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
     12500000000000000 //  10 @ = 0.0125 ETH / $2
     ];
 
-    constructor (address payable _wallet, INiftyFootballTradingCardGenerator _generator, INiftyTradingCardCreator _creator) public {
+    constructor (
+        address payable _wallet,
+        address payable _partnerAddress,
+        INiftyFootballTradingCardGenerator _generator,
+        INiftyTradingCardCreator _creator
+    ) public FundsSplitter(_wallet, _partnerAddress) {
         generator = _generator;
         creator = _creator;
-        wallet = _wallet;
     }
 
     function blindPack() whenNotPaused public payable returns (uint256 _tokenId) {
@@ -70,7 +74,7 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
 
         uint256 tokenId = _generateAndAssignCard(_to);
 
-        _takePayment();
+        _takePayment(1);
 
         return tokenId;
     }
@@ -92,7 +96,7 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
             generatedTokenIds[i] = _generateAndAssignCard(_to);
         }
 
-        _takePayment();
+        _takePayment(_numberOfCards);
 
         return generatedTokenIds;
     }
@@ -116,10 +120,10 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
         return tokenId;
     }
 
-    function _takePayment() internal {
+    function _takePayment(uint256 _numberOfCards) internal {
         // any trapped ether can be withdrawn with withdraw()
         totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
-        wallet.transfer(msg.value);
+        splitFunds(totalPrice(_numberOfCards));
     }
 
     function setCardTypeDefault(uint256 _newDefaultCardType) public onlyOwner returns (bool) {
@@ -155,12 +159,6 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable {
         pricePerCard = _pricePerCard;
         return true;
     }
-
-    function withdraw() public onlyOwner returns (bool) {
-        wallet.transfer(address(this).balance);
-        return true;
-    }
-
 
     function totalPrice(uint256 _numberOfCards) public view returns (uint256) {
         if (_numberOfCards > pricePerCard.length) {

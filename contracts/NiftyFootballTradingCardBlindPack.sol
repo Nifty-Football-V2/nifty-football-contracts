@@ -9,8 +9,9 @@ import "./libs/Strings.sol";
 import "./INiftyTradingCardCreator.sol";
 import "./INiftyTradingCardCreator.sol";
 import "./generators/INiftyFootballTradingCardGenerator.sol";
+import "./FundsSplitter.sol";
 
-contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
+contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
     using SafeMath for uint256;
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
@@ -27,7 +28,6 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
 
     INiftyFootballTradingCardGenerator public generator;
     INiftyTradingCardCreator public creator;
-    address payable wallet;
 
     mapping(address => uint256) public credits;
 
@@ -55,10 +55,14 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
     8500000000000000 //  10 @ = 0.0085 ETH / $1.35
     ];
 
-    constructor (address payable _wallet, INiftyFootballTradingCardGenerator _generator, INiftyTradingCardCreator _creator) public {
+    constructor (
+        address payable _wallet,
+        address payable _partnerAddress,
+        INiftyFootballTradingCardGenerator _generator,
+        INiftyTradingCardCreator _creator
+    ) FundsSplitter(_wallet, _partnerAddress) public {
         generator = _generator;
         creator = _creator;
-        wallet = _wallet;
     }
 
     function blindPack() whenNotPaused public payable returns (uint256 _tokenId) {
@@ -127,7 +131,7 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
         } else {
             // any trapped ether can be withdrawn with withdraw()
             totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
-            wallet.transfer(msg.value);
+            splitFunds(totalPrice(_numberOfCards));
         }
     }
 
@@ -180,12 +184,6 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable {
 
         return true;
     }
-
-    function withdraw() public onlyOwner returns (bool) {
-        wallet.transfer(address(this).balance);
-        return true;
-    }
-
 
     function totalPrice(uint256 _numberOfCards) public view returns (uint256) {
         if (_numberOfCards > pricePerCard.length) {

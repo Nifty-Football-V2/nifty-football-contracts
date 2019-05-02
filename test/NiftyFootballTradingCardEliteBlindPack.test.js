@@ -6,7 +6,7 @@ const NiftyFootballTradingCardEliteGenerator = artifacts.require('NiftyFootballT
 
 const {BN, expectEvent, shouldFail, balance} = require('openzeppelin-test-helpers');
 
-contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, ...accounts]) => {
+contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, anyone, wallet, cleanWallet, partner, ...accounts]) => {
 
     const firstTokenId = new BN(1);
     const secondTokenId = new BN(2);
@@ -14,6 +14,14 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
 
     const firstURI = 'http://futball-cards';
     const baseURI = 'http://futball-cards';
+
+    const hundred = new BN('100');
+    const partnerPercentage = new BN('7');
+    const niftyFootballPercentage = new BN('100').sub(partnerPercentage);
+
+    function getNiftyFootballShare(num) {
+        return num.div(hundred).mul(niftyFootballPercentage);
+    }
 
     beforeEach(async function () {
         // Create 721 contract
@@ -24,6 +32,7 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
         // Create vending machine
         this.blindPack = await NiftyFootballTradingCardEliteBlindPack.new(
             wallet,
+            partner,
             this.generator.address,
             this.niftyFootballTradingCard.address,
             {from: creator}
@@ -156,6 +165,7 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
             // Create vending machine
             this.cleanBlindPack = await NiftyFootballTradingCardEliteBlindPack.new(
                 cleanWallet,
+                partner,
                 this.generator.address,
                 this.niftyFootballTradingCard.address,
                 {from: creator}
@@ -173,12 +183,12 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
             await this.cleanBlindPack.blindPack({from: anyone, value: this.basePrice});
 
             const postWalletBalance = await balance.current(cleanWallet);
-            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(this.basePrice));
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(getNiftyFootballShare(this.basePrice)));
 
             await this.cleanBlindPack.blindPackTo(tokenOwner, {from: anyone, value: this.basePrice});
 
             const postToWalletBalance = await balance.current(cleanWallet);
-            postToWalletBalance.should.be.bignumber.equal(postWalletBalance.add(this.basePrice));
+            postToWalletBalance.should.be.bignumber.equal(postWalletBalance.add(getNiftyFootballShare(this.basePrice)));
         });
 
         it('should be transferred the blind pack eth purchase - over min amount', async function () {
@@ -187,7 +197,7 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
             await this.cleanBlindPack.blindPack({from: anyone, value: new BN('16000000000000123')});
 
             const postWalletBalance = await balance.current(cleanWallet);
-            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('16000000000000123')));
+            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(getNiftyFootballShare(new BN('16000000000000000'))));
         });
 
     });
@@ -314,5 +324,49 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
             );
         });
 
+    });
+
+    context('splitFunds', function () {
+
+        it('all parties get the correct amounts', async function () {
+            const overpay = new BN(1000000);
+
+            const currentPrice = await this.blindPack.totalPrice(new BN(1));
+            const overpayPrice = currentPrice.add(overpay);
+
+            const nfcWallet = new BN((await web3.eth.getBalance(wallet)));
+            const nfcPartner = new BN((await web3.eth.getBalance(partner)));
+            const purchaserBalanceBefore = new BN((await web3.eth.getBalance(tokenOwner)));
+
+            const receipt = await this.blindPack.blindPackTo(tokenOwner, {
+                from: tokenOwner,
+                value: overpayPrice
+            });
+            const gasCosts = await getGasCosts(receipt);
+
+            const nfcWalletAfter = new BN((await web3.eth.getBalance(wallet)));
+            const nfcPartnerAfter = new BN((await web3.eth.getBalance(partner)));
+
+            const purchaserBalanceAfter = new BN((await web3.eth.getBalance(tokenOwner)));
+
+            // 93% of current
+            nfcWalletAfter.should.be.bignumber.equal(nfcWallet.add(getNiftyFootballShare(currentPrice)));
+
+            // 7% of current
+            nfcPartnerAfter.should.be.bignumber.equal(nfcPartner.add(currentPrice.div(new BN(100)).mul(partnerPercentage)));
+
+            // check refund is applied and only pay for current price, not the overpay
+            purchaserBalanceAfter.should.be.bignumber.equal(
+                purchaserBalanceBefore
+                    .sub(gasCosts)
+                    .sub(currentPrice)
+            );
+        });
+
+        async function getGasCosts (receipt) {
+            let tx = await web3.eth.getTransaction(receipt.tx);
+            let gasPrice = new BN(tx.gasPrice);
+            return gasPrice.mul(new BN(receipt.receipt.gasUsed));
+        }
     });
 });
