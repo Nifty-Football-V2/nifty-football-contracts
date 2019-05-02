@@ -450,7 +450,7 @@ contract FundsSplitter is Ownable {
     }
 }
 
-// File: contracts/NiftyFootballTradingCardBlindPack.sol
+// File: contracts/NiftyFootballTradingCardEliteBlindPack.sol
 
 pragma solidity 0.5.0;
 
@@ -462,14 +462,12 @@ pragma solidity 0.5.0;
 
 
 
-contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
+contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable, FundsSplitter {
     using SafeMath for uint256;
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
 
     event BlindPackPulled(uint256 indexed _tokenId, address indexed _to);
-
-    event CreditAdded(address indexed _to);
 
     event DefaultCardTypeChanged(uint256 _new);
 
@@ -480,30 +478,28 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
     INiftyFootballTradingCardGenerator public generator;
     INiftyTradingCardCreator public creator;
 
-    mapping(address => uint256) public credits;
-
     uint256 public totalPurchasesInWei = 0;
     uint256 public cardTypeDefault = 0;
-    uint256 public attributesBase = 40; // Standard 40-100
+    uint256 public attributesBase = 60; // Standard 60-100
 
     uint256[] public pricePerCard = [
     // single cards
-    11000000000000000, // 1 @ = 0.011 ETH / $1.75
-    11000000000000000, // 2 @ = 0.011 ETH / $1.75
+    16000000000000000, // 1 @ = 0.016 ETH / $2.50
+    16000000000000000, // 2 @ = 0.016 ETH / $2.50
 
     // 1 packs
-    10000000000000000, //  3 @ = 0.01 ETH / $1.59
-    10000000000000000, //  4 @ = 0.01 ETH / $1.59
-    10000000000000000, //  5 @ = 0.01 ETH / $1.59
+    14500000000000000, //  3 @ = 0.0145 ETH / $2.30
+    14500000000000000, //  4 @ = 0.0145 ETH / $2.30
+    14500000000000000, //  5 @ = 0.0145 ETH / $2.30
 
     // 2 packs
-    9100000000000000, //  6 @ = 0.0091 ETH / $1.45
-    9100000000000000, //  7 @ = 0.0091 ETH / $1.45
-    9100000000000000, //  8 @ = 0.0091 ETH / $1.45
+    13500000000000000, //  6 @ = 0.0135 ETH / $2.15
+    13500000000000000, //  7 @ = 0.0135 ETH / $2.15
+    13500000000000000, //  8 @ = 0.0135 ETH / $2.15
 
     // 3 packs or more
-    8500000000000000, //  9 @ = 0.0085 ETH / $1.35
-    8500000000000000 //  10 @ = 0.0085 ETH / $1.35
+    12500000000000000, //  9 @ = 0.0125 ETH / $2
+    12500000000000000 //  10 @ = 0.0125 ETH / $2
     ];
 
     constructor (
@@ -511,7 +507,7 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
         address payable _partnerAddress,
         INiftyFootballTradingCardGenerator _generator,
         INiftyTradingCardCreator _creator
-    ) FundsSplitter(_wallet, _partnerAddress) public {
+    ) public FundsSplitter(_wallet, _partnerAddress) {
         generator = _generator;
         creator = _creator;
     }
@@ -523,8 +519,8 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
     function blindPackTo(address _to) whenNotPaused public payable returns (uint256 _tokenId) {
         uint256 _totalPrice = totalPrice(1);
         require(
-            credits[msg.sender] > 0 || msg.value >= _totalPrice,
-            "Must supply at least the required minimum purchase value or have credit"
+            msg.value >= _totalPrice,
+            "Must supply at least the required minimum purchase value"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
@@ -542,8 +538,8 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
     function buyBatchTo(address _to, uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
         uint256 _totalPrice = totalPrice(_numberOfCards);
         require(
-            credits[msg.sender] >= _numberOfCards || msg.value >= _totalPrice,
-            "Must supply at least the required minimum purchase value or have credit"
+            msg.value >= _totalPrice,
+            "Must supply at least the required minimum purchase value"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
@@ -578,14 +574,9 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
     }
 
     function _takePayment(uint256 _numberOfCards, uint256 _totalPrice) internal {
-        // use credits first
-        if (credits[msg.sender] >= _numberOfCards) {
-            credits[msg.sender] = credits[msg.sender].sub(_numberOfCards);
-        } else {
-            // any trapped ether can be withdrawn with withdraw()
-            totalPurchasesInWei = totalPurchasesInWei.add(_totalPrice);
-            splitFunds(_totalPrice);
-        }
+        // any trapped ether can be withdrawn with withdraw()
+        totalPurchasesInWei = totalPurchasesInWei.add(_totalPrice);
+        splitFunds(_totalPrice);
     }
 
     function setCardTypeDefault(uint256 _newDefaultCardType) public onlyOwner returns (bool) {
@@ -619,22 +610,6 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
 
     function updatePricePerCard(uint256[] memory _pricePerCard) public onlyOwner returns (bool) {
         pricePerCard = _pricePerCard;
-        return true;
-    }
-
-    function addCredit(address _to) public onlyOwner returns (bool) {
-        credits[_to] = credits[_to].add(1);
-
-        emit CreditAdded(_to);
-
-        return true;
-    }
-
-    function addCredits(address _to, uint256 _creditsToAdd) public onlyOwner returns (bool) {
-        credits[_to] = credits[_to].add(_creditsToAdd);
-
-        emit CreditAdded(_to);
-
         return true;
     }
 

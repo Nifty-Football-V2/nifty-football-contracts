@@ -1296,11 +1296,6 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
     string public tokenBaseURI = "";
     string public tokenBaseIpfsURI = "https://ipfs.infura.io/ipfs/";
 
-    event CardMinted(
-        uint256 indexed _tokenId,
-        address indexed _to
-    );
-
     event TokenBaseURIChanged(
         string _new
     );
@@ -1444,8 +1439,6 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         // woo! more cards exist!
         totalCards = totalCards.add(1);
 
-        emit CardMinted(tokenIdPointer, _to);
-
         // increment pointer
         tokenIdPointer = tokenIdPointer.add(1);
 
@@ -1584,15 +1577,16 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         return _tokensOfOwner(owner);
     }
 
-    function burn(uint256 _tokenId) public returns (bool) {
+    function burn(uint256 _tokenId) onlyWhitelisted public returns (bool) {
         require(_exists(_tokenId), "Token does not exist");
 
+        delete staticIpfsImageLink[_tokenId];
         delete cardMapping[_tokenId];
         delete attributesMapping[_tokenId];
         delete namesMapping[_tokenId];
         delete extrasMapping[_tokenId];
 
-        _burn(msg.sender, _tokenId);
+        _burn(ownerOf(_tokenId), _tokenId);
 
         return true;
     }
