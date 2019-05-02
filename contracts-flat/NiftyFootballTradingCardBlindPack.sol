@@ -426,7 +426,7 @@ contract FundsSplitter is Ownable {
             uint256 partnerAmount = _totalPrice.div(100).mul(partnerRate);
             partner.transfer(partnerAmount);
 
-            // send remaining amount to blockCities wallet
+            // send remaining amount to partner wallet
             uint256 remaining = _totalPrice.sub(partnerAmount);
             platform.transfer(remaining);
         }
