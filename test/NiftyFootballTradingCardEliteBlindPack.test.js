@@ -53,12 +53,7 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
 
         beforeEach(async function () {
             // mint a single building
-            const {logs} = await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
-            expectEvent.inLogs(
-                logs,
-                `BlindPackPulled`,
-                {_tokenId: firstTokenId, _to: tokenOwner}
-            );
+            await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
         });
 
         it('returns total card', async function () {

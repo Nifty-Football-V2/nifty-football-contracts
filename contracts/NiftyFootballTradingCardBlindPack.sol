@@ -16,8 +16,6 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
 
     event PriceInWeiChanged(uint256 _old, uint256 _new);
 
-    event BlindPackPulled(uint256 indexed _tokenId, address indexed _to);
-
     event CreditAdded(address indexed _to);
 
     event DefaultCardTypeChanged(uint256 _new);
@@ -65,11 +63,11 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
         creator = _creator;
     }
 
-    function blindPack() whenNotPaused public payable returns (uint256 _tokenId) {
-        return blindPackTo(msg.sender);
+    function blindPack() whenNotPaused public payable {
+        blindPackTo(msg.sender);
     }
 
-    function blindPackTo(address _to) whenNotPaused public payable returns (uint256 _tokenId) {
+    function blindPackTo(address _to) whenNotPaused public payable {
         uint256 _totalPrice = totalPrice(1);
         require(
             credits[msg.sender] > 0 || msg.value >= _totalPrice,
@@ -77,18 +75,16 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
-        uint256 tokenId = _generateAndAssignCard(_to);
+        _generateAndAssignCard(_to);
 
         _takePayment(1, _totalPrice);
-
-        return tokenId;
     }
 
-    function buyBatch(uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
+    function buyBatch(uint256 _numberOfCards) whenNotPaused public payable {
         return buyBatchTo(msg.sender, _numberOfCards);
     }
 
-    function buyBatchTo(address _to, uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
+    function buyBatchTo(address _to, uint256 _numberOfCards) whenNotPaused public payable {
         uint256 _totalPrice = totalPrice(_numberOfCards);
         require(
             credits[msg.sender] >= _numberOfCards || msg.value >= _totalPrice,
@@ -96,18 +92,14 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
-        uint256[] memory generatedTokenIds = new uint256[](_numberOfCards);
-
         for (uint i = 0; i < _numberOfCards; i++) {
-            generatedTokenIds[i] = _generateAndAssignCard(_to);
+            _generateAndAssignCard(_to);
         }
 
         _takePayment(_numberOfCards, _totalPrice);
-
-        return generatedTokenIds;
     }
 
-    function _generateAndAssignCard(address _to) internal returns (uint256 _tokenId) {
+    function _generateAndAssignCard(address _to) internal {
         // Generate card
         (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour) = generator.generateCard(msg.sender);
 
@@ -120,10 +112,6 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
 
         (uint256 _firstName, uint256 _lastName) = generator.generateName(msg.sender);
         creator.setName(tokenId, _firstName, _lastName);
-
-        emit BlindPackPulled(tokenId, _to);
-
-        return tokenId;
     }
 
     function _takePayment(uint256 _numberOfCards, uint256 _totalPrice) internal {

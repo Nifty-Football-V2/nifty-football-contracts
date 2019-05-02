@@ -19,6 +19,8 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
     const partnerPercentage = new BN('7');
     const niftyFootballPercentage = new BN('100').sub(partnerPercentage);
 
+    const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
     function getNiftyFootballShare(num) {
         return num.div(hundred).mul(niftyFootballPercentage);
     }
@@ -53,12 +55,7 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
 
         beforeEach(async function () {
             // mint a single building
-            const {logs} = await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
-            expectEvent.inLogs(
-                logs,
-                `BlindPackPulled`,
-                {_tokenId: firstTokenId, _to: tokenOwner}
-            );
+            await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
         });
 
         it('returns total card', async function () {

@@ -9,7 +9,7 @@ module.exports = {
         // reporter: 'eth-gas-reporter',
         // reporterOptions: {
         //     currency: 'USD',
-        //     gasPrice: 10
+        //     gasPrice: 5
         // }
     },
     compilers: {

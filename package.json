@@ -12,6 +12,7 @@
   "author": "BlockRocket.tech",
   "license": "MIT",
   "devDependencies": {
+    "eth-gas-reporter": "^0.1.12",
     "openzeppelin-solidity": "2.1.2",
     "openzeppelin-test-helpers": "0.1.2",
     "solidity-coverage": "github:rotcivegaf/solidity-coverage",
@@ -22,7 +23,6 @@
     "npm": ">= 5.0.0"
   },
   "dependencies": {
-    "eth-gas-reporter": "^0.1.12",
     "ethjs": "^0.4.0",
     "lodash": "^4.17.11",
     "truffle": "5.0.5",
