@@ -517,15 +517,16 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable, FundsSplit
     }
 
     function blindPackTo(address _to) whenNotPaused public payable returns (uint256 _tokenId) {
+        uint256 _totalPrice = totalPrice(1);
         require(
-            msg.value >= totalPrice(1),
+            msg.value >= _totalPrice,
             "Must supply at least the required minimum purchase value"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
         uint256 tokenId = _generateAndAssignCard(_to);
 
-        _takePayment(1);
+        _takePayment(1, _totalPrice);
 
         return tokenId;
     }
@@ -535,8 +536,9 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable, FundsSplit
     }
 
     function buyBatchTo(address _to, uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
+        uint256 _totalPrice = totalPrice(_numberOfCards);
         require(
-            msg.value >= totalPrice(_numberOfCards),
+            msg.value >= _totalPrice,
             "Must supply at least the required minimum purchase value"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
@@ -547,7 +549,7 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable, FundsSplit
             generatedTokenIds[i] = _generateAndAssignCard(_to);
         }
 
-        _takePayment(_numberOfCards);
+        _takePayment(_numberOfCards, _totalPrice);
 
         return generatedTokenIds;
     }
@@ -571,10 +573,10 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable, FundsSplit
         return tokenId;
     }
 
-    function _takePayment(uint256 _numberOfCards) internal {
+    function _takePayment(uint256 _numberOfCards, uint256 _totalPrice) internal {
         // any trapped ether can be withdrawn with withdraw()
-        totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
-        splitFunds(totalPrice(_numberOfCards));
+        totalPurchasesInWei = totalPurchasesInWei.add(_totalPrice);
+        splitFunds(_totalPrice);
     }
 
     function setCardTypeDefault(uint256 _newDefaultCardType) public onlyOwner returns (bool) {

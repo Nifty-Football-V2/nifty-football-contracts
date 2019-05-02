@@ -521,15 +521,16 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
     }
 
     function blindPackTo(address _to) whenNotPaused public payable returns (uint256 _tokenId) {
+        uint256 _totalPrice = totalPrice(1);
         require(
-            credits[msg.sender] > 0 || msg.value >= totalPrice(1),
+            credits[msg.sender] > 0 || msg.value >= _totalPrice,
             "Must supply at least the required minimum purchase value or have credit"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
 
         uint256 tokenId = _generateAndAssignCard(_to);
 
-        _takePayment(1);
+        _takePayment(1, _totalPrice);
 
         return tokenId;
     }
@@ -539,8 +540,9 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
     }
 
     function buyBatchTo(address _to, uint256 _numberOfCards) whenNotPaused public payable returns (uint256[] memory _tokenIds){
+        uint256 _totalPrice = totalPrice(_numberOfCards);
         require(
-            credits[msg.sender] >= _numberOfCards || msg.value >= totalPrice(_numberOfCards),
+            credits[msg.sender] >= _numberOfCards || msg.value >= _totalPrice,
             "Must supply at least the required minimum purchase value or have credit"
         );
         require(!isContract(msg.sender), "Unable to buy packs from another contract");
@@ -551,7 +553,7 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
             generatedTokenIds[i] = _generateAndAssignCard(_to);
         }
 
-        _takePayment(_numberOfCards);
+        _takePayment(_numberOfCards, _totalPrice);
 
         return generatedTokenIds;
     }
@@ -575,14 +577,14 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
         return tokenId;
     }
 
-    function _takePayment(uint256 _numberOfCards) internal {
+    function _takePayment(uint256 _numberOfCards, uint256 _totalPrice) internal {
         // use credits first
         if (credits[msg.sender] >= _numberOfCards) {
             credits[msg.sender] = credits[msg.sender].sub(_numberOfCards);
         } else {
             // any trapped ether can be withdrawn with withdraw()
-            totalPurchasesInWei = totalPurchasesInWei.add(msg.value);
-            splitFunds(totalPrice(_numberOfCards));
+            totalPurchasesInWei = totalPurchasesInWei.add(_totalPrice);
+            splitFunds(_totalPrice);
         }
     }
 
