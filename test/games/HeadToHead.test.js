@@ -28,7 +28,6 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
 
         this.headToHead = await HeadToHead.new(this.resulter.address, this.niftyFootballTradingCard.address, {from: creator});
 
-        (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('0');
     });
 
     context('should be able to play game', async function () {
@@ -43,7 +42,6 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
             await this.niftyFootballTradingCard.mintCard(3, 3, 3, 3, 3, 3, anyone, {from: creator});
             await this.niftyFootballTradingCard.setAttributes(_tokenId3, 30, 30, 30, 30, {from: creator});
 
-            (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('3');
         });
 
         context('validation', async function () {

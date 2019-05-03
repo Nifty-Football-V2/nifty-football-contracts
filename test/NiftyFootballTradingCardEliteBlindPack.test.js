@@ -45,7 +45,6 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
         this.basePrice = await this.blindPack.totalPrice(1);
         this.basePrice.should.be.bignumber.equal('16000000000000000');
 
-        (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('0');
         (await this.blindPack.totalPurchasesInWei()).should.be.bignumber.equal('0');
     });
 
@@ -54,10 +53,6 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
         beforeEach(async function () {
             // mint a single building
             await this.blindPack.blindPack({from: tokenOwner, value: this.basePrice});
-        });
-
-        it('returns total card', async function () {
-            (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('1');
         });
 
         it('returns total purchases', async function () {
@@ -93,7 +88,6 @@ contract('NiftyFootballTradingCardEliteBlindPack', ([_, creator, tokenOwner, any
                 cardAttrs[2].should.be.bignumber.lt('32');
                 cardAttrs[3].should.be.bignumber.lt('32');
                 cardAttrs[4].should.be.bignumber.lt('32');
-                cardAttrs[6].should.not.be.null;
             });
         });
 
