@@ -15,13 +15,13 @@ contract.only('Match Prediction Contract Tests',
         matchExists: "match.prediction.validation.error.match.exists",
         zeroAddress: "match.prediction.validation.error.address.zero",
         matchIdInvalid: "match.prediction.validation.error.invalid.match.id",
-        nftNotApproved: "futball.card.game.error.nft.not.approved",
-        notNFTOwner: "futball.card.game.error.not.nft.owner",
-        tokenAlreadyPlaying: "futball.card.game.error.token.playing",
+        nftNotApproved: "card.game.error.nft.not.approved",
+        notNFTOwner: "card.game.error.not.nft.owner",
+        tokenAlreadyPlaying: "card.game.error.token.playing",
         matchServiceAddressZero: "match.prediction.error.match.service.address.zero",
         nftAddressZero: "match.prediction.error.nft.contract.address.zero",
-        invalidGameId: "futball.card.game.error.invalid.game",
-        gameComplete: "futball.card.game.error.game.complete",
+        invalidGameId: "card.game.error.invalid.game",
+        gameComplete: "card.game.error.game.complete",
         invalidPrediction: "match.prediction.validation.error.invalid.prediction",
         matchServiceEqOwner: "match.prediction.error.match.service.address.eq.owner",
         nftContractEqOwner: "match.prediction.error.nft.contract.eq.owner",
@@ -135,6 +135,10 @@ contract.only('Match Prediction Contract Tests',
         return contract.matchResult(matchId, result, {from: sender});
     }
 
+    function givenTheNftContractWasUpdated(contract, newAddr, sender) {
+        return contract.updateNft(newAddr, {from: sender});
+    }
+
     beforeEach(async () => {
         this.niftyFootballCards = await NiftyFootballTradingCard.new(baseURI, {from: creator});
         this.matchService = await MatchService.new(oracle, {from: creator});
@@ -185,6 +189,10 @@ contract.only('Match Prediction Contract Tests',
                 (await this.matchPrediction.paused()).should.be.true;
             });
 
+            it('should fail to update the nft contract', async () => {
+               await shouldFail.reverting(givenTheNftContractWasUpdated(this.matchPrediction, random, creator));
+            });
+
             it('should fail to withdraw cards', async () => {
                await shouldFail.reverting(givenAWithdrawalTookPlace(this.matchPrediction, random));
             });
@@ -195,6 +203,20 @@ contract.only('Match Prediction Contract Tests',
 
             it('should fail on an attempt to do a second prediction', async () => {
                 await shouldFail.reverting(givenABasicSecondPrediction(this.matchPrediction, tokenOwner2));
+            });
+        });
+
+        context('when updating the nft contract', async () => {
+            it('should be successful with valid parameters', async () => {
+                const {logs} = await givenTheNftContractWasUpdated(this.matchPrediction, random, creator);
+
+                thenExpectTheFollowingEvent.inLogs(logs,
+                    'NFTUpdated',
+                    {
+                        prevAddr: this.niftyFootballCards.address,
+                        newAddr: random
+                    }
+                );
             });
         });
 

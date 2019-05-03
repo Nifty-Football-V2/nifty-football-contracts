@@ -1,10 +1,10 @@
 pragma solidity ^0.5.0;
 
-import "./abstract/FutballCardGame.sol";
+import "./ICardGame.sol";
 import "../service/MatchService.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Holder.sol";
 
-contract MatchPrediction is FutballCardGame, ERC721Holder {
+contract MatchPrediction is ICardGame, ERC721Holder {
 
     event ContractDeployed (
         address indexed nftAddress,
