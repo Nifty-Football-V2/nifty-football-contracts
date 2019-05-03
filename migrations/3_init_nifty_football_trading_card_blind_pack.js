@@ -17,7 +17,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(
         NiftyFootballTradingCardBlindPack,
         accounts[0],
-        '0x860E21aBcc3b9C10635a65C8a3bc7F1BA692211c', // SWITCH TO STAN CHOW ADDRESS
+        '0xacE0a8666953bf9E1fe1Cc91Abf5Db5a1c57DD46', // STAN'S ADDRESS
         _generator.address,
         _niftyFootballTradingCard.address,
         {
