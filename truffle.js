@@ -6,11 +6,11 @@ const {INFURA_KEY} = require('./constants');
 module.exports = {
     mocha: {
         useColors: true,
-        // reporter: 'eth-gas-reporter',
-        // reporterOptions: {
-        //     currency: 'USD',
-        //     gasPrice: 5
-        // }
+        reporter: 'eth-gas-reporter',
+        reporterOptions: {
+            currency: 'USD',
+            gasPrice: 5
+        }
     },
     compilers: {
         solc: {
