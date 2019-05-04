@@ -74,7 +74,7 @@ contract.only('MatchService Contract Tests',
      }
 
      function givenASpecificMatchResultSupplied(contract, matchId, result, sender) {
-         return contract.matchResult(matchId, result, {from: sender});
+         return contract.resultMatch(matchId, result, {from: sender});
      }
 
      function givenTheOracleAddressWasUpdatedTo(contract, address, sender) {

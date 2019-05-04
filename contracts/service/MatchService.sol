@@ -166,7 +166,7 @@ contract MatchService is OracleInterface {
         emit MatchRestored(_matchId);
     }
 
-    function matchResult(uint256 _matchId, Outcome _resultState)
+    function resultMatch(uint256 _matchId, Outcome _resultState)
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
