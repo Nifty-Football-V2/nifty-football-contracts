@@ -3,7 +3,7 @@ const MatchService = artifacts.require('MatchService');
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
 contract.only('MatchService Contract Tests',
-             ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
+             ([_, creator, tokenOwner1, externalContract, oracle, oracle2, random, ...accounts]) => {
      const thenExpectTheFollowingEvent = expectEvent;
 
      const validationErrorContentKeys = {
@@ -19,6 +19,11 @@ contract.only('MatchService Contract Tests',
          notPostponed: "match.service.error.match.not.postponed",
          invalidMatchResultState: "match.service.error.invalid.match.result.state",
          resultWindowNotOpen: "match.service.error.result.window.not.open"
+     };
+
+     const MatchStates = {
+         UNINITIALISED: new BN(0),
+         UPCOMING: new BN(1)
      };
 
      const Outcomes = {
@@ -95,6 +100,11 @@ contract.only('MatchService Contract Tests',
 
      function isBeforePredictionDeadline(contract, matchId, sender) {
          return contract.isBeforePredictionDeadline(matchId, {from: sender});
+     }
+
+     async function thenExpectTheFollowingMatchState(contract, state) {
+         await givenAnAddressIsWhitelisted(contract, externalContract, creator);
+         (await getMatchState(contract, match1.id, externalContract)).should.be.bignumber.equal(state);
      }
 
      beforeEach(async () => {
@@ -179,6 +189,15 @@ contract.only('MatchService Contract Tests',
                          current: oracle2
                      }
                  );
+
+                 // Ensure the new oracle can now perform operations and the old one can't
+                 await givenAMatchIsAdded(this.matchService, oracle2);
+
+                 let match2 = {id: 2, predictBefore: seconds_since_epoch() + 2, resultAfter: seconds_since_epoch() + 3};
+                 await shouldFail.reverting.withMessage(
+                     givenASpecificMatchIsAdded(this.matchService, match2, oracle),
+                     validationErrorContentKeys.notOracle
+                 );
              });
 
              it('should fail when not owner', async () => {
@@ -204,6 +223,7 @@ contract.only('MatchService Contract Tests',
                      }
                  );
 
+                 await thenExpectTheFollowingMatchState(this.matchService, MatchStates.UPCOMING);
                  (await this.matchService.matchIds(0)).should.be.bignumber.equal(`${match1.id}`);
              });
 
