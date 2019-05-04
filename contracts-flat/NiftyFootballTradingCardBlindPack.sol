@@ -578,6 +578,11 @@ contract NiftyFootballTradingCardBlindPack is Ownable, Pausable, FundsSplitter {
         // use credits first
         if (credits[msg.sender] >= _numberOfCards) {
             credits[msg.sender] = credits[msg.sender].sub(_numberOfCards);
+
+            // Refund any accidentally ETH
+            if (msg.value > 0) {
+                msg.sender.transfer(msg.value);
+            }
         } else {
             // any trapped ether can be withdrawn with withdraw()
             totalPurchasesInWei = totalPurchasesInWei.add(_totalPrice);

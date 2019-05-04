@@ -5,8 +5,8 @@ const NiftyFootballTradingCard = artifacts.require('./NiftyFootballTradingCard.s
 module.exports = async function (deployer, network, accounts) {
     let tokenbaseuri = "http://localhost:5000/futball-cards/us-central1/api/network/5777/token/";
 
-    // assume all is live network unless specified
-    if (network === 'live') {
+    // assume all is mainnet network unless specified
+    if (network === 'mainnet') {
         tokenbaseuri = "https://niftyfootball.cards/api/network/1/token/";
     } else if (network === 'ropsten') {
         tokenbaseuri = "https://niftyfootball.cards/api/network/3/token/";
