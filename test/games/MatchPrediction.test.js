@@ -14,6 +14,7 @@ contract.only('Match Prediction Contract Tests',
         notOracle: "match.prediction.validation.error.not.oracle",
         matchExists: "match.prediction.validation.error.match.exists",
         zeroAddress: "match.prediction.validation.error.address.zero",
+        zeroAddressCardGame: "card.game.error.address.zero",
         matchIdInvalid: "match.prediction.validation.error.invalid.match.id",
         nftNotApproved: "card.game.error.nft.not.approved",
         notNFTOwner: "card.game.error.not.nft.owner",
@@ -217,6 +218,17 @@ contract.only('Match Prediction Contract Tests',
                         newAddr: random
                     }
                 );
+            });
+
+            it('should fail when not owner', async () => {
+               await shouldFail.reverting(givenTheNftContractWasUpdated(this.matchPrediction, random, random));
+            });
+
+            it('should fail when trying to update to address zero', async () => {
+               await shouldFail.reverting.withMessage(
+                   givenTheNftContractWasUpdated(this.matchPrediction, constants.ZERO_ADDRESS, creator),
+                   validationErrorContentKeys.zeroAddressCardGame
+               );
             });
         });
 

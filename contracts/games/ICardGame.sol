@@ -20,7 +20,7 @@ contract ICardGame is Ownable, Pausable {
     ///////////////
 
     modifier onlyWhenNotAddressZero(address addr) {
-        require(addr != address(0), "oracle.interface.error.address.zero");
+        require(addr != address(0), "card.game.error.address.zero");
         _;
     }
 
@@ -66,6 +66,7 @@ contract ICardGame is Ownable, Pausable {
     ////////////////
     // Functions //
     ///////////////
+
     function updateNft(IERC721 _newNft)
     whenNotPaused
     onlyOwner
