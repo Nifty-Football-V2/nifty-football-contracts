@@ -85,6 +85,18 @@ contract('MatchService Contract Tests',
          return contract.whitelist(address, {from: sender});
      }
 
+     function getMatchState(contract, matchId, sender) {
+         return contract.matchState(matchId, {from: sender});
+     }
+
+     function getMatchResult(contract, matchId, sender) {
+         return contract.matchResult(matchId, {from: sender});
+     }
+
+     function isBeforePredictionDeadline(contract, matchId, sender) {
+         return contract.isBeforePredictionDeadline(matchId, {from: sender});
+     }
+
      beforeEach(async () => {
          this.matchService = await MatchService.new(oracle, {from: creator});
 
@@ -141,6 +153,18 @@ contract('MatchService Contract Tests',
 
              it('should fail to whitelist an address', async () => {
                 await shouldFail.reverting(givenAnAddressIsWhitelisted(this.matchService, random, creator));
+             });
+
+             it('should fail to get a match state', async () => {
+                await shouldFail.reverting(getMatchState(this.matchPrediction, match1.id, creator));
+             });
+
+             it('should fail to get a match result', async () => {
+                 await shouldFail.reverting(getMatchResult(this.matchPrediction, match1.id, creator));
+             });
+
+             it('should fail to establish prediction deadline status', async () => {
+                await shouldFail.reverting(isBeforePredictionDeadline(this.matchPrediction, match1.id, creator));
              });
          });
 
