@@ -2,7 +2,7 @@ const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('MatchService Contract Tests',
+contract.only('MatchService Contract Tests',
              ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
      const thenExpectTheFollowingEvent = expectEvent;
 
@@ -156,15 +156,15 @@ contract('MatchService Contract Tests',
              });
 
              it('should fail to get a match state', async () => {
-                await shouldFail.reverting(getMatchState(this.matchPrediction, match1.id, creator));
+                await shouldFail.reverting(getMatchState(this.matchService, match1.id, creator));
              });
 
              it('should fail to get a match result', async () => {
-                 await shouldFail.reverting(getMatchResult(this.matchPrediction, match1.id, creator));
+                 await shouldFail.reverting(getMatchResult(this.matchService, match1.id, creator));
              });
 
              it('should fail to establish prediction deadline status', async () => {
-                await shouldFail.reverting(isBeforePredictionDeadline(this.matchPrediction, match1.id, creator));
+                await shouldFail.reverting(isBeforePredictionDeadline(this.matchService, match1.id, creator));
              });
          });
 
