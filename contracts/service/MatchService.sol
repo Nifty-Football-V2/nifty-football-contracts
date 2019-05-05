@@ -30,7 +30,7 @@ contract MatchService is OracleInterface {
 
     enum Outcome {UNINITIALISED, HOME_WIN, AWAY_WIN, DRAW}
 
-    enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED}
+    enum MatchState {UNINITIALISED, UPCOMING, POSTPONED, CANCELLED, RESULTED}
 
     struct Match {
         uint256 id;
@@ -173,7 +173,9 @@ contract MatchService is OracleInterface {
     onlyWhenMatchUpcoming(_matchId)
     onlyWhenResultStateValid(_resultState)
     onlyWhenResultWindowOpen(_matchId) external {
-        matchIdToMatchMapping[_matchId].result = _resultState;
+        Match storage aMatch = matchIdToMatchMapping[_matchId];
+        aMatch.result = _resultState;
+        aMatch.state = MatchState.RESULTED;
 
         emit MatchOutcome(_matchId, _resultState);
     }

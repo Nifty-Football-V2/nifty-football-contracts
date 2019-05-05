@@ -23,7 +23,10 @@ contract.only('MatchService Contract Tests',
 
      const MatchStates = {
          UNINITIALISED: new BN(0),
-         UPCOMING: new BN(1)
+         UPCOMING: new BN(1),
+         POSTPONED: new BN(2),
+         CANCELLED: new BN(3),
+         RESULTED: new BN(4)
      };
 
      const Outcomes = {
@@ -105,6 +108,10 @@ contract.only('MatchService Contract Tests',
      async function thenExpectTheFollowingMatchState(contract, state) {
          await givenAnAddressIsWhitelisted(contract, externalContract, creator);
          (await getMatchState(contract, match1.id, externalContract)).should.be.bignumber.equal(state);
+     }
+
+     async function thenExpectTheFirstMatchIdToEqual(contract, target) {
+         (await contract.matchIds(0)).should.be.bignumber.equal(`${target}`);
      }
 
      beforeEach(async () => {
@@ -224,7 +231,7 @@ contract.only('MatchService Contract Tests',
                  );
 
                  await thenExpectTheFollowingMatchState(this.matchService, MatchStates.UPCOMING);
-                 (await this.matchService.matchIds(0)).should.be.bignumber.equal(`${match1.id}`);
+                 await thenExpectTheFirstMatchIdToEqual(this.matchService, match1.id);
              });
 
              it('should block any non-oracle address', async () => {
@@ -284,6 +291,8 @@ contract.only('MatchService Contract Tests',
                          id: match1.id
                      }
                  );
+
+                 await thenExpectTheFollowingMatchState(this.matchService, MatchStates.POSTPONED);
              });
 
              it('should block any non-oracle address', async () => {
@@ -336,6 +345,8 @@ contract.only('MatchService Contract Tests',
                          id: match1.id
                      }
                  );
+
+                 await thenExpectTheFollowingMatchState(this.matchService, MatchStates.CANCELLED);
              });
 
              it('should block any non-oracle address', async () => {
@@ -386,6 +397,8 @@ contract.only('MatchService Contract Tests',
                          id: match1.id
                      }
                  );
+
+                 await thenExpectTheFollowingMatchState(this.matchService, MatchStates.UPCOMING);
              });
 
              it('should block any non-oracle address', async () => {
@@ -450,6 +463,8 @@ contract.only('MatchService Contract Tests',
                          result: Outcomes.HOME_WIN
                      }
                  );
+
+                 await thenExpectTheFollowingMatchState(this.matchService, MatchStates.RESULTED);
              });
 
              it('should block any non-oracle address', async () => {
@@ -468,6 +483,16 @@ contract.only('MatchService Contract Tests',
 
              it('should fail when match has been cancelled', async () => {
                  await givenAMatchIsCancelled(this.matchService, oracle);
+
+                 await shouldFail.reverting.withMessage(
+                     givenAMatchResultWasSupplied(this.matchService, oracle),
+                     validationErrorContentKeys.matchNotUpcoming
+                 );
+             });
+
+             it('should fail when trying to supply a match result twice', async () => {
+                 await sleep(4500);
+                 await givenAMatchResultWasSupplied(this.matchService, oracle);
 
                  await shouldFail.reverting.withMessage(
                      givenAMatchResultWasSupplied(this.matchService, oracle),
