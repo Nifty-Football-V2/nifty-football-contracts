@@ -114,6 +114,16 @@ contract.only('MatchService Contract Tests',
          (await contract.matchIds(0)).should.be.bignumber.equal(`${target}`);
      }
 
+     async function thenExpectTheFollowingMatchResult(contract, result) {
+         await givenAnAddressIsWhitelisted(contract, externalContract, creator);
+         (await getMatchResult(contract, match1.id, externalContract)).should.be.bignumber.equal(result);
+     }
+
+     async function thenExpectNowToBeBeforePredictionDeadline(contract) {
+         await givenAnAddressIsWhitelisted(contract, externalContract, creator);
+         (await isBeforePredictionDeadline(contract, match1.id, externalContract)).should.be.true;
+     }
+
      beforeEach(async () => {
          this.matchService = await MatchService.new(oracle, {from: creator});
 
@@ -231,7 +241,10 @@ contract.only('MatchService Contract Tests',
                  );
 
                  await thenExpectTheFollowingMatchState(this.matchService, MatchStates.UPCOMING);
+                 await thenExpectTheFollowingMatchResult(this.matchService, Outcomes.UNINITIALISED);
                  await thenExpectTheFirstMatchIdToEqual(this.matchService, match1.id);
+                 await thenExpectNowToBeBeforePredictionDeadline(this.matchService);
+
              });
 
              it('should block any non-oracle address', async () => {
@@ -465,6 +478,7 @@ contract.only('MatchService Contract Tests',
                  );
 
                  await thenExpectTheFollowingMatchState(this.matchService, MatchStates.RESULTED);
+                 await thenExpectTheFollowingMatchResult(this.matchService, Outcomes.HOME_WIN);
              });
 
              it('should block any non-oracle address', async () => {
@@ -526,12 +540,12 @@ contract.only('MatchService Contract Tests',
 
          context('when whitelisting an address', async () => {
             it('should be successful with valid parameters', async () => {
-                const {logs} = await givenAnAddressIsWhitelisted(this.matchService, random, creator);
+                const {logs} = await givenAnAddressIsWhitelisted(this.matchService, externalContract, creator);
 
                 thenExpectTheFollowingEvent.inLogs(logs,
                     'NewWhitelist',
                     {
-                        addr: random
+                        addr: externalContract
                     }
                 );
             });
