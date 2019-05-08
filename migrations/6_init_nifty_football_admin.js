@@ -10,7 +10,7 @@ module.exports = async function (deployer, network, accounts) {
     const _niftyFootballTradingCard = await NiftyFootballTradingCard.deployed();
     const _niftyFootballTradingCardGenerator = await NiftyFootballTradingCardGenerator.deployed();
 
-    // Deploy elite blind pack
+    // Deploy admin 
     await deployer.deploy(
         NiftyFootballAdmin,
         _niftyFootballTradingCardGenerator.address,
@@ -21,6 +21,6 @@ module.exports = async function (deployer, network, accounts) {
 
     const _niftyFootballAdmin = await NiftyFootballAdmin.deployed();
 
-    // white blind pack creator
+    // whitelist admin with trading card to allow creation
     await _niftyFootballTradingCard.addWhitelisted(_niftyFootballAdmin.address, {from: accountOne});
 };

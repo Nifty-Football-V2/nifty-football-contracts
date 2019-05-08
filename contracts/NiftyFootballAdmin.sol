@@ -4,7 +4,6 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
-import "./libs/Strings.sol";
 import "./INiftyTradingCardCreator.sol";
 import "./generators/INiftyFootballTradingCardGenerator.sol";
 
