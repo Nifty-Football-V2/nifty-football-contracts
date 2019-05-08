@@ -5,7 +5,7 @@ const NiftyFootballAdmin = artifacts.require('NiftyFootballAdmin');
 
 const {BN, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('NiftyFootballAdmin', ([_, creator, tokenOwner, ...accounts]) => {
+contract('NiftyFootballAdmin', ([_, creator, tokenOwner, ...accounts]) => {
 
     const one = new BN(1);
     const baseURI = 'http://futball-cards';

@@ -222,19 +222,22 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
         });
 
         it('should allow withdrawal of send eth if credit used', async function () {
-            const preWalletBalance = await balance.current(cleanWallet);
+            const preWalletBalance = await balance.current(tokenOwner);
             const contractBalance = await balance.current(this.cleanBlindPack.address);
             contractBalance.should.be.bignumber.equal(new BN('0'));
 
             await this.cleanBlindPack.addCredit(tokenOwner, {from: creator});
-            await this.cleanBlindPack.blindPack({from: tokenOwner, value: new BN('11000000000000123')});
+            const receipt = await this.cleanBlindPack.blindPack({from: tokenOwner, value: new BN('11000000000000123')});
+
+            const gasCosts = await getGasCosts(receipt);
 
             const postContractBalance = await balance.current(this.cleanBlindPack.address);
-            postContractBalance.should.be.bignumber.equal(new BN('11000000000000123'));
+            postContractBalance.should.be.bignumber.equal(new BN('0'));
 
-            await this.cleanBlindPack.withdraw({from: creator});
-            const postWalletBalance = await balance.current(cleanWallet);
-            postWalletBalance.should.be.bignumber.equal(preWalletBalance.add(new BN('11000000000000123')));
+            const postWalletBalance = await balance.current(tokenOwner);
+            postWalletBalance.should.be.bignumber.equal(
+                preWalletBalance.sub(gasCosts)
+            );
 
         });
     });
@@ -454,11 +457,11 @@ contract('NiftyFootballTradingCardBlindPack', ([_, creator, tokenOwner, anyone, 
             // Check total purchases doesnt change
             (await this.blindPack.totalPurchasesInWei()).should.be.bignumber.equal(totalBefore);
         });
-
-        async function getGasCosts (receipt) {
-            let tx = await web3.eth.getTransaction(receipt.tx);
-            let gasPrice = new BN(tx.gasPrice);
-            return gasPrice.mul(new BN(receipt.receipt.gasUsed));
-        }
     });
+
+    async function getGasCosts (receipt) {
+        let tx = await web3.eth.getTransaction(receipt.tx);
+        let gasPrice = new BN(tx.gasPrice);
+        return gasPrice.mul(new BN(receipt.receipt.gasUsed));
+    }
 });
