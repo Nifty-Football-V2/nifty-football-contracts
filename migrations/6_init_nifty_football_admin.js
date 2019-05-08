@@ -10,7 +10,7 @@ module.exports = async function (deployer, network, accounts) {
     const _niftyFootballTradingCard = await NiftyFootballTradingCard.deployed();
     const _niftyFootballTradingCardGenerator = await NiftyFootballTradingCardGenerator.deployed();
 
-    // Deploy admin 
+    // Deploy admin
     await deployer.deploy(
         NiftyFootballAdmin,
         _niftyFootballTradingCardGenerator.address,
