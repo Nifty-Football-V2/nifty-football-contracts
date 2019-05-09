@@ -11,7 +11,7 @@ const {INFURA_KEY} = require('../constants');
 const {gas, gasPrice} = {gas: 6721975, gasPrice: '5000000000'};
 console.log(`gas=${gas} | gasPrice=${gasPrice}`);
 
-const data = require('./data/launch-credits-2');
+const data = require('./data/launch-credits-3');
 
 function getHttpProviderUri (network) {
     if (network === 'local') {
