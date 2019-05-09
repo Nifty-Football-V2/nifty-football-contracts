@@ -24,4 +24,14 @@ interface INiftyTradingCardCreator {
         uint256 _firstName,
         uint256 _lastName
     ) external returns (bool);
+
+    function setAttributesAndName(
+        uint256 _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill,
+        uint256 _firstName,
+        uint256 _lastName
+    ) external returns (bool);
 }

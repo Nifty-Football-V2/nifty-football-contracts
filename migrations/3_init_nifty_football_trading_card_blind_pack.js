@@ -16,7 +16,8 @@ module.exports = async function (deployer, network, accounts) {
     // Deploy blind pack
     await deployer.deploy(
         NiftyFootballTradingCardBlindPack,
-        accounts[0],
+        accountOne,
+        '0xacE0a8666953bf9E1fe1Cc91Abf5Db5a1c57DD46', // STAN'S ADDRESS
         _generator.address,
         _niftyFootballTradingCard.address,
         {

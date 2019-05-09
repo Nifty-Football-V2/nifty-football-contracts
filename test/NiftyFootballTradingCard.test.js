@@ -28,7 +28,6 @@ contract('NiftyFootballTradingCard', ([_, creator, tokenOwner, anyone, ...accoun
                 {from: ZERO_ADDRESS, to: tokenOwner, tokenId: firstTokenId}
             );
 
-            (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('1');
             (await this.niftyFootballTradingCard.name()).should.be.equal('Nifty Football Trading Card');
             (await this.niftyFootballTradingCard.symbol()).should.be.equal('NFTFC');
         });
@@ -86,7 +85,6 @@ contract('NiftyFootballTradingCard', ([_, creator, tokenOwner, anyone, ...accoun
             cardAttrs[3].should.be.bignumber.equal('0');
             cardAttrs[4].should.be.bignumber.equal('0');
             cardAttrs[5].should.be.bignumber.equal('0');
-            cardAttrs[6].should.not.be.null;
         });
 
         it('set attributes', async function () {
@@ -327,7 +325,6 @@ contract('NiftyFootballTradingCard', ([_, creator, tokenOwner, anyone, ...accoun
 
         beforeEach(async function () {
             await this.niftyFootballTradingCard.mintCard(0, 0, 0, 0, 0, 0, tokenOwner, {from: creator});
-            (await this.niftyFootballTradingCard.totalCards()).should.be.bignumber.equal('1');
         });
 
         context('if token owner', function () {

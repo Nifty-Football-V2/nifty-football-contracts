@@ -1235,6 +1235,16 @@ interface INiftyTradingCardCreator {
         uint256 _firstName,
         uint256 _lastName
     ) external returns (bool);
+
+    function setAttributesAndName(
+        uint256 _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill,
+        uint256 _firstName,
+        uint256 _lastName
+    ) external returns (bool);
 }
 
 // File: contracts/INiftyTradingCardAttributes.sol
@@ -1273,8 +1283,7 @@ contract INiftyTradingCardAttributes is IERC721 {
         uint256 _position,
         uint256 _ethnicity,
         uint256 _kit,
-        uint256 _colour,
-        uint256 _birth
+        uint256 _colour
     );
 
 }
@@ -1295,11 +1304,6 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
 
     string public tokenBaseURI = "";
     string public tokenBaseIpfsURI = "https://ipfs.infura.io/ipfs/";
-
-    event CardMinted(
-        uint256 indexed _tokenId,
-        address indexed _to
-    );
 
     event TokenBaseURIChanged(
         string _new
@@ -1377,8 +1381,6 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
 
         uint256 kit;
         uint256 colour;
-
-        uint256 birth;
     }
 
     struct Attributes {
@@ -1408,8 +1410,7 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         _;
     }
 
-    uint256 public totalCards = 0;
-    uint256 public tokenIdPointer = 1;
+    uint256 public tokenIdPointer = 0;
 
     mapping(uint256 => string) public staticIpfsImageLink;
     mapping(uint256 => Card) internal cardMapping;
@@ -1427,6 +1428,9 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         address _to
     ) public onlyWhitelisted returns (uint256 _tokenId) {
 
+        // increment pointer
+        tokenIdPointer = tokenIdPointer.add(1);
+
         // create new card
         cardMapping[tokenIdPointer] = Card({
             cardType : _cardType,
@@ -1434,23 +1438,39 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
             position : _position,
             ethnicity : _ethnicity,
             kit : _kit,
-            colour : _colour,
-            birth: now
-        });
+            colour : _colour
+            });
 
         // the magic bit!
         _mint(_to, tokenIdPointer);
 
-        // woo! more cards exist!
-        totalCards = totalCards.add(1);
+        return tokenIdPointer;
+    }
 
-        emit CardMinted(tokenIdPointer, _to);
+    function setAttributesAndName(
+        uint256 _tokenId,
+        uint256 _strength,
+        uint256 _speed,
+        uint256 _intelligence,
+        uint256 _skill,
+        uint256 _firstName,
+        uint256 _lastName
+    ) public onlyWhitelisted returns (bool) {
 
-        // increment pointer
-        tokenIdPointer = tokenIdPointer.add(1);
+        attributesMapping[_tokenId] = Attributes({
+            strength : _strength,
+            speed : _speed,
+            intelligence : _intelligence,
+            skill : _skill,
+            special : 0
+            });
 
-        // pointer been bumped so return the last token ID
-        return tokenIdPointer.sub(1);
+        namesMapping[_tokenId] = Name({
+            firstName : _firstName,
+            lastName : _lastName
+            });
+
+        return true;
     }
 
     function setAttributes(
@@ -1508,8 +1528,7 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         uint256 _position,
         uint256 _ethnicity,
         uint256 _kit,
-        uint256 _colour,
-        uint256 _birth
+        uint256 _colour
     ) {
         require(_exists(_tokenId), "Token does not exist");
         Card storage tokenCard = cardMapping[_tokenId];
@@ -1519,8 +1538,7 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         tokenCard.position,
         tokenCard.ethnicity,
         tokenCard.kit,
-        tokenCard.colour,
-        tokenCard.birth
+        tokenCard.colour
         );
     }
 
@@ -1584,15 +1602,16 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         return _tokensOfOwner(owner);
     }
 
-    function burn(uint256 _tokenId) public returns (bool) {
+    function burn(uint256 _tokenId) onlyWhitelisted public returns (bool) {
         require(_exists(_tokenId), "Token does not exist");
 
+        delete staticIpfsImageLink[_tokenId];
         delete cardMapping[_tokenId];
         delete attributesMapping[_tokenId];
         delete namesMapping[_tokenId];
         delete extrasMapping[_tokenId];
 
-        _burn(msg.sender, _tokenId);
+        _burn(ownerOf(_tokenId), _tokenId);
 
         return true;
     }

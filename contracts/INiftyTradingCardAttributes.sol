@@ -33,8 +33,7 @@ contract INiftyTradingCardAttributes is IERC721 {
         uint256 _position,
         uint256 _ethnicity,
         uint256 _kit,
-        uint256 _colour,
-        uint256 _birth
+        uint256 _colour
     );
 
 }
