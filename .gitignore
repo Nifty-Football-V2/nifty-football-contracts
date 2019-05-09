@@ -28,3 +28,4 @@ allFiredEvents
 /build
 package-lock.json
 mnemonic.js
+/scripts/data/**
