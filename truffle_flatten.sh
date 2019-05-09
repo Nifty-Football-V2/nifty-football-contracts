@@ -6,6 +6,7 @@ node ./node_modules/.bin/truffle-flattener ./contracts/NiftyFootballTradingCard.
 
 node ./node_modules/.bin/truffle-flattener ./contracts/NiftyFootballTradingCardBlindPack.sol > ./contracts-flat/NiftyFootballTradingCardBlindPack.sol;
 node ./node_modules/.bin/truffle-flattener ./contracts/NiftyFootballTradingCardEliteBlindPack.sol > ./contracts-flat/NiftyFootballTradingEliteCardBlindPack.sol;
+node ./node_modules/.bin/truffle-flattener ./contracts/NiftyFootballAdmin.sol > ./contracts-flat/NiftyFootballAdmin.sol;
 
 #node ./node_modules/.bin/truffle-flattener ./contracts/BuyNowMarketplace.sol > ./contracts-flat/BuyNowMarketplace.sol;
 
