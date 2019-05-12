@@ -2,7 +2,7 @@ const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('MatchService Contract Tests',
+contract('MatchService Contract Tests',
              ([_, creator, tokenOwner1, externalContract, oracle, oracle2, random, ...accounts]) => {
      const thenExpectTheFollowingEvent = expectEvent;
 

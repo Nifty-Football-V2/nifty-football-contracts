@@ -2,6 +2,7 @@ pragma solidity 0.5.0;
 
 import "../libs/OracleInterface.sol";
 
+//todo: change all of the predict before references to something else to make this contract more generic
 contract MatchService is OracleInterface {
     event MatchAdded (
         uint256 indexed id
