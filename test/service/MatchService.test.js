@@ -2,7 +2,7 @@ const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('MatchService Contract Tests',
+contract.only('MatchService Contract Tests',
              ([_, creator, tokenOwner1, externalContract, oracle, oracle2, random, ...accounts]) => {
      const thenExpectTheFollowingEvent = expectEvent;
 
@@ -11,8 +11,8 @@ contract('MatchService Contract Tests',
          oracleEqOwner: "oracle.interface.error.oracle.address.eq.owner",
          zeroAddress: "oracle.interface.error.address.zero",
          matchExists: "match.service.error.match.exists",
-         predictBeforeAfterResultAfterTime: "match.service.error.predict.before.is.after.result.after",
-         pastPredictionDeadline: "match.service.error.past.prediction.deadline",
+         predictBeforeAfterResultAfterTime: "match.service.error.match.start.is.after.match.end",
+         pastPredictionDeadline: "match.service.error.past.match.start.time",
          notOracle: "match.service.error.not.oracle",
          matchIdInvalid: "match.service.error.invalid.match.id",
          matchNotUpcoming: "match.service.error.match.not.upcoming",
@@ -101,8 +101,8 @@ contract('MatchService Contract Tests',
          return contract.matchResult(matchId, {from: sender});
      }
 
-     function isBeforePredictionDeadline(contract, matchId, sender) {
-         return contract.isBeforePredictionDeadline(matchId, {from: sender});
+     function isBeforeMatchStartTime(contract, matchId, sender) {
+         return contract.isBeforeMatchStartTime(matchId, {from: sender});
      }
 
      async function thenExpectTheFollowingMatchState(contract, state) {
@@ -121,7 +121,7 @@ contract('MatchService Contract Tests',
 
      async function thenExpectNowToBeBeforePredictionDeadline(contract) {
          await givenAnAddressIsWhitelisted(contract, externalContract, creator);
-         (await isBeforePredictionDeadline(contract, match1.id, externalContract)).should.be.true;
+         (await isBeforeMatchStartTime(contract, match1.id, externalContract)).should.be.true;
      }
 
      beforeEach(async () => {
@@ -191,7 +191,7 @@ contract('MatchService Contract Tests',
              });
 
              it('should fail to establish prediction deadline status', async () => {
-                await shouldFail.reverting(isBeforePredictionDeadline(this.matchService, match1.id, creator));
+                await shouldFail.reverting(isBeforeMatchStartTime(this.matchService, match1.id, creator));
              });
          });
 

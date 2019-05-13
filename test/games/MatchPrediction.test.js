@@ -4,7 +4,7 @@ const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('Match Prediction Contract Tests',
+contract('Match Prediction Contract Tests',
              ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 

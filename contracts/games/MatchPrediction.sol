@@ -70,12 +70,12 @@ contract MatchPrediction is ICardGame, ERC721Holder {
     }
 
     modifier onlyWhenBeforePredictionDeadline(uint256 _matchId) {
-        _isBeforePredictionDeadline(_matchId);
+        _isBeforeMatchStartTime(_matchId);
         _;
     }
 
     modifier onlyWhenBeforeGamePredictionDeadline(uint256 _gameId) {
-        _isBeforePredictionDeadline(gameIdToGameMapping[_gameId].matchId);
+        _isBeforeMatchStartTime(gameIdToGameMapping[_gameId].matchId);
         _;
     }
 
@@ -129,8 +129,8 @@ contract MatchPrediction is ICardGame, ERC721Holder {
         require(matchService.matchState(_matchId) == MatchService.MatchState.UPCOMING, "match.prediction.validation.error.match.not.upcoming");
     }
 
-    function _isBeforePredictionDeadline(uint256 _matchId) private view {
-        require(matchService.isBeforePredictionDeadline(_matchId), "match.prediction.validation.error.past.prediction.deadline");
+    function _isBeforeMatchStartTime(uint256 _matchId) private view {
+        require(matchService.isBeforeMatchStartTime(_matchId), "match.prediction.validation.error.past.prediction.deadline");
     }
 
     function _escrowPlayerCards(Game storage _game) private {

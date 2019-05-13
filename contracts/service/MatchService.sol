@@ -2,7 +2,6 @@ pragma solidity 0.5.0;
 
 import "../libs/OracleInterface.sol";
 
-//todo: change all of the predict before references to something else to make this contract more generic
 contract MatchService is OracleInterface {
     event MatchAdded (
         uint256 indexed id
@@ -35,8 +34,8 @@ contract MatchService is OracleInterface {
 
     struct Match {
         uint256 id;
-        uint256 predictBefore;
-        uint256 resultAfter;
+        uint256 matchStart;
+        uint256 matchEnd;
         MatchState state;
         Outcome result;
     }
@@ -54,9 +53,9 @@ contract MatchService is OracleInterface {
         _;
     }
 
-    modifier onlyWhenTimesValid(uint256 _predictBefore, uint256 _resultAfter) {
-        require(_predictBefore <  _resultAfter, "match.service.error.predict.before.is.after.result.after");
-        require(now < _predictBefore, "match.service.error.past.prediction.deadline");
+    modifier onlyWhenTimesValid(uint256 _matchStart, uint256 _matchEnd) {
+        require(_matchStart <  _matchEnd, "match.service.error.match.start.is.after.match.end");
+        require(now < _matchStart, "match.service.error.past.match.start.time");
         _;
     }
 
@@ -86,7 +85,7 @@ contract MatchService is OracleInterface {
     }
 
     modifier onlyWhenResultWindowOpen(uint256 _matchId) {
-        require(now >= matchIdToMatchMapping[_matchId].resultAfter, "match.service.error.result.window.not.open");
+        require(now >= matchIdToMatchMapping[_matchId].matchEnd, "match.service.error.result.window.not.open");
         _;
     }
 
@@ -101,7 +100,7 @@ contract MatchService is OracleInterface {
 
     function _doesMatchExist(uint256 _matchId) internal view returns (bool) {
         Match storage aMatch = matchIdToMatchMapping[_matchId];
-        return (_matchId > 0 && aMatch.predictBefore < aMatch.resultAfter);
+        return (_matchId > 0 && aMatch.matchStart < aMatch.matchEnd);
     }
 
     function _isMatchUpcoming(uint256 _matchId) internal view {
@@ -114,15 +113,15 @@ contract MatchService is OracleInterface {
 
     constructor(address oracle) OracleInterface(oracle) public {}
 
-    function addMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
+    function addMatch(uint256 _matchId, uint256 _matchStart, uint256 _matchEnd)
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchDoesNotExist(_matchId)
-    onlyWhenTimesValid(_predictBefore, _resultAfter) external {
+    onlyWhenTimesValid(_matchStart, _matchEnd) external {
         matchIdToMatchMapping[_matchId] = Match({
             id: _matchId,
-            predictBefore: _predictBefore,
-            resultAfter: _resultAfter,
+            matchStart: _matchStart,
+            matchEnd: _matchEnd,
             state: MatchState.UPCOMING,
             result: Outcome.UNINITIALISED
             });
@@ -152,15 +151,15 @@ contract MatchService is OracleInterface {
         emit MatchCancelled(_matchId);
     }
 
-    function restoreMatch(uint256 _matchId, uint256 _predictBefore, uint256 _resultAfter)
+    function restoreMatch(uint256 _matchId, uint256 _matchStart, uint256 _matchEnd)
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
     onlyWhenMatchPostponed(_matchId)
-    onlyWhenTimesValid(_predictBefore, _resultAfter) external {
+    onlyWhenTimesValid(_matchStart, _matchEnd) external {
         Match storage aMatch = matchIdToMatchMapping[_matchId];
-        aMatch.predictBefore = _predictBefore;
-        aMatch.resultAfter = _resultAfter;
+        aMatch.matchStart = _matchStart;
+        aMatch.matchEnd = _matchEnd;
         aMatch.result = Outcome.UNINITIALISED;
         aMatch.state = MatchState.UPCOMING;
 
@@ -193,10 +192,10 @@ contract MatchService is OracleInterface {
         return matchIdToMatchMapping[_matchId].result;
     }
 
-    function isBeforePredictionDeadline(uint256 _matchId)
+    function isBeforeMatchStartTime(uint256 _matchId)
     whenNotPaused
     onlyWhenAddressWhitelisted external view returns (bool) {
-        return (now <= matchIdToMatchMapping[_matchId].predictBefore);
+        return (now <= matchIdToMatchMapping[_matchId].matchStart);
     }
 
     function whitelist(address addr)
