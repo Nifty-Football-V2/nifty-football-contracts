@@ -36,6 +36,10 @@ contract MatchService is OracleInterface {
         uint256 id;
         uint256 matchStart;
         uint256 matchEnd;
+        string description;
+        string resultSource;
+        uint256 homeGoals;
+        uint256 awayGoals;
         MatchState state;
         Outcome result;
     }
@@ -122,9 +126,13 @@ contract MatchService is OracleInterface {
             id: _matchId,
             matchStart: _matchStart,
             matchEnd: _matchEnd,
+            description: "",
+            resultSource: "",
+            homeGoals: 0,
+            awayGoals: 0,
             state: MatchState.UPCOMING,
             result: Outcome.UNINITIALISED
-            });
+        });
 
         matchIds.push(_matchId);
 
