@@ -4,39 +4,14 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/lifecycle/Pausable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../generators/HeadToHeadResulter.sol";
-import "../INiftyTradingCardAttributes.sol";
+import "./IHeadToHeadEvents.sol";
+import "../../INiftyTradingCardAttributes.sol";
 
-contract HeadToHead is Ownable, Pausable {
+/*
+ * Head to Head Extreme - where players lose their cards if the battle is lost
+ */
+contract HeadToHeadExtreme is Ownable, Pausable, IHeadToHeadEvents {
     using SafeMath for uint256;
-
-    event GameCreated(
-        uint256 indexed gameId,
-        address indexed home,
-        uint256 indexed homeTokenId
-    );
-
-    event GameResulted(
-        address indexed home,
-        address indexed away,
-        uint256 indexed gameId,
-        uint256 homeValue,
-        uint256 awayValue,
-        uint256 result
-    );
-
-    event GameDraw(
-        address indexed home,
-        address indexed away,
-        uint256 indexed gameId,
-        uint256 homeValue,
-        uint256 awayValue,
-        uint256 result
-    );
-
-    event GameClosed(
-        uint256 indexed gameId,
-        address indexed closer
-    );
 
     enum State {UNSET, OPEN, HOME_WIN, AWAY_WIN, DRAW, CLOSED}
 
@@ -81,7 +56,7 @@ contract HeadToHead is Ownable, Pausable {
     ///////////////
 
     modifier onlyWhenTokenOwner(uint256 _tokenId) {
-        require(nft.ownerOf(_tokenId) == msg.sender, "You cannot enter if you dont own the card");
+        require(nft.ownerOf(_tokenId) == msg.sender, "You dont own the card");
         _;
     }
 

@@ -1,6 +1,6 @@
 pragma solidity 0.5.0;
 
-import "../generators/HeadToHeadResulter.sol";
+import "../games/generators/HeadToHeadResulter.sol";
 
 contract MockHeadToHeadResulter is HeadToHeadResulter
 {

@@ -1,10 +1,10 @@
 const NiftyFootballTradingCard = artifacts.require('NiftyFootballTradingCard');
-const HeadToHead = artifacts.require('HeadToHead');
+const HeadToHeadExtreme = artifacts.require('HeadToHeadExtreme');
 const MockHeadToHeadResulter = artifacts.require('MockHeadToHeadResulter');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
+contract('HeadToHeadExtreme game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone, ...accounts]) => {
     const baseURI = 'http://futball-cards';
     const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -26,7 +26,7 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
         this.niftyFootballTradingCard = await NiftyFootballTradingCard.new(baseURI, {from: creator});
         this.resulter = await MockHeadToHeadResulter.new({from: creator});
 
-        this.headToHead = await HeadToHead.new(this.resulter.address, this.niftyFootballTradingCard.address, {from: creator});
+        this.headToHead = await HeadToHeadExtreme.new(this.resulter.address, this.niftyFootballTradingCard.address, {from: creator});
 
     });
 
@@ -98,14 +98,14 @@ contract('HeadToHead game tests', ([_, creator, tokenOwner1, tokenOwner2, anyone
                 it('cant create game when not the owner', async function () {
                     await shouldFail.reverting.withMessage(
                         this.headToHead.createGame(_tokenId1, {from: tokenOwner2}),
-                        "You cannot enter if you dont own the card"
+                        "You dont own the card"
                     );
                 });
 
                 it('cant result a game for a token you dont own', async function () {
                     await shouldFail.reverting.withMessage(
                         this.headToHead.resultGame(1, _tokenId2, {from: tokenOwner1}),
-                        "You cannot enter if you dont own the card"
+                        "You dont own the card"
                     );
                 });
 
