@@ -2,6 +2,7 @@ pragma solidity 0.5.0;
 
 import "../libs/OracleInterface.sol";
 
+//todo: rename to match oracle, add batch adding functionality
 contract MatchService is OracleInterface {
     event MatchAdded (
         uint256 indexed id
@@ -117,7 +118,7 @@ contract MatchService is OracleInterface {
 
     constructor(address oracle) OracleInterface(oracle) public {}
 
-    function addMatch(uint256 _matchId, uint256 _matchStart, uint256 _matchEnd)
+    function addMatch(uint256 _matchId, uint256 _matchStart, uint256 _matchEnd, string calldata _description, string calldata _resultSource)
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchDoesNotExist(_matchId)
@@ -126,8 +127,8 @@ contract MatchService is OracleInterface {
             id: _matchId,
             matchStart: _matchStart,
             matchEnd: _matchEnd,
-            description: "",
-            resultSource: "",
+            description: _description,
+            resultSource: _resultSource,
             homeGoals: 0,
             awayGoals: 0,
             state: MatchState.UPCOMING,
@@ -204,6 +205,14 @@ contract MatchService is OracleInterface {
     whenNotPaused
     onlyWhenAddressWhitelisted external view returns (bool) {
         return (now <= matchIdToMatchMapping[_matchId].matchStart);
+    }
+
+    function getAllMatchIds() whenNotPaused external view returns(uint256[] memory allMatchIds) {
+        allMatchIds = new uint256[](matchIds.length);
+
+        for(uint256 i = 0; i < matchIds.length; i++) {
+            allMatchIds[i] = matchIds[i];
+        }
     }
 
     function whitelist(address addr)
