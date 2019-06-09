@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./ICardGame.sol";
-import "../service/MatchService.sol";
+import "../service/MatchOracle.sol";
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Holder.sol";
 
 contract MatchPrediction is ICardGame, ERC721Holder {
@@ -47,7 +47,7 @@ contract MatchPrediction is ICardGame, ERC721Holder {
         uint256 matchId;
     }
 
-    MatchService public matchService;
+    MatchOracle public matchOracle;
 
     uint256 public totalGamesCreated = 0;
 
@@ -80,7 +80,7 @@ contract MatchPrediction is ICardGame, ERC721Holder {
     }
 
     modifier onlyWhenGameMatchResultReceived(uint256 _gameId) {
-        require(matchService.matchResult(gameIdToGameMapping[_gameId].matchId) != MatchService.Outcome.UNINITIALISED, "match.prediction.validation.error.game.match.result.not.received");
+        require(matchOracle.matchResult(gameIdToGameMapping[_gameId].matchId) != MatchOracle.Outcome.UNINITIALISED, "match.prediction.validation.error.game.match.result.not.received");
         _;
     }
 
@@ -126,11 +126,11 @@ contract MatchPrediction is ICardGame, ERC721Holder {
     }
 
     function _isMatchUpcoming(uint256 _matchId) internal view {
-        require(matchService.matchState(_matchId) == MatchService.MatchState.UPCOMING, "match.prediction.validation.error.match.not.upcoming");
+        require(matchOracle.matchState(_matchId) == MatchOracle.MatchState.UPCOMING, "match.prediction.validation.error.match.not.upcoming");
     }
 
     function _isBeforeMatchStartTime(uint256 _matchId) private view {
-        require(matchService.isBeforeMatchStartTime(_matchId), "match.prediction.validation.error.past.prediction.deadline");
+        require(matchOracle.isBeforeMatchStartTime(_matchId), "match.prediction.validation.error.past.prediction.deadline");
     }
 
     function _escrowPlayerCards(Game storage _game) private {
@@ -165,12 +165,12 @@ contract MatchPrediction is ICardGame, ERC721Holder {
         _freeUpCardsForFutureGames(game.p1TokenId, game.p2TokenId);
     }
 
-    function _convertMatchServiceResult(MatchService.Outcome _result) private pure returns (Outcome) {
-        if(_result == MatchService.Outcome.HOME_WIN) {
+    function _convertMatchServiceResult(MatchOracle.Outcome _result) private pure returns (Outcome) {
+        if(_result == MatchOracle.Outcome.HOME_WIN) {
             return Outcome.HOME_WIN;
-        } else if (_result == MatchService.Outcome.AWAY_WIN) {
+        } else if (_result == MatchOracle.Outcome.AWAY_WIN) {
             return Outcome.AWAY_WIN;
-        } else if (_result == MatchService.Outcome.DRAW) {
+        } else if (_result == MatchOracle.Outcome.DRAW) {
             return Outcome.DRAW;
         } else {
             return Outcome.UNINITIALISED;
@@ -181,16 +181,16 @@ contract MatchPrediction is ICardGame, ERC721Holder {
     // Constructor //
     /////////////////
 
-    constructor (IERC721 _nft, MatchService _matchService) public {
+    constructor (IERC721 _nft, MatchOracle _matchOracle) public {
         require(address(_nft) != address(0), "match.prediction.error.nft.contract.address.zero");
         require(address(_nft) != msg.sender, "match.prediction.error.nft.contract.eq.owner");
-        require(address(_matchService) != address(0), "match.prediction.error.match.service.address.zero");
-        require(address(_matchService) != msg.sender, "match.prediction.error.match.service.address.eq.owner");
+        require(address(_matchOracle) != address(0), "match.prediction.error.match.oracle.address.zero");
+        require(address(_matchOracle) != msg.sender, "match.prediction.error.match.oracle.address.eq.owner");
 
         nft = _nft;
-        matchService = _matchService;
+        matchOracle = _matchOracle;
 
-        emit ContractDeployed(address(nft), address(matchService));
+        emit ContractDeployed(address(nft), address(matchOracle));
     }
 
     ///////////////
@@ -268,7 +268,7 @@ contract MatchPrediction is ICardGame, ERC721Holder {
     onlyWhenAllPredictionsReceived(_gameId)
     onlyWhenGameMatchResultReceived(_gameId) external {
         Game storage game = gameIdToGameMapping[_gameId];
-        MatchService.Outcome matchResult = matchService.matchResult(game.matchId);
+        MatchOracle.Outcome matchResult = matchOracle.matchResult(game.matchId);
 
         _performWithdrawal(game, _convertMatchServiceResult(matchResult));
         _performPostGameCleanup(_gameId);

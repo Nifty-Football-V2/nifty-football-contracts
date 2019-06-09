@@ -1,8 +1,8 @@
-const MatchService = artifacts.require('MatchService');
+const MatchOracle = artifacts.require('MatchOracle');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('MatchService Contract Tests',
+contract.only('MatchOracle Contract Tests',
              ([_, creator, tokenOwner1, externalContract, oracle, oracle2, random, ...accounts]) => {
      const thenExpectTheFollowingEvent = expectEvent;
 
@@ -132,7 +132,7 @@ contract.only('MatchService Contract Tests',
      }
 
      beforeEach(async () => {
-         this.matchService = await MatchService.new(oracle, {from: creator});
+         this.matchService = await MatchOracle.new(oracle, {from: creator});
 
          (await this.matchService.owner()).should.be.equal(creator);
          (await this.matchService.isOracle(oracle)).should.be.true;
@@ -142,14 +142,14 @@ contract.only('MatchService Contract Tests',
          context('when creating the contract', async () => {
              it('should fail to create contract with address(0) oracle', async () => {
                  await shouldFail.reverting.withMessage(
-                     MatchService.new(constants.ZERO_ADDRESS, {from: creator}),
+                     MatchOracle.new(constants.ZERO_ADDRESS, {from: creator}),
                      validationErrorContentKeys.oracleAddressZero
                  );
              });
 
              it('should fail to create contract when oracle and owner are the same address', async () => {
                  await shouldFail.reverting.withMessage(
-                     MatchService.new(creator, {from: creator}),
+                     MatchOracle.new(creator, {from: creator}),
                      validationErrorContentKeys.oracleEqOwner
                  );
              });

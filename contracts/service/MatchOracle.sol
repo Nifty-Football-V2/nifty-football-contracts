@@ -2,8 +2,8 @@ pragma solidity 0.5.0;
 
 import "../libs/OracleInterface.sol";
 
-//todo: rename to match oracle, batch adding functionality, upcoming, past matches and multiple oracle addresses
-contract MatchService is OracleInterface {
+//todo: batch adding functionality, upcoming, past matches and multiple oracle addresses
+contract MatchOracle is OracleInterface {
     event MatchAdded (
         uint256 indexed id
     );
