@@ -46,11 +46,18 @@ contract.only('MatchService Contract Tests',
      }
 
      function givenAMatchIsAdded(contract, sender) {
-         return contract.addMatch(match1.id, seconds_since_epoch() + 2, seconds_since_epoch() + 3, {from: sender});
+         const match = {
+             id: match1.id,
+             predictBefore: seconds_since_epoch() + 2,
+             resultAfter: seconds_since_epoch() + 3,
+             description: "",
+             resultSource: ""
+         };
+         return givenASpecificMatchIsAdded(contract, match, sender);
      }
 
      function givenASpecificMatchIsAdded(contract, match, sender) {
-         return contract.addMatch(match.id, match.predictBefore, match.resultAfter, {from: sender});
+         return contract.addMatch(match.id, match.predictBefore, match.resultAfter, match.description, match.resultSource, {from: sender});
      }
 
      function givenAMatchIsPostponed(contract, sender) {
@@ -86,7 +93,7 @@ contract.only('MatchService Contract Tests',
      }
 
      function givenTheOracleAddressWasUpdatedTo(contract, address, sender) {
-         return contract.updateOracle(address, {from: sender});
+         return contract.updateOracle(address, true, {from: sender});
      }
 
      function givenAnAddressIsWhitelisted(contract, address, sender) {
@@ -128,7 +135,7 @@ contract.only('MatchService Contract Tests',
          this.matchService = await MatchService.new(oracle, {from: creator});
 
          (await this.matchService.owner()).should.be.equal(creator);
-         (await this.matchService.oracle()).should.be.equal(oracle);
+         (await this.matchService.isOracle(oracle)).should.be.true;
      });
 
      context('validation', async () => {
@@ -202,30 +209,29 @@ contract.only('MatchService Contract Tests',
                  thenExpectTheFollowingEvent.inLogs(logs,
                      'OracleUpdated',
                      {
-                         previous: oracle,
-                         current: oracle2
+                         addr: oracle2,
+                         isOracle: true
                      }
                  );
 
-                 // Ensure the new oracle can now perform operations and the old one can't
+                 // Ensure the new oracle can now perform operations and a random address can't
                  await givenAMatchIsAdded(this.matchService, oracle2);
 
-                 let match2 = {id: 2, predictBefore: seconds_since_epoch() + 2, resultAfter: seconds_since_epoch() + 3};
+                 let match2 = {
+                     id: 2,
+                     predictBefore: seconds_since_epoch() + 2,
+                     resultAfter: seconds_since_epoch() + 3,
+                     description: "",
+                     resultSource: ""
+                 };
                  await shouldFail.reverting.withMessage(
-                     givenASpecificMatchIsAdded(this.matchService, match2, oracle),
+                     givenASpecificMatchIsAdded(this.matchService, match2, random),
                      validationErrorContentKeys.notOracle
                  );
              });
 
              it('should fail when not owner', async () => {
                  await shouldFail.reverting(givenTheOracleAddressWasUpdatedTo(this.matchService, oracle2, random));
-             });
-
-             it('should prevent oracle being updated to address(0)', async () => {
-                 await shouldFail.reverting.withMessage(
-                     givenTheOracleAddressWasUpdatedTo(this.matchService, constants.ZERO_ADDRESS, creator),
-                     validationErrorContentKeys.zeroAddress
-                 );
              });
          });
 
@@ -267,7 +273,9 @@ contract.only('MatchService Contract Tests',
                  const matchWithInvalidResultAfter = {
                      id: new BN(1),
                      predictBefore: new BN(seconds_since_epoch() + 9),
-                     resultAfter: new BN(seconds_since_epoch() + 4)
+                     resultAfter: new BN(seconds_since_epoch() + 4),
+                     description: "",
+                     resultSource: ""
                  };
 
                  await shouldFail.reverting.withMessage(
@@ -280,7 +288,9 @@ contract.only('MatchService Contract Tests',
                  const matchWithPastPredictionDeadline = {
                      id: match1.id,
                      predictBefore: new BN(seconds_since_epoch() - 5),
-                     resultAfter: new BN(seconds_since_epoch() + 9)
+                     resultAfter: new BN(seconds_since_epoch() + 9),
+                     description: "",
+                     resultSource: ""
                  };
 
                  await shouldFail.reverting.withMessage(
@@ -432,7 +442,9 @@ contract.only('MatchService Contract Tests',
                  const randomMatch = {
                      id: new BN(45),
                      predictBefore: seconds_since_epoch() + 5,
-                     resultAfter: seconds_since_epoch() + 8
+                     resultAfter: seconds_since_epoch() + 8,
+                     description: "",
+                     resultSource: ""
                  };
 
                  await givenASpecificMatchIsAdded(this.matchService, randomMatch, oracle);

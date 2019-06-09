@@ -2,7 +2,7 @@ pragma solidity 0.5.0;
 
 import "../libs/OracleInterface.sol";
 
-//todo: rename to match oracle, add batch adding functionality
+//todo: rename to match oracle, batch adding functionality, upcoming, past matches and multiple oracle addresses
 contract MatchService is OracleInterface {
     event MatchAdded (
         uint256 indexed id
@@ -70,7 +70,7 @@ contract MatchService is OracleInterface {
     }
 
     modifier onlyWhenOracle() {
-        require(oracle == msg.sender, "match.service.error.not.oracle");
+        require(isOracle[msg.sender], "match.service.error.not.oracle");
         _;
     }
 

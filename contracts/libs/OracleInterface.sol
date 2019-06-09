@@ -8,32 +8,25 @@ contract OracleInterface is Ownable, Pausable {
     using SafeMath for uint256;
 
     event OracleUpdated (
-        address indexed previous,
-        address indexed current
+        address indexed addr,
+        bool indexed isOracle
     );
 
-    address public oracle;
-
-    modifier onlyWhenNotAddressZero(address addr) {
-        require(addr != address(0), "oracle.interface.error.address.zero");
-        _;
-    }
+    mapping(address => bool) public isOracle;
 
     constructor (address _oracle) internal {
         require(_oracle != address(0), "oracle.interface.error.oracle.address.zero");
         require(_oracle != msg.sender, "oracle.interface.error.oracle.address.eq.owner");
-        oracle = _oracle;
+        isOracle[_oracle] = true;
 
-        emit OracleUpdated(address(0), _oracle);
+        emit OracleUpdated(_oracle, true);
     }
 
-    function updateOracle(address _newOracle)
+    function updateOracle(address _oracle, bool _isOracle)
     whenNotPaused
-    onlyOwner
-    onlyWhenNotAddressZero(_newOracle) external {
-        address previous = oracle;
-        oracle = _newOracle;
+    onlyOwner external {
+        isOracle[_oracle] = true;
 
-        emit OracleUpdated(previous, oracle);
+        emit OracleUpdated(_oracle, _isOracle);
     }
 }
