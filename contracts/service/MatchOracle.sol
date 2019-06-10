@@ -2,7 +2,7 @@ pragma solidity 0.5.0;
 
 import "../libs/OracleInterface.sol";
 
-//todo: batch adding functionality, upcoming, past matches and multiple oracle addresses
+//todo: upcoming, past matches
 contract MatchOracle is OracleInterface {
     event MatchAdded (
         uint256 indexed id
@@ -43,6 +43,13 @@ contract MatchOracle is OracleInterface {
         uint256 awayGoals;
         MatchState state;
         Outcome result;
+    }
+
+    struct BasicMatchInfo {
+        uint256 id;
+        uint256 matchStart;
+        uint256 matchEnd;
+        string description;
     }
 
     uint256[] public matchIds;
@@ -140,6 +147,8 @@ contract MatchOracle is OracleInterface {
         emit MatchAdded(_matchId);
     }
 
+    //todo: add batch add functionality
+
     function postponeMatch(uint256 _matchId)
     whenNotPaused
     onlyWhenOracle
@@ -189,21 +198,15 @@ contract MatchOracle is OracleInterface {
         emit MatchOutcome(_matchId, _resultState);
     }
 
-    function matchState(uint256 _matchId)
-    whenNotPaused
-    onlyWhenAddressWhitelisted external view returns (MatchState) {
+    function matchState(uint256 _matchId) whenNotPaused external view returns (MatchState) {
         return matchIdToMatchMapping[_matchId].state;
     }
 
-    function matchResult(uint256 _matchId)
-    whenNotPaused
-    onlyWhenAddressWhitelisted external view returns (Outcome) {
+    function matchResult(uint256 _matchId) whenNotPaused external view returns (Outcome) {
         return matchIdToMatchMapping[_matchId].result;
     }
 
-    function isBeforeMatchStartTime(uint256 _matchId)
-    whenNotPaused
-    onlyWhenAddressWhitelisted external view returns (bool) {
+    function isBeforeMatchStartTime(uint256 _matchId) whenNotPaused external view returns (bool) {
         return (now <= matchIdToMatchMapping[_matchId].matchStart);
     }
 
@@ -215,9 +218,41 @@ contract MatchOracle is OracleInterface {
         }
     }
 
-    function whitelist(address addr)
-    whenNotPaused
-    onlyOwner external {
+    function getUpcomingMatchIds() whenNotPaused external view returns(uint256[] memory upcomingMatchIds) {
+        uint256 upcomingMatchCount = 0;
+        for(uint256 i = 0; i < matchIds.length; i++) {
+            if(now < matchIdToMatchMapping[matchIds[i]].matchStart) {
+                upcomingMatchCount.add(1);
+            }
+        }
+
+        upcomingMatchIds = new uint256[](upcomingMatchCount);
+
+        for(uint256 i = 0; i < matchIds.length; i++) {
+            if(now < matchIdToMatchMapping[matchIds[i]].matchStart) {
+                upcomingMatchIds[i] = matchIds[i];
+            }
+        }
+    }
+
+    function getPastMatchIds() whenNotPaused external view returns(uint256[] memory pastMatchIds) {
+        uint256 pastMatchCount = 0;
+        for(uint256 i = 0; i < matchIds.length; i++) {
+            if(now > matchIdToMatchMapping[matchIds[i]].matchEnd) {
+                pastMatchCount.add(1);
+            }
+        }
+
+        pastMatchIds = new uint256[](pastMatchCount);
+
+        for(uint256 i = 0; i < matchIds.length; i++) {
+            if(now > matchIdToMatchMapping[matchIds[i]].matchEnd) {
+                pastMatchIds[i] = matchIds[i];
+            }
+        }
+    }
+
+    function whitelist(address addr) whenNotPaused onlyOwner external {
         isWhitelisted[addr] = true;
 
         emit NewWhitelist(addr);

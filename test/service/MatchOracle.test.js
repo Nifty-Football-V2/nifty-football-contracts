@@ -113,7 +113,6 @@ contract.only('MatchOracle Contract Tests',
      }
 
      async function thenExpectTheFollowingMatchState(contract, state) {
-         await givenAnAddressIsWhitelisted(contract, externalContract, creator);
          (await getMatchState(contract, match1.id, externalContract)).should.be.bignumber.equal(state);
      }
 
@@ -122,12 +121,10 @@ contract.only('MatchOracle Contract Tests',
      }
 
      async function thenExpectTheFollowingMatchResult(contract, result) {
-         await givenAnAddressIsWhitelisted(contract, externalContract, creator);
          (await getMatchResult(contract, match1.id, externalContract)).should.be.bignumber.equal(result);
      }
 
      async function thenExpectNowToBeBeforePredictionDeadline(contract) {
-         await givenAnAddressIsWhitelisted(contract, externalContract, creator);
          (await isBeforeMatchStartTime(contract, match1.id, externalContract)).should.be.true;
      }
 
