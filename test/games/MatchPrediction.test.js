@@ -4,7 +4,7 @@ const MatchService = artifacts.require('MatchService');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract('Match Prediction Contract Tests',
+contract.only('Match Prediction Contract Tests',
              ([_, creator, tokenOwner1, tokenOwner2, tokenOwner3, oracle, oracle2, random, ...accounts]) => {
     const baseURI = 'http://futball-cards';
 
@@ -19,12 +19,12 @@ contract('Match Prediction Contract Tests',
         nftNotApproved: "card.game.error.nft.not.approved",
         notNFTOwner: "card.game.error.not.nft.owner",
         tokenAlreadyPlaying: "card.game.error.token.playing",
-        matchServiceAddressZero: "match.prediction.error.match.service.address.zero",
+        matchOracleAddressZero: "match.prediction.error.match.oracle.address.zero",
         nftAddressZero: "match.prediction.error.nft.contract.address.zero",
         invalidGameId: "card.game.error.invalid.game",
         gameComplete: "card.game.error.game.complete",
         invalidPrediction: "match.prediction.validation.error.invalid.prediction",
-        matchServiceEqOwner: "match.prediction.error.match.service.address.eq.owner",
+        matchOracleEqOwner: "match.prediction.error.match.oracle.address.eq.owner",
         nftContractEqOwner: "match.prediction.error.nft.contract.eq.owner",
         p1RevokedApproval: "match.prediction.validation.error.p1.revoked.approval",
         p2PredictionInvalid: "match.prediction.validation.error.p2.prediction.invalid",
@@ -72,13 +72,20 @@ contract('Match Prediction Contract Tests',
         id: new BN(34564543)
     };
 
-    function givenAMatchIsAdded(contract, sender) {
-        return contract.addMatch(match1.id, seconds_since_epoch() + 2, seconds_since_epoch() + 3, {from: sender});
-    }
+     function givenAMatchIsAdded(contract, sender) {
+         const match = {
+             id: match1.id,
+             predictBefore: seconds_since_epoch() + 2,
+             resultAfter: seconds_since_epoch() + 3,
+             description: "",
+             resultSource: ""
+         };
+         return givenASpecificMatchIsAdded(contract, match, sender);
+     }
 
-    function givenASpecificMatchIsAdded(contract, match, sender) {
-        return contract.addMatch(match.id, match.predictBefore, match.resultAfter, {from: sender});
-    }
+     function givenASpecificMatchIsAdded(contract, match, sender) {
+         return contract.addMatch(match.id, match.predictBefore, match.resultAfter, match.description, match.resultSource, {from: sender});
+     }
 
     function givenAMatchIsPostponed(contract, sender) {
         return givenASpecificMatchIsPostponed(contract, match1.id, sender);
@@ -155,17 +162,17 @@ contract('Match Prediction Contract Tests',
 
     context('validation', async () => {
         context('when creating the contract', async () => {
-            it('should fail to create contract with address(0) Match Service', async () => {
+            it('should fail to create contract with address(0) Match Oracle', async () => {
                 await shouldFail.reverting.withMessage(
                     MatchPrediction.new(this.niftyFootballCards.address, constants.ZERO_ADDRESS, {from: creator}),
-                    validationErrorContentKeys.matchServiceAddressZero
+                    validationErrorContentKeys.matchOracleAddressZero
                 );
             });
 
-            it('should fail to create contract when Match Service and owner are the same address', async () => {
+            it('should fail to create contract when Match Oracle and owner are the same address', async () => {
                 await shouldFail.reverting.withMessage(
                     MatchPrediction.new(this.niftyFootballCards.address, creator, {from: creator}),
-                    validationErrorContentKeys.matchServiceEqOwner
+                    validationErrorContentKeys.matchOracleEqOwner
                 );
             });
 
@@ -321,7 +328,9 @@ contract('Match Prediction Contract Tests',
                 const randomMatch = {
                     id: new BN(24),
                     predictBefore: new BN(seconds_since_epoch() + 3),
-                    resultAfter: new BN(seconds_since_epoch() + 5)
+                    resultAfter: new BN(seconds_since_epoch() + 5),
+                    description: "",
+                    resultSource: ""
                 };
 
                 givenASpecificMatchIsAdded(this.matchService, randomMatch, oracle);
@@ -377,7 +386,7 @@ contract('Match Prediction Contract Tests',
 
             it('should fail on referencing an invalid game', async () => {
                 await shouldFail.reverting.withMessage(
-                    makeASecondPredictionFor(this.matchPrediction, new BN(2), _tokenId3, Outcomes.UNINITIALISED, random),
+                    makeASecondPredictionFor(this.matchPrediction, new BN(3), _tokenId3, Outcomes.UNINITIALISED, random),
                     validationErrorContentKeys.invalidGameId
                 );
             });

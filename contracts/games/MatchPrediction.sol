@@ -110,7 +110,7 @@ contract MatchPrediction is ICardGame, ERC721Holder {
     ///////////////////////////////////////
 
     function _isValidGame(uint256 _gameId) internal view returns (bool) {
-        return gameIdToGameMapping[_gameId].id > 0;
+        return gameIdToGameMapping[_gameId].id == _gameId;
     }
 
     function _isGameOpen(uint256 _gameId) internal view returns (bool) {

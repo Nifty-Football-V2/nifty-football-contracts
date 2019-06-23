@@ -38,7 +38,8 @@ contract MatchOracle is OracleInterface {
         uint256 matchStart;
         uint256 matchEnd;
         string description;
-        string resultSource;
+        string proposedResultSrc;
+        string actualResultSrc;
         uint256 homeGoals;
         uint256 awayGoals;
         MatchState state;
@@ -91,6 +92,12 @@ contract MatchOracle is OracleInterface {
         _;
     }
 
+    modifier onlyWhenMatchNotPostponedCancelled(uint256 _matchId) {
+        require(matchIdToMatchMapping[_matchId].state != MatchState.POSTPONED && matchIdToMatchMapping[_matchId].state != MatchState.CANCELLED,
+            "match.service.error.match.postponed.or.cancelled");
+        _;
+    }
+
     modifier onlyWhenResultStateValid(Outcome _resultState) {
         require(_resultState != Outcome.UNINITIALISED, "match.service.error.invalid.match.result.state");
         _;
@@ -135,7 +142,8 @@ contract MatchOracle is OracleInterface {
             matchStart: _matchStart,
             matchEnd: _matchEnd,
             description: _description,
-            resultSource: _resultSource,
+            proposedResultSrc: _resultSource,
+            actualResultSrc: "",
             homeGoals: 0,
             awayGoals: 0,
             state: MatchState.UPCOMING,
@@ -184,14 +192,17 @@ contract MatchOracle is OracleInterface {
         emit MatchRestored(_matchId);
     }
 
-    function resultMatch(uint256 _matchId, Outcome _resultState)
+    function resultMatch(uint256 _matchId, string calldata _resultSource, uint256 _homeGoals, uint256 _awayGoals, Outcome _resultState)
     whenNotPaused
     onlyWhenOracle
     onlyWhenMatchExists(_matchId)
-    onlyWhenMatchUpcoming(_matchId)
+    onlyWhenMatchNotPostponedCancelled(_matchId)
     onlyWhenResultStateValid(_resultState)
     onlyWhenResultWindowOpen(_matchId) external {
         Match storage aMatch = matchIdToMatchMapping[_matchId];
+        aMatch.actualResultSrc = _resultSource;
+        aMatch.homeGoals = _homeGoals;
+        aMatch.awayGoals = _awayGoals;
         aMatch.result = _resultState;
         aMatch.state = MatchState.RESULTED;
 

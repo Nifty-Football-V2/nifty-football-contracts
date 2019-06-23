@@ -2,7 +2,7 @@ const MatchOracle = artifacts.require('MatchOracle');
 
 const {BN, constants, expectEvent, shouldFail} = require('openzeppelin-test-helpers');
 
-contract.only('MatchOracle Contract Tests',
+contract('MatchOracle Contract Tests',
              ([_, creator, tokenOwner1, externalContract, oracle, oracle2, random, ...accounts]) => {
      const thenExpectTheFollowingEvent = expectEvent;
 
@@ -18,7 +18,8 @@ contract.only('MatchOracle Contract Tests',
          matchNotUpcoming: "match.service.error.match.not.upcoming",
          notPostponed: "match.service.error.match.not.postponed",
          invalidMatchResultState: "match.service.error.invalid.match.result.state",
-         resultWindowNotOpen: "match.service.error.result.window.not.open"
+         resultWindowNotOpen: "match.service.error.result.window.not.open",
+         matchPostponedOrCancelled: "match.service.error.match.postponed.or.cancelled"
      };
 
      const MatchStates = {
@@ -39,6 +40,8 @@ contract.only('MatchOracle Contract Tests',
      const match1 = {
          id: new BN(34564543)
      };
+
+     const homeWinMatchResult = {matchId: match1.id, resultSrc: "", homeGoals: 1, awayGoals: 0, result: Outcomes.HOME_WIN};
 
      function seconds_since_epoch(){ return Math.floor( Date.now() / 1000 ) }
      function sleep(ms) {
@@ -85,11 +88,12 @@ contract.only('MatchOracle Contract Tests',
      }
 
      function givenAMatchResultWasSupplied(contract, sender) {
-         return givenASpecificMatchResultSupplied(contract, match1.id, Outcomes.HOME_WIN, sender);
+         return givenASpecificMatchResultSupplied(contract, homeWinMatchResult, sender);
      }
 
-     function givenASpecificMatchResultSupplied(contract, matchId, result, sender) {
-         return contract.resultMatch(matchId, result, {from: sender});
+     function givenASpecificMatchResultSupplied(contract, matchResult, sender) {
+         return contract.resultMatch(matchResult.matchId, matchResult.resultSrc,
+             matchResult.homeGoals, matchResult.awayGoals, matchResult.result, {from: sender});
      }
 
      function givenTheOracleAddressWasUpdatedTo(contract, address, sender) {
@@ -492,14 +496,16 @@ contract.only('MatchOracle Contract Tests',
 
              it('should block any non-oracle address', async () => {
                  await shouldFail.reverting.withMessage(
-                     givenASpecificMatchResultSupplied(this.matchService, match1.id, Outcomes.HOME_WIN, random),
+                     givenASpecificMatchResultSupplied(this.matchService, homeWinMatchResult, random),
                      validationErrorContentKeys.notOracle
                  );
              });
 
              it('should fail when a match doesnt exist', async () => {
+                 const invalidMatchResult = Object.assign({}, homeWinMatchResult);
+                 invalidMatchResult.matchId = new BN(2);
                  await shouldFail.reverting.withMessage(
-                     givenASpecificMatchResultSupplied(this.matchService, new BN(2), Outcomes.HOME_WIN, oracle),
+                     givenASpecificMatchResultSupplied(this.matchService, invalidMatchResult, oracle),
                      validationErrorContentKeys.matchIdInvalid
                  );
              });
@@ -509,17 +515,7 @@ contract.only('MatchOracle Contract Tests',
 
                  await shouldFail.reverting.withMessage(
                      givenAMatchResultWasSupplied(this.matchService, oracle),
-                     validationErrorContentKeys.matchNotUpcoming
-                 );
-             });
-
-             it('should fail when trying to supply a match result twice', async () => {
-                 await sleep(4500);
-                 await givenAMatchResultWasSupplied(this.matchService, oracle);
-
-                 await shouldFail.reverting.withMessage(
-                     givenAMatchResultWasSupplied(this.matchService, oracle),
-                     validationErrorContentKeys.matchNotUpcoming
+                     validationErrorContentKeys.matchPostponedOrCancelled
                  );
              });
 
@@ -528,13 +524,15 @@ contract.only('MatchOracle Contract Tests',
 
                  await shouldFail.reverting.withMessage(
                      givenAMatchResultWasSupplied(this.matchService, oracle),
-                     validationErrorContentKeys.matchNotUpcoming
+                     validationErrorContentKeys.matchPostponedOrCancelled
                  );
              });
 
              it('should fail when result is invalid', async () => {
+                 const invalidMatchResult = Object.assign({}, homeWinMatchResult);
+                 invalidMatchResult.result = Outcomes.UNINITIALISED;
                  await shouldFail.reverting.withMessage(
-                     givenASpecificMatchResultSupplied(this.matchService, match1.id, Outcomes.UNINITIALISED, oracle),
+                     givenASpecificMatchResultSupplied(this.matchService, invalidMatchResult, oracle),
                      validationErrorContentKeys.invalidMatchResultState
                  );
              });
