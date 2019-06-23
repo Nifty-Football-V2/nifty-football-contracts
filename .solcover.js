@@ -1,4 +1,4 @@
 module.exports = {
-    copyPackages: ['openzeppelin-solidity'],
-    skipFiles: ['Migrations.sol']
+  copyPackages: ['openzeppelin-solidity'],
+  skipFiles: ['Migrations.sol']
 };

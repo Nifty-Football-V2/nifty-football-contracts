@@ -1,4 +1,4 @@
-let Migrations = artifacts.require('./Migrations.sol');
+let Migrations = artifacts.require('Migrations');
 const {getAccountOne} = require('../constants');
 
 module.exports = function (deployer, network, accounts) {
