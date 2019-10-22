@@ -1,6 +1,8 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
 const {INFURA_KEY} = require('./constants');
 
+const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY;
+
 // Check gas prices before live deploy - https://ethgasstation.info/
 
 module.exports = {
@@ -65,8 +67,8 @@ module.exports = {
                 );
             },
             network_id: 4,
-            gas: 6500000, // default = 4712388
-            gasPrice: 4000000000, // default = 100 gwei = 100000000000
+            gas: 7000000, // default = 4712388
+            gasPrice: 20000000000, // default = 100 gwei = 100000000000
             skipDryRun: true
         },
         mainnet: {
@@ -81,5 +83,14 @@ module.exports = {
             gasPrice: 5000000000, // default = 100 gwei = 100000000000
             skipDryRun: true
         },
+    },
+    plugins: [
+        'truffle-plugin-verify'
+    ],
+    verify: {
+        preamble: "Author: Blockrocket.tech.\n"
+    },
+    api_keys: {
+        etherscan: ETHERSCAN_KEY
     }
 };

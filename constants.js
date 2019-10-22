@@ -1,7 +1,7 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
 const mnemonic = process.env.NIFTY_FOOTBALL_MNEMONIC;
 
-const INFURA_KEY = "8d878f1ce20b4e2fa9eea01668281193";
+const INFURA_KEY = process.env.NIFTY_FOOTBALL_INFURA_KEY;
 
 module.exports = {
     INFURA_KEY: INFURA_KEY,
