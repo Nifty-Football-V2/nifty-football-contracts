@@ -1,15 +1,23 @@
-pragma solidity 0.5.0;
+pragma solidity 0.5.5;
 
 import "openzeppelin-solidity/contracts/token/ERC721/ERC721Full.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/access/roles/WhitelistedRole.sol";
+
+import "tabookey-gasless/contracts/GsnUtils.sol";
+import "tabookey-gasless/contracts/IRelayHub.sol";
+import "tabookey-gasless/contracts/RelayRecipient.sol";
 
 import "./libs/Strings.sol";
 import "./erc721/CustomERC721Full.sol";
 import "./INiftyTradingCardCreator.sol";
 import "./INiftyTradingCardAttributes.sol";
 
-contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCardCreator, INiftyTradingCardAttributes {
+contract NiftyTradingCard is CustomERC721Full,
+                             RelayRecipient,
+                             WhitelistedRole,
+                             INiftyTradingCardCreator,
+                             INiftyTradingCardAttributes {
     using SafeMath for uint256;
 
     string public tokenBaseURI = "";
@@ -116,7 +124,7 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
     }
 
     modifier onlyWhitelistedOrTokenOwner(uint256 _tokenId){
-        require(isWhitelisted(msg.sender) || ownerOf(_tokenId) == msg.sender, "Unable to set token image URI unless owner of whitelisted");
+        require(isWhitelisted(getSender()) || ownerOf(_tokenId) == getSender(), "Unable to set token image URI unless owner of whitelisted");
         _;
     }
 
@@ -127,6 +135,11 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
     mapping(uint256 => Attributes) internal attributesMapping;
     mapping(uint256 => Name) internal namesMapping;
     mapping(uint256 => Extras) internal extrasMapping;
+
+    constructor(string memory name, string memory symbol) public CustomERC721Full(name, symbol) {
+        // todo: make this part of the constructor of the contract
+        setRelayHub(IRelayHub(0xD216153c06E857cD7f72665E0aF1d7D82172F494));
+    }
 
     function mintCard(
         uint256 _cardType,
@@ -453,5 +466,16 @@ contract NiftyTradingCard is CustomERC721Full, WhitelistedRole, INiftyTradingCar
         emit StaticIpfsTokenURICleared(_tokenId);
 
         return true;
+    }
+
+    function acceptRelayedCall(address relay, address from, bytes calldata encodedFunction, uint256 transactionFee, uint256 gasPrice, uint256 gasLimit, uint256 nonce, bytes calldata approvalData, uint256 maxPossibleCharge) external view returns (uint256, bytes memory) {
+        return (0, "");
+    }
+
+    function preRelayedCall(bytes calldata context) external returns (bytes32) {
+        return bytes32(uint(123456));
+    }
+
+    function postRelayedCall(bytes calldata context, bool success, uint actualCharge, bytes32 preRetVal) /*relayHubOnly*/ external {
     }
 }

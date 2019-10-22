@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity 0.5.5;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -37,7 +37,7 @@ contract NiftyFootballAdmin is Ownable, Pausable {
 
         // 100 for special
         uint256 tokenId = creator.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
-        
+
         // Generate attributes as normal
         (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = generator.generateAttributes(msg.sender, attributesBase);
 

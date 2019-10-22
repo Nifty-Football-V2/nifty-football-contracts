@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity 0.5.5;
 
 contract INiftyFootballTradingCardGenerator {
     function generateCard(address _sender) external returns (uint256 _nationality, uint256 _position, uint256 _ethnicity, uint256 _kit, uint256 _colour);

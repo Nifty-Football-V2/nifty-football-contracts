@@ -1,4 +1,4 @@
-pragma solidity 0.5.0;
+pragma solidity 0.5.5;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -101,7 +101,7 @@ contract NiftyFootballTradingCardEliteBlindPack is Ownable, Pausable, FundsSplit
 
         // cardType is 0 for genesis (initially)
         uint256 tokenId = creator.mintCard(cardTypeDefault, _nationality, _position, _ethnicity, _kit, _colour, _to);
-        
+
         // Generate attributes
         (uint256 _strength, uint256 _speed, uint256 _intelligence, uint256 _skill) = generator.generateAttributes(msg.sender, attributesBase);
         (uint256 _firstName, uint256 _lastName) = generator.generateName(msg.sender);

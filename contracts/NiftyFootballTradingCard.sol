@@ -1,10 +1,10 @@
-pragma solidity 0.5.0;
+pragma solidity 0.5.5;
 
 import "./NiftyTradingCard.sol";
 
 contract NiftyFootballTradingCard is NiftyTradingCard {
 
-    constructor (string memory _tokenBaseURI) public CustomERC721Full("Nifty Football Trading Card", "NFTFC") {
+    constructor (string memory _tokenBaseURI) public NiftyTradingCard("Nifty Football Trading Card", "NFTFC") {
         super.addWhitelisted(msg.sender);
         tokenBaseURI = _tokenBaseURI;
     }
